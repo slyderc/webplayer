@@ -1,0 +1,42 @@
+# Audio files directory
+audio_files/
+
+# Environment files
+.env
+*.env
+
+# PHP files
+vendor/
+composer.lock
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Editor backup files
+*.bak
+*.backup
