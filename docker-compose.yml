@@ -23,6 +23,8 @@ services:
     dns:
       - 1.1.1.1
       - 1.0.0.1
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}  # Default to 'development' if not set
 
   php:
     build:
@@ -37,3 +39,5 @@ services:
     dns:
       - 1.1.1.1
       - 1.0.0.1
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}  # Default to 'development' if not set

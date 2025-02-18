@@ -45,4 +45,3 @@ RUN mkdir -p /var/www/audio_files && \
 
 # Add custom PHP configuration
 RUN echo "extension=pdo_dblib.so" > /usr/local/etc/php/conf.d/pdo_dblib.ini
-

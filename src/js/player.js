@@ -84,7 +84,7 @@ class NowWavePlayer {
             // Update album artwork - note the change to use data.image
             if (data.image) {
                 // Clean up the image path to remove any double slashes
-                const cleanImagePath = data.image.replace(/^\/+/, '');
+                const cleanImagePath = data.image.replace(/^\/+/, '').replace(/\/+/g, '/');
                 
                 // Construct the correct URL based on environment
                 const artworkUrl = window.location.origin.includes('localhost') 
@@ -94,6 +94,7 @@ class NowWavePlayer {
                 // Only update if the image URL has changed
                 if (this.albumArt.src !== artworkUrl) {
                     this.albumArt.src = artworkUrl;
+                    console.log('Updated artwork URL:', artworkUrl); // For debugging
                 }
             } else {
                 this.albumArt.src = '/placeholder.jpg';

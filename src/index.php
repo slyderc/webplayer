@@ -1,12 +1,18 @@
-<?php include './php/nocache.php'; ?>
+<?php 
+include './php/nocache.php';
+
+// Get file modification times for cache busting
+$cssVersion = filemtime(__DIR__ . '/css/player.css');
+$jsVersion = filemtime(__DIR__ . '/js/player.js');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Now Wave Radio</title>
-    <link rel="stylesheet" href="./css/player.css?v=<?php echo time(); ?>">
-    <script src="js/player.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="./css/player.css?v=<?php echo $cssVersion; ?>">
+    <script src="js/player.js?v=<?php echo $jsVersion; ?>"></script>
 <body>
     <div class="player-container">
         <div class="artwork">
