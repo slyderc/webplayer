@@ -4,10 +4,13 @@ class NowWavePlayer {
         this.isPlaying = false;
         this.currentTab = 'live';
         this.lovedTracks = new Set(this.loadLovedTracks());
+        this.recentTracks = [];
+        this.maxRecentTracks = 5;
         
         this.initializeElements();
         this.attachEventListeners();
-        this.startMetadataPolling();
+        this.startMetadataPolling();       
+        this.switchTab('live');
     }
     
     initializeElements() {
@@ -19,7 +22,14 @@ class NowWavePlayer {
         this.programTitle = document.getElementById('programTitle');
         this.presenterName = document.getElementById('presenterName');
         this.tabs = document.getElementById('tabs');
-        this.tabContent = document.getElementById('tabContent');
+        this.views = {
+            live: document.getElementById('liveView'),
+            recent: document.getElementById('recentView'),
+            schedule: document.getElementById('scheduleView'),
+            catchup: document.getElementById('catchupView'),
+            favorites: document.getElementById('favoritesView')
+        };
+
     }
     
     attachEventListeners() {
@@ -37,6 +47,52 @@ class NowWavePlayer {
         this.audio.addEventListener('error', () => this.handleError());
     }
     
+    addTrackToHistory(track) {
+        const trackWithTimestamp = {
+            id: `${track.artist}-${track.title}`,
+            title: track.title,
+            artist: track.artist,
+            artwork_url: track.image,
+            played_at: new Date().toISOString()
+        };
+
+        // Only add if it's different from the most recent track
+        if (this.recentTracks.length === 0 || 
+            this.recentTracks[0].id !== trackWithTimestamp.id) {
+            
+            this.recentTracks.unshift(trackWithTimestamp);
+            if (this.recentTracks.length > this.maxRecentTracks) {
+                this.recentTracks.pop();
+            }
+            
+            if (this.currentTab === 'recent') {
+                this.updateRecentTracksView();
+            }
+        }
+    }
+
+    formatTimeElapsed(date) {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            week: 604800,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
+
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return `${interval} ${unit}${interval !== 1 ? 's' : ''} ago`;
+            }
+        }
+        
+        return 'just now';
+    }
+
     togglePlay() {
         if (this.isPlaying) {
             this.audio.pause();
@@ -73,6 +129,11 @@ class NowWavePlayer {
     
             const data = await response.json();
             
+            // Add track to history before updating current track info
+            if (data.title && data.artist) {
+                this.addTrackToHistory(data);
+            }
+
             // Update track information
             this.trackTitle.textContent = data.title || 'Unknown Track';
             this.trackArtist.textContent = data.artist || 'Unknown Artist';
@@ -94,7 +155,7 @@ class NowWavePlayer {
                 // Only update if the image URL has changed
                 if (this.albumArt.src !== artworkUrl) {
                     this.albumArt.src = artworkUrl;
-                    console.log('Updated artwork URL:', artworkUrl); // For debugging
+                    // console.log('Updated artwork URL:', artworkUrl);
                 }
             } else {
                 this.albumArt.src = '/placeholder.jpg';
@@ -110,8 +171,8 @@ class NowWavePlayer {
         }
     }
 
-    toggleLove() {
-        const trackId = `${this.trackArtist.textContent}-${this.trackTitle.textContent}`;
+    toggleLove(specificTrackId = null) {
+        const trackId = specificTrackId || `${this.trackArtist.textContent}-${this.trackTitle.textContent}`;
         
         if (this.lovedTracks.has(trackId)) {
             this.lovedTracks.delete(trackId);
@@ -119,7 +180,14 @@ class NowWavePlayer {
             this.lovedTracks.add(trackId);
         }
         
-        this.loveButton.dataset.loved = this.lovedTracks.has(trackId);
+        // Update UI for both main player and recent tracks if visible
+        if (!specificTrackId) {
+            this.loveButton.dataset.loved = this.lovedTracks.has(trackId);
+        }
+        if (this.currentTab === 'recent') {
+            this.updateRecentTracksView();
+        }
+        
         this.saveLovedTracks();
     }
     
@@ -131,32 +199,86 @@ class NowWavePlayer {
     saveLovedTracks() {
         localStorage.setItem('lovedTracks', JSON.stringify([...this.lovedTracks]));
     }
-    
+
+    updateRecentTracksView() {
+        const tracksHTML = this.recentTracks.map(track => `
+            <div class="track-item">
+                <img class="track-artwork" 
+                     src="${track.artwork_url || '/placeholder.jpg'}" 
+                     alt="${track.title} artwork">
+                <div class="track-info">
+                    <p class="track-title">${track.title}</p>
+                    <p class="track-artist">${track.artist}</p>
+                </div>
+                <div class="track-actions">
+                    <button class="heart-button" 
+                            data-track-id="${track.id}"
+                            data-loved="${this.lovedTracks.has(track.id)}">
+                        <svg class="heart-icon" viewBox="0 0 24 24">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                    </button>
+                    <span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>
+                </div>
+            </div>
+        `).join('');
+
+        this.views.recent.innerHTML = tracksHTML;
+        
+        // Add click handlers for the heart buttons
+        this.views.recent.querySelectorAll('.heart-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const trackId = e.currentTarget.dataset.trackId;
+                this.toggleLove(trackId);
+            });
+        });
+    }
+
     switchTab(tabName) {
-        // Update active state
+        // Update active state of tab buttons
         this.tabs.querySelectorAll('.tab-button').forEach(button => {
             button.dataset.active = button.dataset.tab === tabName;
         });
         
-        // Update content
-        this.currentTab = tabName;
-        this.updateTabContent();
-    }
-    
-    updateTabContent() {
-        // In a real implementation, this would fetch and display
-        // the appropriate content for each tab
-        const content = {
-            live: '<p>Currently playing live stream</p>',
-            schedule: '<p>Show schedule will appear here</p>',
-            catchup: '<p>Past shows available on Mixcloud</p>',
-            recent: '<p>Recent tracks will appear here</p>',
-            favorites: '<p>Your loved tracks will appear here</p>'
-        };
+        // Hide all views
+        Object.values(this.views).forEach(view => {
+            view.dataset.active = 'false';
+        });
         
-        this.tabContent.innerHTML = content[this.currentTab];
+        // Show selected view
+        this.currentTab = tabName;
+        this.views[tabName].dataset.active = 'true';
+        
+        // Update content based on tab
+        switch(tabName) {
+            case 'recent':
+                this.updateRecentTracksView();
+                break;
+            case 'schedule':
+                this.updateScheduleView();
+                break;
+            case 'catchup':
+                this.updateCatchupView();
+                break;
+            case 'favorites':
+                this.updateFavoritesView();
+                break;
+            // 'live' view doesn't need updating as it's always current
+        }
     }
     
+    updateScheduleView() {
+        this.views.schedule.innerHTML = '<p>Show schedule will appear here</p>';
+    }
+
+    updateCatchupView() {
+        this.views.catchup.innerHTML = '<p>Past shows available on Mixcloud</p>';
+    }
+
+    updateFavoritesView() {
+        this.views.favorites.innerHTML = '<p>Your loved tracks will appear here</p>';
+    }
+
     handleError() {
         console.error('Audio stream error occurred');
         this.isPlaying = false;

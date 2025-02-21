@@ -11,14 +11,38 @@ body {
 }
 
 .player-container {
-    max-width: 400px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
+.views-container {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+}
+
+/* View-specific styles */
+.view-content {
+    display: none;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+}
+
+.view-content[data-active="true"] {
+    display: block;
+}
+
+/* Recent tracks view styles */
+#recentView {
+    padding: 1rem;
+}
+
+/* Live view styles */
 .artwork {
     width: 100%;
     aspect-ratio: 1;
@@ -85,12 +109,11 @@ body {
 }
 
 .tabs {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    background: #f1f5f9;
-    padding: 4px;
-    border-radius: 8px;
+    display: flex;
+    justify-content: space-around;
+    background: #f3f4f6;
+    padding: 0.5rem;
+    border-top: 1px solid #e5e7eb;
 }
 
 .tab-button {
@@ -133,4 +156,89 @@ body {
     font-size: 0.875rem;
     margin: 0;
     color: var(--secondary-color);
+}
+
+/* recently-played tab stylings */
+#recentTracksContainer {
+    padding: 1rem;
+}
+
+.track-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.track-item .track-artwork {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 0.25rem;
+    object-fit: cover;
+    margin-right: 1rem;
+}
+
+.track-item .track-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.track-item .track-title {
+    font-weight: bold;
+    font-size: 1.125rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-item .track-artist {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-item .track-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: 1rem;
+}
+
+.track-item .heart-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.track-item .heart-button:hover {
+    transform: scale(1.1);
+}
+
+.track-item .heart-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    stroke: #666;
+    fill: none;
+    stroke-width: 2;
+}
+
+.track-item .heart-button[data-loved="true"] .heart-icon {
+    fill: #ef4444;
+    stroke: #ef4444;
+}
+
+.track-item .time-ago {
+    font-size: 0.875rem;
+    color: #666;
+    min-width: 5rem;
+    text-align: right;
 }
