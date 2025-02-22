@@ -15,22 +15,42 @@ $jsVersion = filemtime(__DIR__ . '/js/player.js');
     <script src="js/player.js?v=<?php echo $jsVersion; ?>"></script>
 <body>
     <div class="player-container">
-        <!-- Views container -->
-        <div class="views-container">
-            <!-- Live View -->
-            <div id="liveView" class="view-content">
-                <div class="artwork">
-                    <img id="albumArt" src="/placeholder.jpg" alt="Album artwork">
-                </div>
-                
-                <div class="track-info">
-                    <h2 id="trackTitle" class="track-title">Loading...</h2>
-                    <p id="trackArtist" class="track-artist"></p>
+        <!-- Main content area -->
+        <div class="main-content">
+            <!-- Views container -->
+            <div class="views-container">
+                <!-- Live View -->
+                <div id="liveView" class="view-content">
+                    <div class="artwork">
+                        <img id="albumArt" src="/placeholder.jpg" alt="Album artwork">
+                    </div>
                 </div>
 
-                <div class="show-info">
-                    <p id="programTitle" class="program-title"></p>
-                    <p id="presenterName" class="presenter-name"></p>
+                <!-- Recent Tracks View -->
+                <div id="recentView" class="view-content"></div>
+
+                <!-- Schedule View -->
+                <div id="scheduleView" class="view-content"></div>
+
+                <!-- Catch Up View -->
+                <div id="catchupView" class="view-content"></div>
+
+                <!-- Favorites View -->
+                <div id="favoritesView" class="view-content"></div>
+            </div>
+        </div>
+
+        <!-- Persistent player bar -->
+        <div class="player-bar">
+            <div class="player-bar-content">
+                <div class="track-info">
+                    <div class="now-playing">Now Playing</div>
+                    <h2 id="trackTitle" class="track-title">Loading...</h2>
+                    <p id="trackArtist" class="track-artist"></p>
+                    <div class="show-info">
+                        <p id="programTitle" class="program-title"></p>
+                        <p id="presenterName" class="presenter-name"></p>
+                    </div>
                 </div>
 
                 <div class="controls">
@@ -47,26 +67,15 @@ $jsVersion = filemtime(__DIR__ . '/js/player.js');
                 </div>
             </div>
 
-            <!-- Recent Tracks View -->
-            <div id="recentView" class="view-content"></div>
 
-            <!-- Schedule View -->
-            <div id="scheduleView" class="view-content"></div>
-
-            <!-- Catch Up View -->
-            <div id="catchupView" class="view-content"></div>
-
-            <!-- Favorites View -->
-            <div id="favoritesView" class="view-content"></div>
-        </div>
-        
-        <!-- Navigation Tabs -->
-        <div class="tabs" id="tabs">
-            <button class="tab-button" data-tab="live" data-active="true">Live</button>
-            <button class="tab-button" data-tab="schedule">Schedule</button>
-            <button class="tab-button" data-tab="catchup">Catch Up</button>
-            <button class="tab-button" data-tab="recent">Recent</button>
-            <button class="tab-button" data-tab="favorites">Favorites</button>
+            <!-- Navigation Tabs -->
+            <div class="tabs" id="tabs">
+                <button class="tab-button" data-tab="live" data-active="true">Live</button>
+                <button class="tab-button" data-tab="schedule">Schedule</button>
+                <button class="tab-button" data-tab="catchup">Catch Up</button>
+                <button class="tab-button" data-tab="recent">Recent</button>
+                <button class="tab-button" data-tab="favorites">Favorites</button>
+            </div>
         </div>
     </div>
 </body>
