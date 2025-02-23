@@ -1,21 +1,25 @@
 :root {
     --primary-color: #2563eb;
     --secondary-color: #475569;
+    --min-window-width: 400px;  /* Minimum window width */
+    --min-window-height: 600px; /* Minimum window height */
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 10px;
     background: #f8fafc;
     height: 100vh;
     overflow: hidden;
+    min-width: var(--min-window-width);
+    min-height: var(--min-window-height);
 }
 
 /* New logo styles */
 .logo-container {
     max-width: 600px;
-    margin: 0 auto 20px;
+    margin: 0 auto 10px;
     text-align: center;
     padding: 20px 0;
 }
@@ -57,6 +61,7 @@ body {
 .views-container {
     height: 100%;
     position: relative;
+    overflow: hidden;
 }
 
 /* View-specific styles */
