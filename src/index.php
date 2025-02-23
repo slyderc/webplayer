@@ -21,8 +21,11 @@ $jsVersion = filemtime(__DIR__ . '/js/player.js');
             <div class="views-container">
                 <!-- Live View -->
                 <div id="liveView" class="view-content">
+                    <div class="logo-container">
+                        <img src="/player/logo_head.png" alt="Now Wave Radio" class="header-logo">
+                    </div>
                     <div class="artwork">
-                        <img id="albumArt" src="/placeholder.jpg" alt="Album artwork">
+                        <img id="albumArt" src="/player/NWR_text_logo_angle.png" alt="Album artwork">
                     </div>
                 </div>
 

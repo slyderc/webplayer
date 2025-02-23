@@ -158,7 +158,7 @@ class NowWavePlayer {
                     // console.log('Updated artwork URL:', artworkUrl);
                 }
             } else {
-                this.albumArt.src = '/placeholder.jpg';
+                this.albumArt.src = '/player/NWR_text_logo_angle.png';
             }
             
             
@@ -204,7 +204,7 @@ class NowWavePlayer {
         const tracksHTML = this.recentTracks.map(track => `
             <div class="track-item">
                 <img class="track-artwork" 
-                     src="${track.artwork_url || '/placeholder.jpg'}" 
+                     src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
                      alt="${track.title} artwork">
                 <div class="track-info">
                     <p class="track-title">${track.title}</p>
