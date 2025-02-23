@@ -19,14 +19,18 @@ body {
 /* New logo styles */
 .logo-container {
     max-width: 600px;
-    margin: 0 auto 10px;
+    width: 90%;
+    margin: 0 auto 20px;
     text-align: center;
     padding: 20px 0;
+    transition: all 0.3s ease;
 }
 
 .header-logo {
     max-width: 300px;
+    width: 100%;
     height: auto;
+    transition: all 0.3s ease;
 }
 
 .player-bar {
@@ -87,13 +91,62 @@ body {
 /* Live view styles */
 .artwork {
     max-width: 300px;
+    width: 90%;
     margin: 0 auto 20px;
+    transition: all 0.3s ease;
 }
 
 .artwork img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    object-fit: contain;
+    transition: all 0.3s ease;
+}
+
+/* Media queries for responsive scaling */
+@media screen and (max-height: 300px) {
+    .artwork {
+        max-width: 300px;
+    }
+    
+    .logo-container {
+        max-width: 300px;
+        padding: 10px 0;
+    }
+    
+    .header-logo {
+        max-width: 250px;
+    }
+}
+
+@media screen and (max-height: 200px) {
+    .artwork {
+        max-width: 200px;
+    }
+    
+    .logo-container {
+        max-width: 200px;
+        padding: 5px 0;
+    }
+    
+    .header-logo {
+        max-width: 175px;
+    }
+}
+
+@media screen and (max-height: 100px) {
+    .artwork {
+        max-width: 100px;
+    }
+    
+    .logo-container {
+        max-width: 100px;
+        padding: 5px 0;
+    }
+    
+    .header-logo {
+        max-width: 125px;
+    }
 }
 
 .track-info {
@@ -244,7 +297,7 @@ body {
 
 .track-item .track-title {
     font-weight: bold;
-    font-size: 1.125rem;
+    font-size: 1.0rem;
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -252,7 +305,7 @@ body {
 }
 
 .track-item .track-artist {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: #666;
     margin: 0;
     white-space: nowrap;
