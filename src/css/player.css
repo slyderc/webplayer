@@ -8,6 +8,8 @@ body {
     margin: 0;
     padding: 20px;
     background: #f8fafc;
+    height: 100vh;
+    overflow: hidden;
 }
 
 /* New logo styles */
@@ -39,15 +41,17 @@ body {
 .player-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: calc(100vh - 40px); /* Adjust for body padding */
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
 
 .main-content {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 20px;
+    position: relative;
 }
 
 .views-container {
@@ -63,7 +67,7 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .view-content[data-active="true"] {
