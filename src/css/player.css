@@ -318,6 +318,8 @@ body {
     align-items: center;
     gap: 1rem;
     margin-left: 1rem;
+    margin-right: 0.5rem;
+    min-width: fit-content;
 }
 
 .track-item .heart-button {
@@ -348,6 +350,7 @@ body {
 .track-item .time-ago {
     font-size: 0.875rem;
     color: #666;
-    min-width: 5rem;
-    text-align: right;
+    min-width: 7rem;
+    text-align: left;
+    white-space: nowrap;
 }
