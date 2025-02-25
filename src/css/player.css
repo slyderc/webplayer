@@ -66,9 +66,11 @@ body {
 
 /* Player Bar */
 .player-bar {
+/*
     background: rgba(255, 255, 255, 0.9);
-    border-top: 1px solid #e5e7eb;
-    padding: 10px 20px 0;
+*/
+    background: transparent;
+    padding: 5px 5px 0;
 }
 
 .player-bar-content {
@@ -76,8 +78,11 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 10px 0;
+/*
     background: rgba(15, 15, 15, 0.85);
-}
+*/
+    background: transparent;
+    }
 
 /* ==========================================================================
    3. Tab Navigation
