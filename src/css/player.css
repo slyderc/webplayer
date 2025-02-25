@@ -296,9 +296,9 @@ body[data-active-tab="live"] .artwork-background {
     height: calc(100% + 40px);
     background-size: cover;
     background-position: center;
-    filter: blur(25px) brightness(0.5);
-    transform: scale(1.05);
-    transition: background-image 1s ease;
+    filter: blur(25px) brightness(0.8);
+    transform: scale(1.00);
+    transition: background-image 0.75s ease;
 }
 
 /* Overlay gradient to ensure readability */
