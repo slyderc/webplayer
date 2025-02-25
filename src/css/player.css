@@ -235,10 +235,10 @@ body[data-active-tab="live"] .tab-button[data-active="true"] {
 /* Logo Container */
 .logo-container {
     max-width: 600px;
-    width: 90%;
+    width: 80%;
     margin: 10px auto 10px;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
 }
 
 .header-logo {
