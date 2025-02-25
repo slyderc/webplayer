@@ -5,8 +5,8 @@
    :root {
     --primary-color: #2563eb;
     --secondary-color: #475569;
-    --min-window-width: 400px;  /* Minimum window width */
-    --min-window-height: 600px; /* Minimum window height */
+    --min-window-width: 450px;  /* Minimum window width */
+    --min-window-height: 670px; /* Minimum window height */
 }
 
 body {
@@ -290,14 +290,14 @@ body[data-active-tab="live"] .artwork-background {
 /* The actual blurred background image */
 .artwork-bg-image {
     position: absolute;
-    top: -20px;
-    left: -20px;
+    top: 0px;
+    left: 0px;
     width: calc(100% + 40px);
     height: calc(100% + 40px);
     background-size: cover;
     background-position: center;
-    filter: blur(25px) brightness(0.6);
-    transform: scale(0.75);
+    filter: blur(25px) brightness(0.5);
+    transform: scale(1.05);
     transition: background-image 1s ease;
 }
 
