@@ -1,4 +1,8 @@
-:root {
+/* ==========================================================================
+   1. Variables and Base Styles
+   ========================================================================== */
+
+   :root {
     --primary-color: #2563eb;
     --secondary-color: #475569;
     --min-window-width: 400px;  /* Minimum window width */
@@ -16,38 +20,11 @@ body {
     min-height: var(--min-window-height);
 }
 
-/* New logo styles */
-.logo-container {
-    max-width: 600px;
-    width: 90%;
-    margin: 0 auto 20px;
-    text-align: center;
-    padding: 20px 0;
-    transition: all 0.3s ease;
-}
+/* ==========================================================================
+   2. Layout Components
+   ========================================================================== */
 
-.header-logo {
-    max-width: 300px;
-    width: 100%;
-    height: auto;
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-.player-bar {
-    background: white;
-    border-top: 1px solid #e5e7eb;
-    padding: 10px 20px 0;
-    background: rgba(255, 255, 255, 0.9);
-}
-
-.player-bar-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 0;
-}
-
+/* Main Container */
 .player-container {
     display: flex;
     flex-direction: column;
@@ -89,131 +66,92 @@ body {
     display: block;
 }
 
-/* Recent tracks view styles */
-#recentView {
-    padding: 1rem;
+/* Player Bar */
+.player-bar {
+    background: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid #e5e7eb;
+    padding: 10px 20px 0;
 }
 
-/* Live view styles */
-.artwork {
-    max-width: 300px;
-    width: 90%;
-    margin: 0 auto 20px;
-    transition: all 0.3s ease;
-    position: relative;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+.player-bar-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+/* ==========================================================================
+   3. Tab Navigation
+   ========================================================================== */
+
+.tabs {
+    margin-top: 10px;
+    border-top: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.tab-button {
+    border: none;
+    background: none;
+    padding: 8px;
+    cursor: pointer;
     border-radius: 4px;
-    overflow: hidden;   
+    font-size: 0.875rem;
 }
 
-.artwork img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    transition: all 0.3s ease;
+.tab-button[data-active="true"] {
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.8);
 }
 
-/* Background container that will hold the blurred artwork */
-.artwork-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    overflow: hidden;
-    transition: opacity 1.5s ease;
-    opacity: 0;
-    /* Hide by default - only shown when live tab is active */
-    display: none;
+/* Tab styling specific to Live mode */
+body[data-active-tab="live"] .tabs {
+    background: rgb(0, 0, 0);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Only show the background when the live tab is active */
-body[data-active-tab="live"] .artwork-background {
-    display: block;
+body[data-active-tab="live"] .tab-button {
+    color: white;
 }
 
-.artwork-background.active {
-    opacity: 1;
+body[data-active-tab="live"] .tab-button[data-active="true"] {
+    background: rgba(255, 255, 255, 0.2);
 }
 
-/* The actual blurred background image */
-.artwork-bg-image {
-    position: absolute;
-    top: -20px;
-    left: -20px;
-    width: calc(100% + 40px);
-    height: calc(100% + 40px);
-    background-size: cover;
-    background-position: center;
-    filter: blur(30px) brightness(0.7);
-    transform: scale(1.1);
-    transition: background-image 1s ease;
+.tab-content {
+    margin-top: 20px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    min-height: 100px;
 }
 
-/* Overlay gradient to ensure readability */
-.artwork-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
-}
+/* ==========================================================================
+   4. Player Controls and Track Info
+   ========================================================================== */
 
-/* Media queries for responsive scaling */
-@media screen and (max-height: 300px) {
-    .artwork {
-        max-width: 300px;
-    }
-    
-    .logo-container {
-        max-width: 300px;
-        padding: 10px 0;
-    }
-    
-    .header-logo {
-        max-width: 250px;
-    }
-}
-
-@media screen and (max-height: 200px) {
-    .artwork {
-        max-width: 200px;
-    }
-    
-    .logo-container {
-        max-width: 200px;
-        padding: 5px 0;
-    }
-    
-    .header-logo {
-        max-width: 175px;
-    }
-}
-
-@media screen and (max-height: 100px) {
-    .artwork {
-        max-width: 100px;
-    }
-    
-    .logo-container {
-        max-width: 100px;
-        padding: 5px 0;
-    }
-    
-    .header-logo {
-        max-width: 125px;
-    }
-}
-
+/* Track Info Container */
 .track-info {
     flex: 1;
     text-align: left;
     margin: 0;
 }
 
-/* New rule for now-playing badge */
+/* Track Details */
+.track-title {
+    font-size: 1.0rem;
+    font-weight: bold;
+    margin: 0 0 4px 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.track-artist {
+    color: var(--secondary-color);
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Now Playing Badge */
 .now-playing {
     background: #1e40af;
     color: white;
@@ -225,7 +163,14 @@ body[data-active-tab="live"] .artwork-background {
     margin-bottom: 8px;
 }
 
-/* Update show info positioning for track-info */
+/* Show Info */
+.show-info {
+    text-align: right;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
 .track-info .show-info {
     text-align: left;
     margin-top: 8px;
@@ -233,18 +178,21 @@ body[data-active-tab="live"] .artwork-background {
     border-top: 1px solid #e5e7eb;
 }
 
-.track-title {
-    font-size: 1.0rem;
-    font-weight: bold;
-    margin: 0 0 4px 0;
+.program-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0 0 2px 0;
+    color: var(--primary-color);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.track-artist {
-    color: var(--secondary-color);
+.presenter-name {
+    font-size: 0.875rem;
     margin: 0;
-    font-size: 0.875rem
+    color: var(--secondary-color);
 }
 
+/* Controls */
 .controls {
     display: flex;
     align-items: center;
@@ -278,57 +226,136 @@ body[data-active-tab="live"] .artwork-background {
     fill: currentColor;
 }
 
-.tabs {
-    margin-top: 10px;
-    border-top: 1px solid #e5e7eb;
-    background: rgba(255, 255, 255, 0.9);
+/* ==========================================================================
+   5. Album Artwork and Background Effects
+   ========================================================================== */
+
+/* Logo Container */
+.logo-container {
+    max-width: 600px;
+    width: 90%;
+    margin: 0 auto 20px;
+    text-align: center;
+    padding: 20px 0;
+    transition: all 0.3s ease;
 }
 
-.tab-button {
-    border: none;
-    background: none;
-    padding: 8px;
-    cursor: pointer;
+.header-logo {
+    max-width: 300px;
+    width: 100%;
+    height: auto;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Album Artwork */
+.artwork {
+    max-width: 300px;
+    width: 90%;
+    margin: 0 auto 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     border-radius: 4px;
-    font-size: 0.875rem;
+    overflow: hidden;   
 }
 
-.tab-button[data-active="true"] {
-    background: white;
-    font-weight: 500;
-    background: rgba(255, 255, 255, 0.8);
+.artwork img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    transition: all 0.3s ease;
 }
 
-.tab-content {
-    margin-top: 20px;
-    padding: 16px;
-    background: white;
-    border-radius: 8px;
-    min-height: 100px;
+/* Background Effect Elements */
+.artwork-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    transition: opacity 1.5s ease;
+    opacity: 0;
+    /* Hide by default - only shown when live tab is active */
+    display: none;
 }
 
-.show-info {
-    text-align: right;
-    margin: 0;
-    padding: 0;
-    border: none;
+/* Only show the background when the live tab is active */
+body[data-active-tab="live"] .artwork-background {
+    display: block;
 }
 
-.program-title {
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin: 0 0 2px 0;
-    color: var(--primary-color);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.artwork-background.active {
+    opacity: 1;
 }
 
-.presenter-name {
-    font-size: 0.875rem;
-    margin: 0;
-    color: var(--secondary-color);
+/* The actual blurred background image */
+.artwork-bg-image {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: calc(100% + 40px);
+    height: calc(100% + 40px);
+    background-size: cover;
+    background-position: center;
+    filter: blur(30px) brightness(0.6);
+    transform: scale(1.1);
+    transition: background-image 1s ease;
 }
 
-/* recently-played tab stylings */
+/* Overlay gradient to ensure readability */
+.artwork-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+}
+
+/* ==========================================================================
+   6. View-Specific Styles
+   ========================================================================== */
+
+/* Live Tab Specific Styling */
+/* Player bar styling for Live tab */
+body[data-active-tab="live"] .player-bar {
+    background: rgba(15, 15, 15, 0.85);
+    color: white;
+}
+
+/* Player bar content in Live tab */
+body[data-active-tab="live"] .player-bar-content {
+    background: rgba(15, 15, 15, 0.85);
+    padding: 15px 20px;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Text color changes in Live tab */
+body[data-active-tab="live"] .track-title {
+    color: white;
+}
+
+body[data-active-tab="live"] .track-artist {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+body[data-active-tab="live"] .presenter-name {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Show info styling for Live tab */
+body[data-active-tab="live"] .show-info {
+    border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Recent view specific styles */
+#recentView {
+    padding: 1rem;
+}
+
 #recentTracksContainer {
     padding: 1rem;
 }
@@ -363,7 +390,6 @@ body[data-active-tab="live"] .artwork-background {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .track-item .track-artist {
@@ -415,4 +441,53 @@ body[data-active-tab="live"] .artwork-background {
     min-width: 7rem;
     text-align: left;
     white-space: nowrap;
+}
+
+/* ==========================================================================
+   7. Responsive Adjustments
+   ========================================================================== */
+
+@media screen and (max-height: 300px) {
+    .artwork {
+        max-width: 300px;
+    }
+    
+    .logo-container {
+        max-width: 300px;
+        padding: 10px 0;
+    }
+    
+    .header-logo {
+        max-width: 250px;
+    }
+}
+
+@media screen and (max-height: 200px) {
+    .artwork {
+        max-width: 200px;
+    }
+    
+    .logo-container {
+        max-width: 200px;
+        padding: 5px 0;
+    }
+    
+    .header-logo {
+        max-width: 175px;
+    }
+}
+
+@media screen and (max-height: 100px) {
+    .artwork {
+        max-width: 100px;
+    }
+    
+    .logo-container {
+        max-width: 100px;
+        padding: 5px 0;
+    }
+    
+    .header-logo {
+        max-width: 125px;
+    }
 }
