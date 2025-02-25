@@ -31,12 +31,14 @@ body {
     width: 100%;
     height: auto;
     transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .player-bar {
     background: white;
     border-top: 1px solid #e5e7eb;
     padding: 10px 20px 0;
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .player-bar-content {
@@ -53,6 +55,9 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    position: relative;
+    z-index: 1;
+    background: transparent;
 }
 
 .main-content {
@@ -60,6 +65,7 @@ body {
     overflow: hidden;
     padding: 20px;
     position: relative;
+    background: transparent;
 }
 
 .views-container {
@@ -94,6 +100,10 @@ body {
     width: 90%;
     margin: 0 auto 20px;
     transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    overflow: hidden;   
 }
 
 .artwork img {
@@ -101,6 +111,54 @@ body {
     height: auto;
     object-fit: contain;
     transition: all 0.3s ease;
+}
+
+/* Background container that will hold the blurred artwork */
+.artwork-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    transition: opacity 1.5s ease;
+    opacity: 0;
+    /* Hide by default - only shown when live tab is active */
+    display: none;
+}
+
+/* Only show the background when the live tab is active */
+body[data-active-tab="live"] .artwork-background {
+    display: block;
+}
+
+.artwork-background.active {
+    opacity: 1;
+}
+
+/* The actual blurred background image */
+.artwork-bg-image {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: calc(100% + 40px);
+    height: calc(100% + 40px);
+    background-size: cover;
+    background-position: center;
+    filter: blur(30px) brightness(0.7);
+    transform: scale(1.1);
+    transition: background-image 1s ease;
+}
+
+/* Overlay gradient to ensure readability */
+.artwork-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
 }
 
 /* Media queries for responsive scaling */
@@ -223,6 +281,7 @@ body {
 .tabs {
     margin-top: 10px;
     border-top: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .tab-button {
@@ -237,6 +296,7 @@ body {
 .tab-button[data-active="true"] {
     background: white;
     font-weight: 500;
+    background: rgba(255, 255, 255, 0.8);
 }
 
 .tab-content {
@@ -259,6 +319,7 @@ body {
     font-weight: 500;
     margin: 0 0 2px 0;
     color: var(--primary-color);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .presenter-name {
@@ -302,6 +363,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .track-item .track-artist {

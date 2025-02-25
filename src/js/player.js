@@ -6,8 +6,10 @@ class NowWavePlayer {
         this.lovedTracks = new Set(this.loadLovedTracks());
         this.recentTracks = [];
         this.maxRecentTracks = 5;
+        this.currentArtworkUrl = '';
         
         this.initializeElements();
+        this.setupBackgroundElements();
         this.attachEventListeners();
         this.startMetadataPolling();       
         this.switchTab('live');
@@ -31,7 +33,44 @@ class NowWavePlayer {
         };
 
     }
-    
+
+    setupBackgroundElements() {
+        // Create background container
+        this.bgContainer = document.createElement('div');
+        this.bgContainer.className = 'artwork-background';
+        
+        // Create the blurred background image element
+        this.bgImage = document.createElement('div');
+        this.bgImage.className = 'artwork-bg-image';
+        
+        // Create overlay for better readability
+        this.bgOverlay = document.createElement('div');
+        this.bgOverlay.className = 'artwork-overlay';
+        
+        // Assemble and append to the document
+        this.bgContainer.appendChild(this.bgImage);
+        this.bgContainer.appendChild(this.bgOverlay);
+        document.body.insertBefore(this.bgContainer, document.body.firstChild);
+        
+        // Create a second background container for smooth transitions
+        this.bgContainer2 = document.createElement('div');
+        this.bgContainer2.className = 'artwork-background';
+        
+        this.bgImage2 = document.createElement('div');
+        this.bgImage2.className = 'artwork-bg-image';
+        
+        this.bgOverlay2 = document.createElement('div');
+        this.bgOverlay2.className = 'artwork-overlay';
+        
+        this.bgContainer2.appendChild(this.bgImage2);
+        this.bgContainer2.appendChild(this.bgOverlay2);
+        document.body.insertBefore(this.bgContainer2, document.body.firstChild);
+        
+        // Set initial active state
+        this.activeBackground = 1;
+        this.bgContainer.classList.add('active');
+    }
+
     attachEventListeners() {
         this.playButton.addEventListener('click', () => this.togglePlay());
         this.loveButton.addEventListener('click', () => this.toggleLove());
@@ -45,8 +84,47 @@ class NowWavePlayer {
         this.audio.addEventListener('playing', () => this.updatePlayButton(true));
         this.audio.addEventListener('pause', () => this.updatePlayButton(false));
         this.audio.addEventListener('error', () => this.handleError());
+
+        // Listen for album art load events to update background
+         this.albumArt.addEventListener('load', () => this.updateBackground(this.albumArt.src));
     }
-    
+
+    updateBackground(imageUrl, forceUpdate = false) {
+        // Skip if it's the same URL or a default image, unless force update is requested
+        if (!forceUpdate && (imageUrl === this.currentArtworkUrl || 
+            imageUrl.includes('NWR_text_logo_angle.png'))) {
+            return;
+        }
+        
+        // Store current artwork URL even if it's default image
+        this.currentArtworkUrl = imageUrl;
+        
+        // Don't update background if it's the default image
+        if (imageUrl.includes('NWR_text_logo_angle.png')) {
+            return;
+        }
+        
+        // Only update if we're on the live tab
+        if (this.currentTab !== 'live' && !forceUpdate) {
+            return;
+        }
+        
+        // Toggle between the two background containers for smooth transitions
+        const activeBg = this.activeBackground === 1 ? this.bgImage2 : this.bgImage;
+        const activeContainer = this.activeBackground === 1 ? this.bgContainer2 : this.bgContainer;
+        const inactiveContainer = this.activeBackground === 1 ? this.bgContainer : this.bgContainer2;
+        
+        // Set the new background image
+        activeBg.style.backgroundImage = `url(${imageUrl})`;
+        
+        // Hide the current background and show the new one
+        inactiveContainer.classList.remove('active');
+        activeContainer.classList.add('active');
+        
+        // Toggle the active background for next update
+        this.activeBackground = this.activeBackground === 1 ? 2 : 1;
+    }
+
     addTrackToHistory(track) {
         const trackWithTimestamp = {
             id: `${track.artist}-${track.title}`,
@@ -248,7 +326,10 @@ class NowWavePlayer {
         // Show selected view
         this.currentTab = tabName;
         this.views[tabName].dataset.active = 'true';
-        
+
+        // Set active tab attribute on body element for CSS targeting
+        document.body.setAttribute('data-active-tab', tabName);
+
         // Update content based on tab
         switch(tabName) {
             case 'recent':
@@ -264,6 +345,13 @@ class NowWavePlayer {
                 this.updateFavoritesView();
                 break;
             // 'live' view doesn't need updating as it's always current
+            case 'live':
+                // If switching to live tab, make sure the background is visible
+                if (this.currentArtworkUrl && !this.currentArtworkUrl.includes('NWR_text_logo_angle.png')) {
+                    // Force background update when switching to live tab
+                    this.updateBackground(this.currentArtworkUrl, true);
+                }
+                break;
         }
     }
     
