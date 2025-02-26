@@ -1,6 +1,18 @@
 class NowWavePlayer {
     constructor() {
-        this.audio = new Audio('https://streaming.live365.com/a78360_2');
+        // Get configuration from global object
+        this.config = window.NWR_CONFIG || {
+            streamUrl: 'https://streaming.live365.com/a78360_2',
+            format: 'aac',
+            metadataUrl: 'https://nowwave.radio/player/publish/playlist.json',
+            pollInterval: 5000,
+            defaultVolume: 1.0
+        };
+        this.audioService = new AudioService({
+            streamUrl: this.config.streamUrl,
+            format: [this.config.format],
+            volume: this.config.defaultVolume
+        });
         this.isPlaying = false;
         this.currentTab = 'live';
         this.lovedTracks = new Set(this.loadLovedTracks());
@@ -81,12 +93,14 @@ class NowWavePlayer {
         });
         
         // Handle audio events
-        this.audio.addEventListener('playing', () => this.updatePlayButton(true));
-        this.audio.addEventListener('pause', () => this.updatePlayButton(false));
-        this.audio.addEventListener('error', () => this.handleError());
-
-        // Listen for album art load events to update background
-         this.albumArt.addEventListener('load', () => this.updateBackground(this.albumArt.src));
+        this.audioService
+            .addEventListener('onPlay', () => this.updatePlayButton(true))
+            .addEventListener('onPause', () => this.updatePlayButton(false))
+            .addEventListener('onStop', () => this.updatePlayButton(false))
+            .addEventListener('onError', () => this.handleError());
+            
+        // Handle album art load events to update background
+        this.albumArt.addEventListener('load', () => this.updateBackground(this.albumArt.src));
     }
 
     updateBackground(imageUrl, forceUpdate = false) {
@@ -172,12 +186,8 @@ class NowWavePlayer {
     }
 
     togglePlay() {
-        if (this.isPlaying) {
-            this.audio.pause();
-        } else {
-            this.audio.play();
-        }
-        this.isPlaying = !this.isPlaying;
+        // Use the AudioService to toggle playback
+        this.isPlaying = this.audioService.toggle();
         this.updatePlayButton(this.isPlaying);
     }
     
@@ -189,17 +199,12 @@ class NowWavePlayer {
     
     async startMetadataPolling() {
         await this.updateMetadata();
-        setInterval(() => this.updateMetadata(), 30000);
+        setInterval(() => this.updateMetadata(), this.config.pollInterval);
     }
     
     async updateMetadata() {
-        // Use environment-based URL switching
-        const API_URL = window.location.origin.includes('localhost') 
-            ? '/proxy/player/publish/playlist.json' 
-            : 'https://nowwave.radio/player/publish/playlist.json';
-    
         try {
-            const response = await fetch(API_URL);
+            const response = await fetch(this.config.metadataUrl);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -213,8 +218,8 @@ class NowWavePlayer {
             }
 
             // Update track information
-            this.trackTitle.textContent = data.title || 'Unknown Track';
-            this.trackArtist.textContent = data.artist || 'Unknown Artist';
+            this.trackTitle.textContent = data.title || 'Now Wave Radio';
+            this.trackArtist.textContent = data.artist || 'The Next Wave Today';
             
             // Update program information
             this.programTitle.textContent = data.program_title || '';
@@ -225,7 +230,7 @@ class NowWavePlayer {
                 // Clean up the image path to remove any double slashes
                 const cleanImagePath = data.image.replace(/^\/+/, '').replace(/\/+/g, '/');
                 
-                // Construct the correct URL based on environment
+                // Use environment-aware URL construction
                 const artworkUrl = window.location.origin.includes('localhost') 
                     ? `/artwork/${cleanImagePath}`
                     : `https://nowwave.radio/${cleanImagePath}`;
@@ -233,12 +238,10 @@ class NowWavePlayer {
                 // Only update if the image URL has changed
                 if (this.albumArt.src !== artworkUrl) {
                     this.albumArt.src = artworkUrl;
-                    // console.log('Updated artwork URL:', artworkUrl);
                 }
             } else {
                 this.albumArt.src = '/player/NWR_text_logo_angle.png';
             }
-            
             
             // Update love button state
             const trackId = `${data.artist}-${data.title}`;
@@ -376,5 +379,10 @@ class NowWavePlayer {
 
 // Initialize the player when the page loads
 document.addEventListener('DOMContentLoaded', () => {
+    // Make sure AudioService is loaded
+    if (typeof AudioService === 'undefined') {
+        console.error('AudioService not loaded!');
+        return;
+    }
     window.player = new NowWavePlayer();
 });

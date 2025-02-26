@@ -1,9 +1,13 @@
 <?php 
 include './php/nocache.php';
+include './php/config.php';
 
 // Get file modification times for cache busting
 $cssVersion = filemtime(__DIR__ . '/css/player.css');
+$jsServiceVersion = filemtime(__DIR__ . '/js/audio-service.js');
 $jsVersion = filemtime(__DIR__ . '/js/player.js');
+$streamConfig = getStreamConfig();
+$audioLibs = $audioLibraries;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,7 +16,13 @@ $jsVersion = filemtime(__DIR__ . '/js/player.js');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Now Wave Radio</title>
     <link rel="stylesheet" href="./css/player.css?v=<?php echo $cssVersion; ?>">
-    <script src="js/player.js?v=<?php echo $jsVersion; ?>"></script>
+    <script>
+        window.NWR_CONFIG = <?php echo getJsConfig(); ?>;
+    </script>
+    <script src="<?php echo $audioLibs['howler']['cdn']; ?>"></script>
+    <script src="./js/audio-service.js?v=<?php echo $jsServiceVersion; ?>"></script>
+    <script src="./js/player.js?v=<?php echo $jsPlayerVersion; ?>"></script>
+</head>
 <body>
     <div class="player-container">
         <!-- Main content area -->
@@ -25,20 +35,13 @@ $jsVersion = filemtime(__DIR__ . '/js/player.js');
                         <img src="/player/logo_head.png" alt="Now Wave Radio" class="header-logo">
                     </div>
                     <div class="artwork">
-                        <img id="albumArt" src="/player/NWR_text_logo_angle.png" alt="Album artwork">
+                        <img id="albumArt" src="<?php echo $streamConfig['artworkPath']; ?>" alt="Album artwork">
                     </div>
                 </div>
 
-                <!-- Recent Tracks View -->
                 <div id="recentView" class="view-content"></div>
-
-                <!-- Schedule View -->
                 <div id="scheduleView" class="view-content"></div>
-
-                <!-- Catch Up View -->
                 <div id="catchupView" class="view-content"></div>
-
-                <!-- Favorites View -->
                 <div id="favoritesView" class="view-content"></div>
             </div>
         </div>
@@ -69,7 +72,6 @@ $jsVersion = filemtime(__DIR__ . '/js/player.js');
                     </button>
                 </div>
             </div>
-
 
             <!-- Navigation Tabs -->
             <div class="tabs" id="tabs">
