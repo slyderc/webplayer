@@ -192,8 +192,15 @@ class NowWavePlayer {
     }
 
     togglePlay() {
-        // Use the AudioService to toggle playback (play/stop, not play/pause)
-        this.isPlaying = this.audioService.toggle();
+        // Be more explicit about play vs stop actions
+        if (this.isPlaying) {
+            console.log('User requested to stop playback');
+            this.isPlaying = this.audioService.stop();
+        } else {
+            console.log('User requested to start playback');
+            this.isPlaying = this.audioService.play();
+        }
+        
         this.updatePlayButton(this.isPlaying);
         
         // If we're stopping playback, reset display to default state
