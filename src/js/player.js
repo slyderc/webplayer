@@ -10,8 +10,8 @@ class NowWavePlayer {
             defaultArtwork: '/player/NWR_text_logo_angle.png',
             defaultTitle: 'Now Wave Radio',
             defaultArtist: 'The Next Wave Today',
-            defaultProgram: '',
-            defaultPresenter: ''
+            defaultProgram: '🛜 NowWave.Radio',
+            defaultPresenter: '💌 dj@NowWave.Radio'
         };
         this.audioService = new AudioService({
             streamUrl: this.config.streamUrl,
@@ -41,6 +41,7 @@ class NowWavePlayer {
         this.trackArtist = document.getElementById('trackArtist');
         this.programTitle = document.getElementById('programTitle');
         this.presenterName = document.getElementById('presenterName');
+        this.nowPlayingLabel = document.querySelector('.now-playing');
         this.tabs = document.getElementById('tabs');
         this.views = {
             live: document.getElementById('liveView'),
@@ -210,8 +211,8 @@ class NowWavePlayer {
         this.trackArtist.textContent = this.config.defaultArtist || 'The Next Wave Today';
         
         // Reset program information
-        this.programTitle.textContent = this.config.defaultProgram || '';
-        this.presenterName.textContent = this.config.defaultPresenter || '';
+        this.programTitle.textContent = this.config.defaultProgram || '🛜 NowWave.Radio';
+        this.presenterName.textContent = this.config.defaultPresenter || '💌 dj@NowWave.Radio';
         
         // Reset album artwork
         const defaultArtwork = this.config.defaultArtwork || '/player/NWR_text_logo_angle.png';
@@ -226,6 +227,13 @@ class NowWavePlayer {
 
         // Reset love button state
         this.loveButton.dataset.loved = 'false';
+
+        // Make sure the now playing label shows "Stopped"
+        if (this.nowPlayingLabel) {
+            this.nowPlayingLabel.textContent = 'Stopped';
+            this.nowPlayingLabel.classList.remove('playing');
+            this.nowPlayingLabel.classList.add('stopped');
+        }       
     }
 
     updatePlayButton(isPlaying) {
@@ -234,8 +242,21 @@ class NowWavePlayer {
             ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="12" height="16"/></svg>'
             : '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
             
-        // You could also add a title attribute for accessibility
+        // Add title attribute for accessibility
         this.playButton.title = isPlaying ? 'Stop' : 'Play';
+
+        // Update the Now Playing label
+        if (this.nowPlayingLabel) {
+            this.nowPlayingLabel.textContent = isPlaying ? 'Now Playing' : 'Stopped';
+            
+            if (isPlaying) {
+                this.nowPlayingLabel.classList.remove('stopped');
+                this.nowPlayingLabel.classList.add('playing');
+            } else {
+                this.nowPlayingLabel.classList.remove('playing');
+                this.nowPlayingLabel.classList.add('stopped');
+            }
+        }
     }
     
     async startMetadataPolling() {
@@ -273,9 +294,9 @@ class NowWavePlayer {
             this.trackArtist.textContent = data.artist || 'The Next Wave Today';
             
             // Update program information
-            this.programTitle.textContent = data.program_title || '';
-            this.presenterName.textContent = data.presenter ? `with ${data.presenter}` : '';
-            
+            this.programTitle.textContent = data.program_title || '🛜 NowWave.Radio';
+            this.presenterName.textContent = data.presenter ? `with ${data.presenter}` : '💌 dj@NowWave.Radio';
+
             // Update album artwork - note the change to use data.image
             if (data.image) {
                 // Clean up the image path to remove any double slashes

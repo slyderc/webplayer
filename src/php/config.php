@@ -15,8 +15,8 @@ $audioConfig = [
     'defaultArtwork' => '/player/NWR_text_logo_angle.png',
     'defaultTitle' => 'Now Wave Radio',
     'defaultArtist' => 'The Next Wave Today',
-    'defaultProgram' => '',
-    'defaultPresenter' => ''
+    'defaultProgram' => '🛜 NowWave.Radio',
+    'defaultPresenter' => '💌 dj@NowWave.Radio'
 ];
 
 // Audio libraries
