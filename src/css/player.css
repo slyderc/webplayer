@@ -89,23 +89,60 @@ body {
    ========================================================================== */
 
 .tabs {
-    margin-top: 10px;
-    border-top: 1px solid #e5e7eb;
-    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: space-around;
+    padding: 4px 0;
 }
 
 .tab-button {
-    border: none;
-    background: none;
-    padding: 8px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    min-width: 60px;
+}
+
+.tab-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+/* Icon sizing */
+.tab-icon svg {
+    width: 24px;
+    height: 24px;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.2s ease;
+}
+
+.tab-button[data-active="true"] .tab-icon svg {
+    color: white;
+}
+
+/* Hover effect */
+.tab-button:hover .tab-icon svg {
+    color: white;
+}
+
+.tab-button {
+    transition: all 0.2s ease;
 }
 
 .tab-button[data-active="true"] {
     font-weight: 500;
     background: rgba(255, 255, 255, 0.8);
+}
+
+.tab-button * {
+    pointer-events: none;
+}
+
+.tab-button span {
+    font-size: 0.75rem;
+    margin-top: 2px;
 }
 
 /* Tab styling specific to Live mode */
