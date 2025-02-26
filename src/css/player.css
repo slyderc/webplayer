@@ -27,7 +27,7 @@ body {
 .player-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 40px); /* Adjust for body padding */
+    height: 100vh;  /* Adjust for body padding */
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -92,6 +92,7 @@ body {
     display: flex;
     justify-content: space-around;
     padding: 4px 0;
+    margin-top: auto;
 }
 
 .tab-button {
