@@ -21,6 +21,11 @@ class AudioService {
     }
     
     initAudio() {
+        // If we already have an audio instance, unload it first
+        if (this.audio) {
+            this.audio.unload();
+        }
+        
         this.audio = new Howl({
             src: [this.options.streamUrl],
             html5: true, // Force HTML5 Audio for streaming
@@ -37,12 +42,32 @@ class AudioService {
     
     play() {
         if (!this.isPlaying) {
+            // If we were previously stopped (not just paused), we need to re-init
+            if (!this.audio) {
+                this.initAudio();
+            }
             this.audio.play();
             this.isPlaying = true;
         }
         return this.isPlaying;
     }
     
+    stop() {
+        if (this.isPlaying) {
+            // First stop the current playback
+            this.audio.stop();
+            
+            // Then completely unload the audio to clear buffers
+            this.audio.unload();
+            
+            // Re-initialize to prepare for next play
+            this.initAudio();
+            
+            this.isPlaying = false;
+        }
+        return this.isPlaying;
+    }
+
     pause() {
         if (this.isPlaying) {
             this.audio.pause();
@@ -52,7 +77,7 @@ class AudioService {
     }
     
     toggle() {
-        return this.isPlaying ? this.pause() : this.play();
+        return this.isPlaying ? this.stop() : this.play();
     }
     
     setVolume(volume) {
@@ -95,7 +120,7 @@ class AudioService {
         // Auto-recovery for streaming errors
         setTimeout(() => {
             if (!this.isPlaying) {
-                console.log('Attempting to recover audio stream...');
+                console.log('Reconnecting audio...');
                 this.initAudio(); // Reinitialize audio object
             }
         }, 5000); // Try to recover after 5 seconds

@@ -5,7 +5,7 @@ include './php/config.php';
 // Get file modification times for cache busting
 $cssVersion = filemtime(__DIR__ . '/css/player.css');
 $jsServiceVersion = filemtime(__DIR__ . '/js/audio-service.js');
-$jsVersion = filemtime(__DIR__ . '/js/player.js');
+$jsPlayerVersion = filemtime(__DIR__ . '/js/player.js'); // Corrected variable name
 $streamConfig = getStreamConfig();
 $audioLibs = $audioLibraries;
 ?>
@@ -22,7 +22,7 @@ $audioLibs = $audioLibraries;
     <script src="<?php echo $audioLibs['howler']['cdn']; ?>"></script>
     <script src="./js/audio-service.js?v=<?php echo $jsServiceVersion; ?>"></script>
     <script src="./js/player.js?v=<?php echo $jsPlayerVersion; ?>"></script>
-</head>
+    </head>
 <body>
     <div class="player-container">
         <!-- Main content area -->
@@ -35,7 +35,7 @@ $audioLibs = $audioLibraries;
                         <img src="/player/logo_head.png" alt="Now Wave Radio" class="header-logo">
                     </div>
                     <div class="artwork">
-                        <img id="albumArt" src="<?php echo $streamConfig['artworkPath']; ?>" alt="Album artwork">
+                        <img id="albumArt" src="<?php echo $streamConfig['defaultArtwork']; ?>" alt="Album artwork">
                     </div>
                 </div>
 

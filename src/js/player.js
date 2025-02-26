@@ -5,8 +5,13 @@ class NowWavePlayer {
             streamUrl: 'https://streaming.live365.com/a78360_2',
             format: 'aac',
             metadataUrl: 'https://nowwave.radio/player/publish/playlist.json',
-            pollInterval: 5000,
-            defaultVolume: 1.0
+            pollInterval: 30000,
+            defaultVolume: 1.0,
+            defaultArtwork: '/player/NWR_text_logo_angle.png',
+            defaultTitle: 'Now Wave Radio',
+            defaultArtist: 'The Next Wave Today',
+            defaultProgram: '',
+            defaultPresenter: ''
         };
         this.audioService = new AudioService({
             streamUrl: this.config.streamUrl,
@@ -25,6 +30,7 @@ class NowWavePlayer {
         this.attachEventListeners();
         this.startMetadataPolling();       
         this.switchTab('live');
+        this.resetDisplayToDefault();
     }
     
     initializeElements() {
@@ -92,10 +98,9 @@ class NowWavePlayer {
             }
         });
         
-        // Handle audio events
+        // Register event listeners with the AudioService
         this.audioService
             .addEventListener('onPlay', () => this.updatePlayButton(true))
-            .addEventListener('onPause', () => this.updatePlayButton(false))
             .addEventListener('onStop', () => this.updatePlayButton(false))
             .addEventListener('onError', () => this.handleError());
             
@@ -186,20 +191,66 @@ class NowWavePlayer {
     }
 
     togglePlay() {
-        // Use the AudioService to toggle playback
+        // Use the AudioService to toggle playback (play/stop, not play/pause)
         this.isPlaying = this.audioService.toggle();
         this.updatePlayButton(this.isPlaying);
+        
+        // If we're stopping playback, reset display to default state
+        if (!this.isPlaying) {
+            this.resetDisplayToDefault();
+        } else {
+            // If starting playback, immediately fetch new metadata
+            this.updateMetadata();
+        }
     }
     
+    resetDisplayToDefault() {
+        // Reset display to default state when stream is stopped
+        this.trackTitle.textContent = this.config.defaultTitle || 'Now Wave Radio';
+        this.trackArtist.textContent = this.config.defaultArtist || 'The Next Wave Today';
+        
+        // Reset program information
+        this.programTitle.textContent = this.config.defaultProgram || '';
+        this.presenterName.textContent = this.config.defaultPresenter || '';
+        
+        // Reset album artwork
+        const defaultArtwork = this.config.defaultArtwork || '/player/NWR_text_logo_angle.png';
+        if (this.albumArt.src !== defaultArtwork) {
+            this.albumArt.src = defaultArtwork;
+        }
+        
+        // Reset background if we're on the live tab
+        if (this.currentTab === 'live') {
+            this.updateBackground(defaultArtwork, true);
+        }
+
+        // Reset love button state
+        this.loveButton.dataset.loved = 'false';
+    }
+
     updatePlayButton(isPlaying) {
+        // Updated to use "Stop" icon (square) instead of "Pause" icon
         this.playButton.innerHTML = isPlaying 
-            ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+            ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="12" height="16"/></svg>'
             : '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+            
+        // You could also add a title attribute for accessibility
+        this.playButton.title = isPlaying ? 'Stop' : 'Play';
     }
     
     async startMetadataPolling() {
-        await this.updateMetadata();
-        setInterval(() => this.updateMetadata(), this.config.pollInterval);
+        // Only fetch metadata initially if we're playing
+        if (this.isPlaying) {
+            await this.updateMetadata();
+        }
+        
+        // Store polling interval so we can clear it when needed
+        this.metadataInterval = setInterval(() => {
+            // Only poll for metadata if we're playing
+            if (this.isPlaying) {
+                this.updateMetadata();
+            }
+        }, this.config.pollInterval);
     }
     
     async updateMetadata() {
@@ -374,6 +425,7 @@ class NowWavePlayer {
         console.error('Audio stream error occurred');
         this.isPlaying = false;
         this.updatePlayButton(false);
+        this.resetDisplayToDefault();
     }
 }
 

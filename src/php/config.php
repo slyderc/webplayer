@@ -10,15 +10,21 @@ $audioConfig = [
     'metadataUrl' => 'https://nowwave.radio/player/publish/playlist.json',
     'defaultVolume' => 1.0,
     'pollInterval' => 5000, // Metadata polling interval in milliseconds
-    'artworkPath' => '/player/NWR_text_logo_angle.png', // Default artwork path
+    
+    // Default display values when stream is stopped
+    'defaultArtwork' => '/player/NWR_text_logo_angle.png',
+    'defaultTitle' => 'Now Wave Radio',
+    'defaultArtist' => 'The Next Wave Today',
+    'defaultProgram' => '',
+    'defaultPresenter' => ''
 ];
 
 // Audio libraries
 $audioLibraries = [
     'howler' => [
-        'cdn' => 'https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js',
+        'cdn' => 'https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js',
         'local' => '/js/libs/howler.min.js', // If you want to host locally
-        'version' => '2.2.3',
+        'version' => '2.2.4',
     ],
 ];
 
