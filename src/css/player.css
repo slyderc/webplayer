@@ -328,56 +328,122 @@ body[data-active-tab="live"] .artwork-background {
 }
 
 /* ==========================================================================
-   6. View-Specific Styles
+   6. View-Specific Styles - Updated for consistency while preserving Live tab uniqueness
    ========================================================================== */
 
-/* Live Tab Specific Styling */
-/* Player bar styling for Live tab */
-body[data-active-tab="live"] .player-bar {
+/* ---- GLOBAL DARK STYLING FOR ALL TABS ---- */
+/* Global text and background colors */
+body {
+    color: white;
+}
+
+/* Player bar styling for all tabs */
+.player-bar {
     background: rgba(15, 15, 15, 0.85);
     color: white;
 }
 
-/* Player bar content in Live tab */
-/*
-body[data-active-tab="live"] .player-bar-content {
-    background: rgba(15, 15, 15, 0.85);
-    border-radius: 8px 8px 0 0;
+/* Common text colors */
+.track-title {
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
-*/
 
-/* Text color changes in Live tab */
-body[data-active-tab="live"] .track-title {
+.track-artist, .presenter-name {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Tab navigation styling */
+.tabs {
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgb(0, 0, 0);
+}
+
+.tab-button {
+    border: none;
+    background: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.875rem;
     color: white;
 }
 
-body[data-active-tab="live"] .track-artist {
-    color: rgba(255, 255, 255, 0.7);
+.tab-button[data-active="true"] {
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.2);
 }
 
-body[data-active-tab="live"] .presenter-name {
-    color: rgba(255, 255, 255, 0.7);
+/* ---- LIVE TAB SPECIFIC STYLING ---- */
+/* Background Effect Elements - ONLY for Live tab */
+.artwork-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    transition: opacity 1.5s ease;
+    opacity: 0;
+    /* Hide by default - only shown when live tab is active */
+    display: none;
 }
 
-/* Show info styling for Live tab */
-body[data-active-tab="live"] .show-info {
-    border-top-color: rgba(255, 255, 255, 0.2);
+/* Only show the background when the live tab is active */
+body[data-active-tab="live"] .artwork-background {
+    display: block;
 }
 
+.artwork-background.active {
+    opacity: 1;
+}
+
+/* The actual blurred background image */
+.artwork-bg-image {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: calc(100% + 40px);
+    height: calc(100% + 40px);
+    background-size: cover;
+    background-position: center;
+    filter: blur(25px) brightness(0.8);
+    transform: scale(1.00);
+    transition: background-image 0.75s ease;
+}
+
+/* Overlay gradient to ensure readability */
+.artwork-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+}
+
+/* ---- RECENT TAB STYLING ---- */
 /* Recent view specific styles */
 #recentView, #recentTracksContainer {
     background-color: transparent;
-    color: white;
+    padding: 1rem;
 }
 
 .track-item {
     display: flex;
     align-items: center;
-    padding: 0.25rem;
-    margin-bottom: 0.25rem;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
     background: transparent;
     border-radius: 0;
     box-shadow: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.track-item:last-child {
+    border-bottom: none;
 }
 
 .track-item .track-artwork {
@@ -395,7 +461,7 @@ body[data-active-tab="live"] .show-info {
 
 .track-item .track-title {
     font-weight: bold;
-    font-size: 1.0rem;
+    font-size: 0.85rem;
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -412,18 +478,12 @@ body[data-active-tab="live"] .show-info {
     text-overflow: ellipsis;
 }
 
-.track-item .time-ago {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
-    min-width: 7rem;
-    text-align: left;
-    white-space: nowrap;
-}
-
 .track-item .track-actions {
     display: flex;
     align-items: center;
+    gap: 1rem;
     margin-left: 1rem;
+    margin-right: 0.5rem;
     min-width: fit-content;
 }
 
@@ -452,8 +512,52 @@ body[data-active-tab="live"] .show-info {
     stroke: #ef4444;
 }
 
-.track-item .heart-button:hover .heart-icon {
-    stroke: white;
+.track-item .time-ago {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    min-width: 7rem;
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* ---- OTHER TABS STYLING ---- */
+/* Schedule, Catch Up, and Favorites tab styling */
+#scheduleView, #catchUpView, #favoritesView {
+    background-color: transparent;
+    color: white;
+    padding: 1rem;
+}
+
+/* Style any lists or cards in other views consistently */
+.schedule-item, .catch-up-item, .favorite-item {
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    color: white;
+}
+
+.schedule-item:last-child, .catch-up-item:last-child, .favorite-item:last-child {
+    border-bottom: none;
+}
+
+/* Ensure consistent text styling across all views */
+.item-title {
+    color: white;
+    font-weight: bold;
+}
+
+.item-subtitle, .item-description {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Content styling */
+.tab-content {
+    margin-top: 20px;
+    padding: 16px;
+    background: rgba(15, 15, 15, 0.85);
+    border-radius: 8px;
+    min-height: 100px;
 }
 
 /* ==========================================================================
