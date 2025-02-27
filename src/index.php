@@ -99,7 +99,7 @@ $audioLibs = $audioLibraries;
                 <span>Schedule</span>
             </button>
             
-            <button class="tab-button" data-tab="catchUp">
+            <button class="tab-button" data-tab="catchup">
                 <div class="tab-icon">
                 <svg aria-hidden="true" role="presentation" focusable="false" width="1em" height="1em" viewBox="0 0 24 24">
                     <!-- Headphones icon for Catch Up -->
