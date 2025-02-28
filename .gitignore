@@ -1,5 +1,6 @@
 # project-specific
 audio_files/
+schedule.json
 
 # Environment files
 .env

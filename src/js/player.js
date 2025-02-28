@@ -41,7 +41,8 @@ class NowWavePlayer {
         this.viewManager = new ViewManager({
             trackManager: this.trackManager
         });
-        
+        this.scheduleManager = new ScheduleManager();      
+
         // Setup event handlers
         this.setupEventHandlers();
         
@@ -69,7 +70,8 @@ class NowWavePlayer {
         // Register tab callbacks
         this.viewManager
             .registerTabCallback('recent', () => this.updateRecentView())
-            .registerTabCallback('live', () => this.updateLiveView());
+            .registerTabCallback('live', () => this.updateLiveView())
+            .registerTabCallback('schedule', () => this.updateScheduleView()); // Add this line
         
         // Audio service event listeners
         this.audioService
@@ -153,6 +155,16 @@ class NowWavePlayer {
         );
     }
     
+    updateScheduleView() {
+        // Initialize schedule manager if not already initialized
+        if (!this.scheduleManager.scheduleContainer) {
+            this.scheduleManager.initialize();
+        } else {
+            // Update the view with latest data
+            this.scheduleManager.updateScheduleView();
+        }
+    }
+    
     updateRecentView() {
         const tracks = this.trackManager.getRecentTracks();
         this.viewManager.updateRecentTracksView(
@@ -160,7 +172,7 @@ class NowWavePlayer {
             (trackId) => this.toggleLove(trackId)
         );
     }
-    
+
     updateLiveView() {
         // If switching to live tab, ensure background is updated
         if (this.backgroundManager.currentArtworkUrl && 

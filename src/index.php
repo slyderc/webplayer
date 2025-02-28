@@ -22,6 +22,7 @@ $jsBackgroundManagerVersion = filemtime(__DIR__ . '/js/managers/background-manag
 $jsTrackManagerVersion = filemtime(__DIR__ . '/js/managers/track-manager.js');
 $jsViewManagerVersion = filemtime(__DIR__ . '/js/managers/view-manager.js');
 $jsUIManagerVersion = filemtime(__DIR__ . '/js/managers/ui-manager.js');
+$jsScheduleManagerVersion = filemtime(__DIR__ . '/js/managers/schedule-manager.js');
 
 // Core player files
 $jsPlayerVersion = filemtime(__DIR__ . '/js/player.js');
@@ -52,7 +53,8 @@ $audioLibs = $audioLibraries;
     <script src="./js/managers/track-manager.js?v=<?php echo $jsTrackManagerVersion; ?>"></script>
     <script src="./js/managers/view-manager.js?v=<?php echo $jsViewManagerVersion; ?>"></script>
     <script src="./js/managers/ui-manager.js?v=<?php echo $jsUIManagerVersion; ?>"></script>
-    
+    <script src="./js/managers/schedule-manager.js?v=<?php echo $jsScheduleManagerVersion; ?>"></script>
+
     <!-- Core player -->
     <script src="./js/player.js?v=<?php echo $jsPlayerVersion; ?>"></script>
     <script src="./js/app.js?v=<?php echo $jsAppVersion; ?>"></script>
