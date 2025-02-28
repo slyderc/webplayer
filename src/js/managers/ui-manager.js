@@ -29,7 +29,7 @@ class UIManager {
         }
 
         this.contactFormInitialized = false;
-
+    
     }
     
     updatePlayButton(isPlaying) {
@@ -123,7 +123,7 @@ class UIManager {
         if (contactFormOverlay) {
             contactFormOverlay.classList.add('active');
             
-            // Set up the event listener for the close button if not already set up
+            // Set up the event listeners if not already set up
             if (!this.contactFormInitialized) {
                 const closeButton = document.getElementById('closeContactForm');
                 if (closeButton) {
@@ -136,26 +136,111 @@ class UIManager {
                     contactForm.addEventListener('submit', this.handleFormSubmit.bind(this));
                 }
                 
+                // Success OK button
+                const okButton = document.getElementById('successOkButton');
+                if (okButton) {
+                    okButton.addEventListener('click', this.handleSuccessOk.bind(this));
+                }
+                
                 this.contactFormInitialized = true;
             }
         }
     }
-
+    
     closeContactForm() {
         const contactFormOverlay = document.getElementById('contactFormOverlay');
         if (contactFormOverlay) {
             contactFormOverlay.classList.remove('active');
+            
+            // Return to the live tab after a short delay
+            setTimeout(() => {
+                if (window.viewManager) {
+                    window.viewManager.switchTab('live');
+                }
+            }, 500);
         }
     }
-    
-    handleFormSubmit(event) {
-        // This will allow the form to submit to comment.php
-        // You can add additional validation or processing here if needed
-        console.log('Form submitted');
         
-        // Optional: Close the form after submission
-        // Uncomment this if you want the form to close automatically on submit:
-        // setTimeout(() => this.closeContactForm(), 1000);
+    // Helper function to disable/enable form elements
+    setFormElementsState(form, disabled) {
+        const elements = form.querySelectorAll('input, textarea, button');
+        elements.forEach(element => {
+            element.disabled = disabled;
+        });
+        
+        // Also handle the send button which is outside the form
+        const sendButton = document.getElementById('sendMessage');
+        if (sendButton) {
+            sendButton.disabled = disabled;
+        }
+    }
+
+    // Handle OK button click on success message
+    handleSuccessOk() {
+        // Keep the success message visible during slide-down
+        const contactFormOverlay = document.getElementById('contactFormOverlay');
+        if (contactFormOverlay) {
+            // Start the slide-down animation
+            contactFormOverlay.classList.remove('active');
+            
+            // After the animation completes, reset the form
+            setTimeout(() => {
+                // Reset the success message once it's off-screen
+                const successMessage = document.getElementById('formSuccessMessage');
+                if (successMessage) {
+                    successMessage.classList.remove('active');
+                }
+                
+                // Always return to the live tab
+                if (window.viewManager) {
+                    window.viewManager.switchTab('live');
+                }
+            }, 500);
+        }
+    }
+        
+    handleFormSubmit(event) {
+        event.preventDefault(); // Prevent normal form submission
+    
+        const form = event.target;
+        const formData = new FormData(form);
+        
+        // Disable form elements during submission
+        this.setFormElementsState(form, true);
+        
+        // Use fetch to submit the form
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const successMessage = document.getElementById('formSuccessMessage');
+                if (successMessage) {
+                    successMessage.classList.add('active');
+                }
+                
+                // Reset the form
+                form.reset();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to send message'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('There was a problem sending your message. Please try again later.');
+        })
+        .finally(() => {
+            // Re-enable form elements
+            this.setFormElementsState(form, false);
+        });
     }
 }
 
