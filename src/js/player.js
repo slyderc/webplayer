@@ -1,3 +1,6 @@
+/**
+ * NowWavePlayer - Main player class that coordinates all components
+ */
 class NowWavePlayer {
     constructor() {
         // Get configuration from global object
@@ -13,186 +16,76 @@ class NowWavePlayer {
             defaultProgram: '🛜 NowWave.Radio',
             defaultPresenter: '💌 dj@NowWave.Radio'
         };
+        
+        this.isPlaying = false;
+        
+        // Initialize services
+        this.storageService = new StorageService();
         this.audioService = new AudioService({
             streamUrl: this.config.streamUrl,
             format: [this.config.format],
             volume: this.config.defaultVolume
         });
-        this.isPlaying = false;
-        this.currentTab = 'live';
-        this.lovedTracks = new Set(this.loadLovedTracks());
-        this.recentTracks = [];
-        this.maxRecentTracks = 5;
-        this.currentArtworkUrl = '';
-        
-        this.initializeElements();
-        this.setupBackgroundElements();
-        this.attachEventListeners();
-        this.startMetadataPolling();       
-        this.switchTab('live');
-        this.resetDisplayToDefault();
-    }
-    
-    initializeElements() {
-        this.playButton = document.getElementById('playButton');
-        this.loveButton = document.getElementById('loveButton');
-        this.albumArt = document.getElementById('albumArt');
-        this.trackTitle = document.getElementById('trackTitle');
-        this.trackArtist = document.getElementById('trackArtist');
-        this.programTitle = document.getElementById('programTitle');
-        this.presenterName = document.getElementById('presenterName');
-        this.nowPlayingLabel = document.querySelector('.now-playing');
-        this.tabs = document.getElementById('tabs');
-        this.views = {
-            live: document.getElementById('liveView'),
-            recent: document.getElementById('recentView'),
-            schedule: document.getElementById('scheduleView'),
-            catchup: document.getElementById('catchupView'),
-            favorites: document.getElementById('favoritesView')
-        };
-
-    }
-
-    setupBackgroundElements() {
-        // Create background container
-        this.bgContainer = document.createElement('div');
-        this.bgContainer.className = 'artwork-background';
-        
-        // Create the blurred background image element
-        this.bgImage = document.createElement('div');
-        this.bgImage.className = 'artwork-bg-image';
-        
-        // Create overlay for better readability
-        this.bgOverlay = document.createElement('div');
-        this.bgOverlay.className = 'artwork-overlay';
-        
-        // Assemble and append to the document
-        this.bgContainer.appendChild(this.bgImage);
-        this.bgContainer.appendChild(this.bgOverlay);
-        document.body.insertBefore(this.bgContainer, document.body.firstChild);
-        
-        // Create a second background container for smooth transitions
-        this.bgContainer2 = document.createElement('div');
-        this.bgContainer2.className = 'artwork-background';
-        
-        this.bgImage2 = document.createElement('div');
-        this.bgImage2.className = 'artwork-bg-image';
-        
-        this.bgOverlay2 = document.createElement('div');
-        this.bgOverlay2.className = 'artwork-overlay';
-        
-        this.bgContainer2.appendChild(this.bgImage2);
-        this.bgContainer2.appendChild(this.bgOverlay2);
-        document.body.insertBefore(this.bgContainer2, document.body.firstChild);
-        
-        // Set initial active state
-        this.activeBackground = 1;
-        this.bgContainer.classList.add('active');
-    }
-
-    attachEventListeners() {
-        this.playButton.addEventListener('click', () => this.togglePlay());
-        this.loveButton.addEventListener('click', () => this.toggleLove());
-        this.tabs.addEventListener('click', (e) => {
-            if (e.target.matches('.tab-button')) {
-                this.switchTab(e.target.dataset.tab);
-            }
+        this.metadataService = new MetadataService({
+            metadataUrl: this.config.metadataUrl,
+            pollInterval: this.config.pollInterval
         });
         
-        // Register event listeners with the AudioService
+        // Initialize managers
+        this.trackManager = new TrackManager({
+            maxRecentTracks: 5,
+            storageService: this.storageService
+        });
+        this.backgroundManager = new BackgroundManager();
+        this.uiManager = new UIManager(this.config);
+        this.viewManager = new ViewManager({
+            trackManager: this.trackManager
+        });
+        
+        // Setup event handlers
+        this.setupEventHandlers();
+        
+        // Start metadataService polling and handle updates
+        this.setupMetadataHandling();
+        
+        // Initialize to default state
+        this.viewManager.switchTab('live');
+        this.uiManager.resetToDefault();
+    }
+    
+    setupEventHandlers() {
+        // Playback control
+        document.getElementById('playButton').addEventListener('click', 
+            () => this.togglePlay());
+        
+        // Love track
+        document.getElementById('loveButton').addEventListener('click', 
+            () => this.toggleLove());
+        
+        // Album art load handler
+        document.getElementById('albumArt').addEventListener('load', 
+            (e) => this.handleArtworkLoad(e.target.src));
+        
+        // Register tab callbacks
+        this.viewManager
+            .registerTabCallback('recent', () => this.updateRecentView())
+            .registerTabCallback('live', () => this.updateLiveView());
+        
+        // Audio service event listeners
         this.audioService
-            .addEventListener('onPlay', () => this.updatePlayButton(true))
-            .addEventListener('onStop', () => this.updatePlayButton(false))
+            .addEventListener('onPlay', () => this.handlePlayStateChange(true))
+            .addEventListener('onStop', () => this.handlePlayStateChange(false))
             .addEventListener('onError', () => this.handleError());
-            
-        // Handle album art load events to update background
-        this.albumArt.addEventListener('load', () => this.updateBackground(this.albumArt.src));
     }
-
-    updateBackground(imageUrl, forceUpdate = false) {
-        // Skip if it's the same URL or a default image, unless force update is requested
-        if (!forceUpdate && (imageUrl === this.currentArtworkUrl || 
-            imageUrl.includes('NWR_text_logo_angle.png'))) {
-            return;
-        }
-        
-        // Store current artwork URL even if it's default image
-        this.currentArtworkUrl = imageUrl;
-        
-        // Don't update background if it's the default image
-        if (imageUrl.includes('NWR_text_logo_angle.png')) {
-            return;
-        }
-        
-        // Only update if we're on the live tab
-        if (this.currentTab !== 'live' && !forceUpdate) {
-            return;
-        }
-        
-        // Toggle between the two background containers for smooth transitions
-        const activeBg = this.activeBackground === 1 ? this.bgImage2 : this.bgImage;
-        const activeContainer = this.activeBackground === 1 ? this.bgContainer2 : this.bgContainer;
-        const inactiveContainer = this.activeBackground === 1 ? this.bgContainer : this.bgContainer2;
-        
-        // Set the new background image
-        activeBg.style.backgroundImage = `url(${imageUrl})`;
-        
-        // Hide the current background and show the new one
-        inactiveContainer.classList.remove('active');
-        activeContainer.classList.add('active');
-        
-        // Toggle the active background for next update
-        this.activeBackground = this.activeBackground === 1 ? 2 : 1;
+    
+    setupMetadataHandling() {
+        this.metadataService
+            .setCallback('onMetadataUpdate', (data) => this.handleMetadataUpdate(data))
+            .setCallback('onError', (error) => console.error('Metadata error:', error))
+            .startPolling(this.isPlaying);
     }
-
-    addTrackToHistory(track) {
-        const trackWithTimestamp = {
-            id: `${track.artist}-${track.title}`,
-            title: track.title,
-            artist: track.artist,
-            artwork_url: track.image,
-            played_at: new Date().toISOString()
-        };
-
-        // Only add if it's different from the most recent track
-        if (this.recentTracks.length === 0 || 
-            this.recentTracks[0].id !== trackWithTimestamp.id) {
-            
-            this.recentTracks.unshift(trackWithTimestamp);
-            if (this.recentTracks.length > this.maxRecentTracks) {
-                this.recentTracks.pop();
-            }
-            
-            if (this.currentTab === 'recent') {
-                this.updateRecentTracksView();
-            }
-        }
-    }
-
-    formatTimeElapsed(date) {
-        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-        
-        const intervals = {
-            year: 31536000,
-            month: 2592000,
-            week: 604800,
-            day: 86400,
-            hour: 3600,
-            minute: 60
-        };
-
-        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-            const interval = Math.floor(seconds / secondsInUnit);
-            if (interval >= 1) {
-                return `${interval} ${unit}${interval !== 1 ? 's' : ''} ago`;
-            }
-        }
-        
-        return 'just now';
-    }
-
+    
     togglePlay() {
-        // Be more explicit about play vs stop actions
         if (this.isPlaying) {
             console.log('User requested to stop playback');
             this.isPlaying = this.audioService.stop();
@@ -201,268 +94,90 @@ class NowWavePlayer {
             this.isPlaying = this.audioService.play();
         }
         
-        this.updatePlayButton(this.isPlaying);
+        this.handlePlayStateChange(this.isPlaying);
         
-        // If we're stopping playback, reset display to default state
-        if (!this.isPlaying) {
-            this.resetDisplayToDefault();
-        } else {
-            // If starting playback, immediately fetch new metadata
-            this.updateMetadata();
-        }
+        // Update metadata polling
+        this.metadataService.startPolling(this.isPlaying);
     }
     
-    resetDisplayToDefault() {
-        // Reset display to default state when stream is stopped
-        this.trackTitle.textContent = this.config.defaultTitle || 'Now Wave Radio';
-        this.trackArtist.textContent = this.config.defaultArtist || 'The Next Wave Today';
-        
-        // Reset program information
-        this.programTitle.textContent = this.config.defaultProgram || '🛜 NowWave.Radio';
-        this.presenterName.textContent = this.config.defaultPresenter || '💌 dj@NowWave.Radio';
-        
-        // Reset album artwork
-        const defaultArtwork = this.config.defaultArtwork || '/player/NWR_text_logo_angle.png';
-        if (this.albumArt.src !== defaultArtwork) {
-            this.albumArt.src = defaultArtwork;
-        }
-        
-        // Reset background if we're on the live tab
-        if (this.currentTab === 'live') {
-            this.updateBackground(defaultArtwork, true);
-        }
-
-        // Reset love button state
-        this.loveButton.dataset.loved = 'false';
-
-        // Make sure the now playing label shows "Stopped"
-        if (this.nowPlayingLabel) {
-            this.nowPlayingLabel.textContent = 'Stopped';
-            this.nowPlayingLabel.classList.remove('playing');
-            this.nowPlayingLabel.classList.add('stopped');
-        }       
-    }
-
-    updatePlayButton(isPlaying) {
-        // Updated to use "Stop" icon (square) instead of "Pause" icon
-        this.playButton.innerHTML = isPlaying 
-            ? '<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><title>Pause</title><path style="" d="M208 432h-48a16 16 0 01-16-16V96a16 16 0 0116-16h48a16 16 0 0116 16v320a16 16 0 01-16 16zM352 432h-48a16 16 0 01-16-16V96a16 16 0 0116-16h48a16 16 0 0116 16v320a16 16 0 01-16 16z"></path></svg>'
-            : '<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><title>Play</title><path style="transform: translateX(16px);" d="M133 440a35.37 35.37 0 01-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0135.77.45l247.85 148.36a36 36 0 010 61l-247.89 148.4A35.5 35.5 0 01133 440z"></path></svg>';
-            
-        // Add title attribute for accessibility
-        this.playButton.title = isPlaying ? 'Stop' : 'Play';
-
-        // Update the Now Playing label
-        if (this.nowPlayingLabel) {
-            this.nowPlayingLabel.textContent = isPlaying ? 'Now Playing' : 'Stopped';
-            
-            if (isPlaying) {
-                this.nowPlayingLabel.classList.remove('stopped');
-                this.nowPlayingLabel.classList.add('playing');
-            } else {
-                this.nowPlayingLabel.classList.remove('playing');
-                this.nowPlayingLabel.classList.add('stopped');
-            }
-        }
-    }
-    
-    async startMetadataPolling() {
-        // Only fetch metadata initially if we're playing
-        if (this.isPlaying) {
-            await this.updateMetadata();
-        }
-        
-        // Store polling interval so we can clear it when needed
-        this.metadataInterval = setInterval(() => {
-            // Only poll for metadata if we're playing
-            if (this.isPlaying) {
-                this.updateMetadata();
-            }
-        }, this.config.pollInterval);
-    }
-    
-    async updateMetadata() {
-        try {
-            const response = await fetch(this.config.metadataUrl);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-    
-            const data = await response.json();
-            
-            // Add track to history before updating current track info
-            if (data.title && data.artist) {
-                this.addTrackToHistory(data);
-            }
-
-            // Update track information
-            this.trackTitle.textContent = data.title || 'Now Wave Radio';
-            this.trackArtist.textContent = data.artist || 'The Next Wave Today';
-            
-            // Update program information
-            this.programTitle.textContent = data.program_title || '🛜 NowWave.Radio';
-            this.presenterName.textContent = data.presenter ? `with ${data.presenter}` : '💌 dj@NowWave.Radio';
-
-            // Update album artwork - note the change to use data.image
-            if (data.image) {
-                // Clean up the image path to remove any double slashes
-                const cleanImagePath = data.image.replace(/^\/+/, '').replace(/\/+/g, '/');
-                
-                // Use environment-aware URL construction
-                const artworkUrl = window.location.origin.includes('localhost') 
-                    ? `/artwork/${cleanImagePath}`
-                    : `https://nowwave.radio/${cleanImagePath}`;
-                
-                // Only update if the image URL has changed
-                if (this.albumArt.src !== artworkUrl) {
-                    this.albumArt.src = artworkUrl;
-                }
-            } else {
-                this.albumArt.src = '/player/NWR_text_logo_angle.png';
-            }
-            
-            // Update love button state
-            const trackId = `${data.artist}-${data.title}`;
-            this.loveButton.dataset.loved = this.lovedTracks.has(trackId);
-    
-        } catch (error) {
-            console.error('Error fetching metadata:', error);
-        }
-    }
-
     toggleLove(specificTrackId = null) {
-        const trackId = specificTrackId || `${this.trackArtist.textContent}-${this.trackTitle.textContent}`;
+        const trackId = specificTrackId || 
+            `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
         
-        if (this.lovedTracks.has(trackId)) {
-            this.lovedTracks.delete(trackId);
+        const isLoved = this.trackManager.toggleLove(trackId);
+        
+        // Update love button state
+        this.uiManager.updateLoveButton(isLoved);
+        
+        // If we're on the recent tab, refresh the view
+        if (this.viewManager.getCurrentTab() === 'recent') {
+            this.updateRecentView();
+        }
+    }
+    
+    handlePlayStateChange(isPlaying) {
+        this.isPlaying = isPlaying;
+        this.uiManager.updatePlayButton(isPlaying);
+        
+        if (!isPlaying) {
+            this.uiManager.resetToDefault();
         } else {
-            this.lovedTracks.add(trackId);
-        }
-        
-        // Update UI for both main player and recent tracks if visible
-        if (!specificTrackId) {
-            this.loveButton.dataset.loved = this.lovedTracks.has(trackId);
-        }
-        if (this.currentTab === 'recent') {
-            this.updateRecentTracksView();
-        }
-        
-        this.saveLovedTracks();
-    }
-    
-    loadLovedTracks() {
-        const saved = localStorage.getItem('lovedTracks');
-        return saved ? JSON.parse(saved) : [];
-    }
-    
-    saveLovedTracks() {
-        localStorage.setItem('lovedTracks', JSON.stringify([...this.lovedTracks]));
-    }
-
-    updateRecentTracksView() {
-        const tracksHTML = this.recentTracks.map(track => `
-            <div class="track-item">
-                <img class="track-artwork" 
-                     src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
-                     alt="${track.title} artwork">
-                <div class="track-info">
-                    <p class="track-title">${track.title}</p>
-                    <p class="track-artist">${track.artist}</p>
-                </div>
-                <div class="track-actions">
-                    <button class="heart-button" 
-                            data-track-id="${track.id}"
-                            data-loved="${this.lovedTracks.has(track.id)}">
-                        <svg class="heart-icon" viewBox="0 0 24 24">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                    </button>
-                    <span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>
-                </div>
-            </div>
-        `).join('');
-
-        this.views.recent.innerHTML = tracksHTML;
-        
-        // Add click handlers for the heart buttons
-        this.views.recent.querySelectorAll('.heart-button').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const trackId = e.currentTarget.dataset.trackId;
-                this.toggleLove(trackId);
-            });
-        });
-    }
-
-    switchTab(tabName) {
-        // Update active state of tab buttons
-        this.tabs.querySelectorAll('.tab-button').forEach(button => {
-            button.dataset.active = button.dataset.tab === tabName;
-        });
-        
-        // Hide all views
-        Object.values(this.views).forEach(view => {
-            view.dataset.active = 'false';
-        });
-        
-        // Show selected view
-        this.currentTab = tabName;
-        this.views[tabName].dataset.active = 'true';
-
-        // Set active tab attribute on body element for CSS targeting
-        document.body.setAttribute('data-active-tab', tabName);
-
-        // Update content based on tab
-        switch(tabName) {
-            case 'recent':
-                this.updateRecentTracksView();
-                break;
-            case 'schedule':
-                this.updateScheduleView();
-                break;
-            case 'catchup':
-                this.updateCatchupView();
-                break;
-            case 'favorites':
-                this.updateFavoritesView();
-                break;
-            // 'live' view doesn't need updating as it's always current
-            case 'live':
-                // If switching to live tab, make sure the background is visible
-                if (this.currentArtworkUrl && !this.currentArtworkUrl.includes('NWR_text_logo_angle.png')) {
-                    // Force background update when switching to live tab
-                    this.updateBackground(this.currentArtworkUrl, true);
-                }
-                break;
+            // Immediate metadata fetch when starting playback
+            this.metadataService.fetchMetadata();
         }
     }
     
-    updateScheduleView() {
-        this.views.schedule.innerHTML = '<p>Show schedule will appear here</p>';
+    handleMetadataUpdate(data) {
+        // Add track to history
+        if (data.title && data.artist) {
+            this.trackManager.addTrackToHistory(data);
+        }
+        
+        // Update UI with new track data
+        this.uiManager.updateTrackInfo(data);
+        
+        // Update love button state
+        const trackId = `${data.artist}-${data.title}`;
+        this.uiManager.updateLoveButton(this.trackManager.isLoved(trackId));
+        
+        // Update recent view if active
+        if (this.viewManager.getCurrentTab() === 'recent') {
+            this.updateRecentView();
+        }
     }
-
-    updateCatchupView() {
-        this.views.catchup.innerHTML = '<p>Past shows available on Mixcloud</p>';
+    
+    handleArtworkLoad(imageUrl) {
+        this.backgroundManager.updateBackground(
+            imageUrl,
+            this.viewManager.getCurrentTab()
+        );
     }
-
-    updateFavoritesView() {
-        this.views.favorites.innerHTML = '<p>Your loved tracks will appear here</p>';
+    
+    updateRecentView() {
+        const tracks = this.trackManager.getRecentTracks();
+        this.viewManager.updateRecentTracksView(
+            tracks, 
+            (trackId) => this.toggleLove(trackId)
+        );
     }
-
+    
+    updateLiveView() {
+        // If switching to live tab, ensure background is updated
+        if (this.backgroundManager.currentArtworkUrl && 
+            !this.backgroundManager.currentArtworkUrl.includes('NWR_text_logo_angle.png')) {
+            this.backgroundManager.updateBackground(
+                this.backgroundManager.currentArtworkUrl,
+                'live',
+                true
+            );
+        }
+    }
+    
     handleError() {
         console.error('Audio stream error occurred');
         this.isPlaying = false;
-        this.updatePlayButton(false);
-        this.resetDisplayToDefault();
+        this.uiManager.updatePlayButton(false);
+        this.uiManager.resetToDefault();
     }
 }
 
-// Initialize the player when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    // Make sure AudioService is loaded
-    if (typeof AudioService === 'undefined') {
-        console.error('AudioService not loaded!');
-        return;
-    }
-    window.player = new NowWavePlayer();
-});

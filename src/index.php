@@ -4,8 +4,22 @@ include './php/config.php';
 
 // Get file modification times for cache busting
 $cssVersion = filemtime(__DIR__ . '/css/player.css');
-$jsServiceVersion = filemtime(__DIR__ . '/js/audio-service.js');
-$jsPlayerVersion = filemtime(__DIR__ . '/js/player.js'); // Corrected variable name
+
+// Services
+$jsServiceVersion = filemtime(__DIR__ . '/js/services/audio-service.js');
+$jsMetadataServiceVersion = filemtime(__DIR__ . '/js/services/metadata-service.js');
+$jsStorageServiceVersion = filemtime(__DIR__ . '/js/services/storage-service.js');
+
+// Managers
+$jsBackgroundManagerVersion = filemtime(__DIR__ . '/js/managers/background-manager.js');
+$jsTrackManagerVersion = filemtime(__DIR__ . '/js/managers/track-manager.js');
+$jsViewManagerVersion = filemtime(__DIR__ . '/js/managers/view-manager.js');
+$jsUIManagerVersion = filemtime(__DIR__ . '/js/managers/ui-manager.js');
+
+// Core player files
+$jsPlayerVersion = filemtime(__DIR__ . '/js/player.js');
+$jsAppVersion = filemtime(__DIR__ . '/js/app.js');
+
 $streamConfig = getStreamConfig();
 $audioLibs = $audioLibraries;
 ?>
@@ -20,9 +34,22 @@ $audioLibs = $audioLibraries;
         window.NWR_CONFIG = <?php echo getJsConfig(); ?>;
     </script>
     <script src="<?php echo $audioLibs['howler']['cdn']; ?>"></script>
-    <script src="./js/audio-service.js?v=<?php echo $jsServiceVersion; ?>"></script>
+    
+    <!-- Services -->
+    <script src="./js/services/audio-service.js?v=<?php echo $jsServiceVersion; ?>"></script>
+    <script src="./js/services/metadata-service.js?v=<?php echo $jsMetadataServiceVersion; ?>"></script>
+    <script src="./js/services/storage-service.js?v=<?php echo $jsStorageServiceVersion; ?>"></script>
+    
+    <!-- Managers -->
+    <script src="./js/managers/background-manager.js?v=<?php echo $jsBackgroundManagerVersion; ?>"></script>
+    <script src="./js/managers/track-manager.js?v=<?php echo $jsTrackManagerVersion; ?>"></script>
+    <script src="./js/managers/view-manager.js?v=<?php echo $jsViewManagerVersion; ?>"></script>
+    <script src="./js/managers/ui-manager.js?v=<?php echo $jsUIManagerVersion; ?>"></script>
+    
+    <!-- Core player -->
     <script src="./js/player.js?v=<?php echo $jsPlayerVersion; ?>"></script>
-    </head>
+    <script src="./js/app.js?v=<?php echo $jsAppVersion; ?>"></script>
+</head>
 <body>
     <div class="player-container">
         <!-- Main content area -->
@@ -34,7 +61,16 @@ $audioLibs = $audioLibraries;
                     <div class="logo-container">
                         <img src="/player/logo_head.png" alt="Now Wave Radio" class="header-logo">
                     </div>
-                    <div class="artwork">
+                    <!-- Contact Button Overlay -->
+                    <div class="contact-button-container">
+                        <button id="contactButton" class="contact-button" tabindex="0" role="button" aria-label="Message The Studio" title="Message The Studio">
+                            <svg fill="currentColor" role="presentation" xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 32 32" width="20px" height="20px">
+                                <path d="M 3 7 L 3 25 L 29 25 L 29 7 Z M 7.3125 9 L 24.6875 9 L 16 14.78125 Z M 5 9.875 L 11.75 14.375 L 5 19.09375 Z M 27 9.875 L 27 19.09375 L 20.25 14.375 Z M 13.5 15.5625 L 15.4375 16.84375 L 16 17.1875 L 16.5625 16.84375 L 18.5 15.5625 L 27 21.5 L 27 23 L 5 23 L 5 21.5 Z"></path>
+                            </svg>
+                            <span>Message Us</span>
+                        </button>
+                    </div>
+                     <div class="artwork">
                         <img id="albumArt" src="<?php echo $streamConfig['defaultArtwork']; ?>" alt="Album artwork">
                     </div>
                 </div>
@@ -113,3 +149,4 @@ $audioLibs = $audioLibraries;
     </div>
 </body>
 </html>
+
