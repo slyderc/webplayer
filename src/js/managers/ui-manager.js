@@ -27,6 +27,9 @@ class UIManager {
         if (this.contactButton) {
             this.contactButton.addEventListener('click', this.handleContactButtonClick.bind(this));
         }
+
+        this.contactFormInitialized = false;
+
     }
     
     updatePlayButton(isPlaying) {
@@ -115,9 +118,45 @@ class UIManager {
     }
 
     handleContactButtonClick() {
-        console.log('Contact button clicked - functionality coming soon!');
-        // We'll implement the contact form display later
-    }    
+        // Show the contact form
+        const contactFormOverlay = document.getElementById('contactFormOverlay');
+        if (contactFormOverlay) {
+            contactFormOverlay.classList.add('active');
+            
+            // Set up the event listener for the close button if not already set up
+            if (!this.contactFormInitialized) {
+                const closeButton = document.getElementById('closeContactForm');
+                if (closeButton) {
+                    closeButton.addEventListener('click', this.closeContactForm.bind(this));
+                }
+                
+                // Set up form submission
+                const contactForm = document.getElementById('contactForm');
+                if (contactForm) {
+                    contactForm.addEventListener('submit', this.handleFormSubmit.bind(this));
+                }
+                
+                this.contactFormInitialized = true;
+            }
+        }
+    }
+
+    closeContactForm() {
+        const contactFormOverlay = document.getElementById('contactFormOverlay');
+        if (contactFormOverlay) {
+            contactFormOverlay.classList.remove('active');
+        }
+    }
+    
+    handleFormSubmit(event) {
+        // This will allow the form to submit to comment.php
+        // You can add additional validation or processing here if needed
+        console.log('Form submitted');
+        
+        // Optional: Close the form after submission
+        // Uncomment this if you want the form to close automatically on submit:
+        // setTimeout(() => this.closeContactForm(), 1000);
+    }
 }
 
 // Export as global or module depending on environment

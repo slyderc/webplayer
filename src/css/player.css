@@ -740,3 +740,121 @@ body[data-active-tab="live"] .contact-button-container {
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
+/* ==========================================================================
+   9. Contact Form Overlay
+   ========================================================================== */
+
+   .contact-form-overlay {
+    position: fixed;
+    top: 100%; /* Start offscreen */
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    z-index: 1000;
+    transition: top 0.4s ease-in-out;
+    overflow-y: auto;
+}
+
+.contact-form-overlay.active {
+    top: 0; /* Slide up to cover screen */
+}
+
+.contact-form-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    color: white;
+}
+
+.contact-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.contact-form-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.close-button {
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: background 0.2s;
+}
+
+.close-button:hover {
+    background: rgba(50, 50, 50, 0.8);
+}
+
+.send-button {
+    background: rgba(37, 99, 235, 0.9);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.send-button:hover {
+    background: rgba(37, 99, 235, 1);
+    transform: translateY(-2px);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 0;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-bottom-color: var(--primary-color);
+}
+
+.form-group textarea {
+    height: 200px;
+    resize: vertical;
+}
+
+/* Placeholder styling */
+::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+@media screen and (max-width: 480px) {
+    .contact-form-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .send-button {
+        padding: 6px 15px;
+        font-size: 0.8rem;
+    }
+}

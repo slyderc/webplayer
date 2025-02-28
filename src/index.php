@@ -147,6 +147,35 @@ $audioLibs = $audioLibraries;
             </div>
         </div>
     </div>
+    <!-- Contact Form Overlay -->
+    <div id="contactFormOverlay" class="contact-form-overlay">
+        <div class="contact-form-container">
+            <div class="contact-form-header">
+                <button id="closeContactForm" class="close-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <h2>Send Us A Message</h2>
+                <button id="sendMessage" class="send-button" type="submit" form="contactForm">Send</button>
+            </div>
+            
+            <form id="contactForm" action="./php/comment.php" method="post">
+                <div class="form-group">
+                    <input type="text" id="name" name="name" placeholder="Your Name *" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="email" id="email" name="email" placeholder="Your Email *" required>
+                </div>
+                
+                <div class="form-group">
+                    <textarea id="message" name="message" rows="10" placeholder="Compose your message here" required></textarea>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
 

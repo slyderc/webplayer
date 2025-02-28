@@ -1,4 +1,5 @@
-# Audio files directory
+# project-specific
+messages/
 audio_files/
 
 # Environment files
