@@ -35,8 +35,8 @@ class UIManager {
     updatePlayButton(isPlaying) {
         // Updated to use "Stop" icon (square) instead of "Pause" icon
         this.elements.playButton.innerHTML = isPlaying 
-        ? '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" style="fill: none !important; stroke: #2563eb !important; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>'
-        : '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" style="fill: none !important; stroke: #2563eb !important; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+        ? '<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512" width="28" height="28" stroke="currentColor" stroke-width="32"><rect x="128" y="96" width="64" height="320" rx="16" ry="16"></rect><rect x="320" y="96" width="64" height="320" rx="16" ry="16"></rect></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" style="stroke: #2563eb !important; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;"><polygon points="5 3 19 12 5 21 5 3" fill="#2563eb" style="fill: #2563eb !important;"></polygon></svg>';
             
         // Add title attribute for accessibility
         this.elements.playButton.title = isPlaying ? 'Stop' : 'Play';

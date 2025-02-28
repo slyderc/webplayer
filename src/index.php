@@ -109,7 +109,7 @@ $audioLibs = $audioLibraries;
                         </svg>
                     </button>
                     <button class="play-button" id="playButton">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512" width="28" height="28" fill="none" stroke="currentColor" stroke-width="32"><path d="M112 111v290c0 17.44 17 28.52 31 20.16l247.9-148.37c12.12-7.25 12.12-26.33 0-33.58L143 90.84c-14-8.36-31 2.72-31 20.16z" stroke-miterlimit="10"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" style="stroke: #2563eb !important; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;"><polygon points="5 3 19 12 5 21 5 3" fill="#2563eb" style="fill: #2563eb !important;"></polygon></svg>
                 </div>
             </div>
             <!-- Tabs with icons -->
