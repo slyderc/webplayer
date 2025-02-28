@@ -72,50 +72,32 @@ $audioLibs = $audioLibraries;
                     </button>
                 </div>
             </div>
-
-            <!-- Navigation Tabs -->
+            <!-- Tabs with icons -->
             <div class="tabs" id="tabs">
-
             <button class="tab-button" data-tab="live" data-active="true">
                 <div class="tab-icon">
-                <svg aria-hidden="true" role="presentation" focusable="false" width="1em" height="1em" viewBox="0 0 24 24">
-                    <!-- Antenna/Radio icon for Live -->
-                    <path d="M8 8a1 1 0 000 2h1a1 1 0 000-2H8z" fill="currentColor"></path>
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M4 5a3 3 0 00-3 3v8a3 3 0 003 3h16a3 3 0 003-3V8a3 3 0 00-3-3H4zm16 2h-8v7h8V7zm-10 0H4v7h6V7zm-6 9v-1h16v1H4z" fill="currentColor"></path>
-                    <path d="M16.5 2.5a1 1 0 01.707.293l1 1a1 1 0 01-1.414 1.414l-1-1A1 1 0 0116.5 2.5z" fill="currentColor"></path>
-                    <path d="M16.5 2.5a1 1 0 000 2 1 1 0 000-2z" fill="currentColor"></path>
-                </svg>
+                <svg aria-hidden="true" role="presentation" focusable="false" width="1em" height="1em" style="transform: rotate(360deg);" preserveAspectRatio="xMidYMid meet" viewBox="0 0 512 512"><circle cx="256" cy="256" r="64" fill="currentColor"></circle><path d="M144 256c0-36.9 18.553-69.208 46.314-87.034l-23.141-24.512a131.623 131.623 0 0 0-17.684 15.663C125.314 185.729 112 219.781 112 256c0 36.219 13.314 70.271 37.49 95.883a131.615 131.615 0 0 0 17.684 15.662l23.141-24.511C162.553 325.208 144 292.9 144 256z" fill="currentColor"></path><path d="M368 256c0 36.9-18.553 69.208-46.314 87.034l23.141 24.511a131.615 131.615 0 0 0 17.684-15.662C386.686 326.271 400 292.219 400 256c0-36.219-13.314-70.271-37.49-95.882a131.623 131.623 0 0 0-17.684-15.663l-23.141 24.512C349.447 186.792 368 219.1 368 256z" fill="currentColor"></path><path d="M64 256c0-55.578 25.251-104.907 64.263-135.817L105.433 96a197.799 197.799 0 0 0-17.197 16.178c-17.622 18.669-31.462 40.417-41.134 64.641C37.081 201.917 32 228.556 32 256c0 27.443 5.081 54.084 15.102 79.181 9.672 24.226 23.512 45.973 41.134 64.642a198.105 198.105 0 0 0 17.197 16.178l22.829-24.183C89.251 360.907 64 311.578 64 256z" fill="currentColor"></path><path d="M448 256c0 55.578-25.251 104.907-64.262 135.817l22.828 23.848c6-5.001 11.74-10.062 17.198-15.843 17.622-18.669 31.462-40.416 41.134-64.642C474.918 310.084 480 283.443 480 256c0-27.444-5.082-54.083-15.102-79.181-9.672-24.225-23.512-45.972-41.134-64.641A197.523 197.523 0 0 0 406.566 96l-22.829 24.183C422.749 151.093 448 200.422 448 256z" fill="currentColor"></path><rect x="0" y="0" width="512" height="512" fill="rgba(0, 0, 0, 0)"></rect></svg>
                 </div>
                 <span>Live</span>
             </button>
             
             <button class="tab-button" data-tab="schedule">
                 <div class="tab-icon">
-                <svg aria-hidden="true" role="presentation" focusable="false" width="1em" height="1em" viewBox="0 0 24 24">
-                    <!-- Calendar icon for Schedule -->
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M8 2a1 1 0 011 1v1h6V3a1 1 0 112 0v1h1a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h1V3a1 1 0 011-1zm10 4H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7a1 1 0 00-1-1zM7 11a1 1 0 011-1h8a1 1 0 110 2H8a1 1 0 01-1-1zm1 3a1 1 0 100 2h5a1 1 0 100-2H8z" fill="currentColor"></path>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" style="fill: currentcolor;" class="ionicon" viewBox="0 0 512 512" aria-hidden="true" role="presentation"><title>Calendar</title><rect fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" x="48" y="80" width="416" height="384" rx="48"></rect><circle cx="296" cy="232" r="24"></circle><circle cx="376" cy="232" r="24"></circle><circle cx="296" cy="312" r="24"></circle><circle cx="376" cy="312" r="24"></circle><circle cx="136" cy="312" r="24"></circle><circle cx="216" cy="312" r="24"></circle><circle cx="136" cy="392" r="24"></circle><circle cx="216" cy="392" r="24"></circle><circle cx="296" cy="392" r="24"></circle><path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" stroke-linecap="round" d="M128 48v32M384 48v32"></path><path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" d="M464 160H48"></path></svg>
                 </div>
                 <span>Schedule</span>
             </button>
             
             <button class="tab-button" data-tab="catchup">
                 <div class="tab-icon">
-                <svg aria-hidden="true" role="presentation" focusable="false" width="1em" height="1em" viewBox="0 0 24 24">
-                    <!-- Headphones icon for Catch Up -->
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4a8 8 0 00-8 8v6a2 2 0 002 2h1a2 2 0 002-2v-4a2 2 0 00-2-2H6v-1a6 6 0 1112 0v1h-1a2 2 0 00-2 2v4a2 2 0 002 2h1a2 2 0 002-2v-6a8 8 0 00-8-8z" fill="currentColor"></path>
-                </svg>
+                <svg focusable="false" width="1em" height="1em" style="transform: rotate(360deg);" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24" aria-hidden="true" role="presentation"><path d="M13 16.493C13 18.427 14.573 20 16.507 20s3.507-1.573 3.507-3.507c0-.177-.027-.347-.053-.517H20V6h2V4h-3a1 1 0 0 0-1 1v8.333a3.465 3.465 0 0 0-1.493-.346A3.51 3.51 0 0 0 13 16.493zM2 5h14v2H2z" fill="currentColor"></path><path d="M2 9h14v2H2zm0 4h9v2H2zm0 4h9v2H2z" fill="currentColor"></path><rect x="0" y="0" width="24" height="24" fill="rgba(0, 0, 0, 0)"></rect></svg>
                 </div>
                 <span>Catch Up</span>
             </button>
             
             <button class="tab-button" data-tab="recent">
                 <div class="tab-icon">
-                <svg aria-hidden="true" role="presentation" focusable="false" width="1em" height="1em" viewBox="0 0 24 24">
-                    <!-- Recent/History icon using your provided SVG path -->
-                    <path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 9h-3v3c0 .55-.45 1-1 1s-1-.45-1-1v-3H9c-.55 0-1-.45-1-1s.45-1 1-1h3V7c0-.55.45-1 1-1s1 .45 1 1v3h3c.55 0 1 .45 1 1s-.45 1-1 1z" fill="currentColor"></path>
-                    <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z" fill="currentColor"></path>
-                </svg>
+                <svg aria-hidden="true" role="presentation" focusable="false" width="1em" height="1em" style="transform: rotate(360deg);" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5a2.5 2.5 0 0 1-5 0a2.5 2.5 0 0 1 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z" fill="currentColor"></path><rect x="0" y="0" width="24" height="24" fill="rgba(0, 0, 0, 0)"></rect></svg>
                 </div>
                 <span>Recent</span>
             </button>
@@ -123,14 +105,11 @@ $audioLibs = $audioLibraries;
             <button class="tab-button" data-tab="favorites">
                 <div class="tab-icon">
                 <svg aria-hidden="true" role="presentation" focusable="false" width="1em" height="1em" viewBox="0 0 24 24">
-                    <!-- Heart icon for Favorites -->
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4.528a6 6 0 00-8.243 8.715l6.829 6.828a2 2 0 002.828 0l6.829-6.828A6 6 0 0012 4.528zm-1.172 1.644l.465.464a1 1 0 001.414 0l.465-.464a4 4 0 115.656 5.656l-6.829 6.83-6.829-6.83a4 4 0 115.657-5.656z" fill="currentColor"></path>
                 </svg>
                 </div>
                 <span>Favorites</span>
             </button>
-
-
             </div>
         </div>
     </div>
