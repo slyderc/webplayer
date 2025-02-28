@@ -1,5 +1,4 @@
 # project-specific
-messages/
 audio_files/
 
 # Environment files
@@ -8,7 +7,9 @@ audio_files/
 
 # PHP files
 vendor/
+messages/
 composer.lock
+.htaccess
 
 # IDE specific files
 .idea/

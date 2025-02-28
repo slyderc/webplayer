@@ -1,4 +1,11 @@
 <?php 
+session_start();
+
+// Generate CSRF token if it doesn't exist
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 include './php/nocache.php';
 include './php/config.php';
 
@@ -102,8 +109,7 @@ $audioLibs = $audioLibraries;
                         </svg>
                     </button>
                     <button class="play-button" id="playButton">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><title>Play</title><path style="transform: translateX(16px);" d="M133 440a35.37 35.37 0 01-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0135.77.45l247.85 148.36a36 36 0 010 61l-247.89 148.4A35.5 35.5 0 01133 440z"></path></svg>
-                    </button>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512" width="28" height="28" fill="none" stroke="currentColor" stroke-width="32"><path d="M112 111v290c0 17.44 17 28.52 31 20.16l247.9-148.37c12.12-7.25 12.12-26.33 0-33.58L143 90.84c-14-8.36-31 2.72-31 20.16z" stroke-miterlimit="10"></path></svg>
                 </div>
             </div>
             <!-- Tabs with icons -->
@@ -162,6 +168,7 @@ $audioLibs = $audioLibraries;
             </div>
             
             <form id="contactForm" action="./php/comment.php" method="post">
+            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <div class="form-group">
                     <input type="text" id="name" name="name" placeholder="Your Name *" required>
                 </div>
@@ -169,9 +176,13 @@ $audioLibs = $audioLibraries;
                 <div class="form-group">
                     <input type="email" id="email" name="email" placeholder="Your Email *" required>
                 </div>
-                
+
                 <div class="form-group">
                     <textarea id="message" name="message" rows="10" placeholder="Compose your message here" required></textarea>
+                </div>
+
+                <div class="form-group" style="display:none;">
+                    <input type="text" id="website" name="website" autocomplete="off">
                 </div>
             </form>
         </div>

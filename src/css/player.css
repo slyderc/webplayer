@@ -264,32 +264,26 @@ body[data-active-tab="live"] .logo-container {
 }
 
 .play-button {
-    border-top-width: 2px;
-    border-top-style: solid;
-    border-top-color: rgb(255, 255, 255);
-    border-right-width: 2px;
-    border-right-style: solid;
-    border-right-color: rgb(255, 255, 255);
-    border-bottom-width: 2px;
-    border-bottom-style: solid;
-    border-bottom-color: rgb(255, 255, 255);
-    border-left-width: 2px;
-    border-left-style: solid;
-    border-left-color: rgb(255, 255, 255);
-    border-image-outset: 0;
-    border-image-repeat: stretch;
-    border-image-slice: 100%;
-    border-image-source: none;
-    border-image-width: 1;
-    border-color: rbg(51,102,153);
-    background: var(--primary-color);
-    color: rgb(51,102,153);
+    border: 2px solid var(--primary-color); /* Blue outline */
+    background: transparent; /* Transparent background instead of filled */
+    color: var(--primary-color); /* Blue color for the icon */
     width: 56px;
     height: 56px;
     border-radius: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.play-button:hover {
+    background: rgba(37, 99, 235, 0.6); /* Very slight blue background on hover */
+}
+
+.play-button svg {
+    stroke: currentColor; /* Explicitly ensure stroke inherits from parent */
+    fill: none; /* Explicitly ensure no fill */
 }
 
 .love-button {
