@@ -916,6 +916,7 @@ body[data-active-tab="live"] .contact-button-container {
 /* ==========================================================================
    10. Schedule video tab
    ========================================================================== */
+/* Schedule View Styles */
 .schedule-container {
     padding: 0.5rem;
     color: white;
@@ -1006,9 +1007,7 @@ body[data-active-tab="live"] .contact-button-container {
 }
 
 .schedule-item-time {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+    position: relative;
     min-width: 70px;
     text-align: right;
 }
@@ -1021,6 +1020,9 @@ body[data-active-tab="live"] .contact-button-container {
 /* On Air Badge */
 .on-air-badge {
     display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
     background: #1e40af;
     color: white;
     font-size: 0.7rem;
