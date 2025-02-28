@@ -4,7 +4,7 @@
 class ScheduleManager {
     constructor(options = {}) {
         this.options = {
-            scheduleUrl: '/schedule.json',
+            scheduleUrl: './schedule.json',
             pollInterval: 3600000, // 1 hour
             ...options
         };
@@ -37,7 +37,11 @@ class ScheduleManager {
      * Fetch schedule data
      */
     fetchSchedule() {
-        fetch(this.options.scheduleUrl)
+        // Add cache-busting timestamp parameter
+        const timestamp = new Date().getTime();
+        const url = `${this.options.scheduleUrl}?t=${timestamp}`;
+        
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 this.scheduleData = data;
