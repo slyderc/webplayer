@@ -55,7 +55,6 @@ class AudioService {
         // Play the audio
         this.audio.play();
         this.isPlaying = true;
-        console.log('Stream started with new audio object');
         
         return this.isPlaying;
     }
@@ -64,8 +63,6 @@ class AudioService {
         if (!this.isPlaying) {
             return false; // Already stopped
         }
-        
-        console.log('Stopping stream and destroying audio object...');
         
         // Stop and destroy the audio object
         if (this.audio) {
@@ -80,7 +77,6 @@ class AudioService {
         }
         
         this.isPlaying = false;
-        console.log('Stream completely stopped');
         
         return this.isPlaying;
     }

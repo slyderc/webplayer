@@ -89,10 +89,8 @@ class NowWavePlayer {
     
     togglePlay() {
         if (this.isPlaying) {
-            console.log('User requested to stop playback');
             this.isPlaying = this.audioService.stop();
         } else {
-            console.log('User requested to start playback');
             this.isPlaying = this.audioService.play();
         }
         

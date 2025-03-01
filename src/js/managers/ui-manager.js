@@ -215,16 +215,12 @@ class UIManager {
         
         // Add visual feedback
         if (submitButton) submitButton.textContent = 'Sending...';
-        
-        console.log('Form submission started');
-        
+               
         // Use vanilla XMLHttpRequest for maximum compatibility
         const xhr = new XMLHttpRequest();
         xhr.open('POST', form.action);
         
         xhr.onload = () => {
-            console.log('Response received:', xhr.status, xhr.responseText);
-            
             // Re-enable form elements
             if (submitButton) {
                 submitButton.disabled = false;
@@ -237,7 +233,6 @@ class UIManager {
                     const response = JSON.parse(xhr.responseText);
                     
                     if (response.success) {
-                        console.log('Message sent successfully');
                         
                         // Reset the form
                         form.reset();
@@ -245,7 +240,6 @@ class UIManager {
                         // Show success message
                         const successMessage = document.getElementById('formSuccessMessage');
                         if (successMessage) {
-                            console.log('Showing success message');
                             successMessage.classList.add('active');
                         } else {
                             console.error('Success message element not found');

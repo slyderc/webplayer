@@ -1,11 +1,12 @@
 /**
- * ScheduleManager - Handles schedule data and display
+ * ScheduleManager - Handles schedule data and display with support for recurring patterns
  */
 class ScheduleManager {
     constructor(options = {}) {
         this.options = {
             scheduleUrl: './schedule.json',
-            pollInterval: 900000, // 15 minutes
+            pollInterval: 900000, // 1 hour
+            daysToShow: 7, // Number of days to display in the schedule
             ...options
         };
         
@@ -45,29 +46,140 @@ class ScheduleManager {
             .then(response => response.json())
             .then(data => {
                 this.scheduleData = data;
-                this.updateScheduleView();
+                this.generateSchedule();
             })
             .catch(error => {
                 console.error('Error fetching schedule:', error);
                 // Fall back to mock data in case of error
                 this.mockScheduleData().then(mockData => {
                     this.scheduleData = mockData;
-                    this.updateScheduleView();
+                    this.generateSchedule();
                 });
             });
     }
     
     /**
-     * Update the schedule view with current data
+     * Generate a schedule for the current week based on patterns
      */
-    updateScheduleView() {
+    generateSchedule() {
         if (!this.scheduleData) {
             this.scheduleContainer.innerHTML = '<p class="no-data-message">Schedule information is currently unavailable</p>';
             return;
         }
         
+        // Start with today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to start of day
+        
+        const generatedSchedule = [];
+        
+        // Generate schedule for the specified number of days
+        for (let i = 0; i < this.options.daysToShow; i++) {
+            const currentDate = new Date(today);
+            currentDate.setDate(today.getDate() + i);
+            
+            // Add weekly shows for this day of week
+            this.addWeeklyShows(generatedSchedule, currentDate);
+            
+            // Add weekday shows (Mon-Fri)
+            this.addWeekdayShows(generatedSchedule, currentDate);
+            
+            // Add special shows that fall on this date
+            this.addSpecialShows(generatedSchedule, currentDate);
+        }
+        
+        // Sort the schedule by start time
+        generatedSchedule.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+        
+        // Update the view with the generated schedule
+        this.updateScheduleView(generatedSchedule);
+    }
+    
+    /**
+     * Add weekly shows for a specific date
+     */
+    addWeeklyShows(schedule, date) {
+        if (!this.scheduleData.weekly || !this.scheduleData.weekly.length) {
+            return;
+        }
+        
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        
+        this.scheduleData.weekly.forEach(show => {
+            // Check if this show runs on this day of week
+            if (show.day === dayOfWeek) {
+                // Create a date object for the show's start time on this date
+                const [hours, minutes] = show.startTime.split(':').map(Number);
+                const startTime = new Date(date);
+                startTime.setHours(hours, minutes, 0, 0);
+                
+                schedule.push({
+                    ...show,
+                    startTime: startTime.toISOString()
+                });
+            }
+        });
+    }
+    
+    /**
+     * Add weekday shows (Mon-Fri) for a specific date
+     */
+    addWeekdayShows(schedule, date) {
+        if (!this.scheduleData.weekdays || !this.scheduleData.weekdays.length) {
+            return;
+        }
+        
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        
+        // Only add weekday shows for Monday through Friday (1-5)
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+            this.scheduleData.weekdays.forEach(show => {
+                // Create a date object for the show's start time on this date
+                const [hours, minutes] = show.startTime.split(':').map(Number);
+                const startTime = new Date(date);
+                startTime.setHours(hours, minutes, 0, 0);
+                
+                schedule.push({
+                    ...show,
+                    startTime: startTime.toISOString()
+                });
+            });
+        }
+    }
+    
+    /**
+     * Add special one-time shows for a specific date
+     */
+    addSpecialShows(schedule, date) {
+        if (!this.scheduleData.special || !this.scheduleData.special.length) {
+            return;
+        }
+        
+        // Normalize date to start of day for comparison
+        const dateStr = date.toISOString().split('T')[0];
+        
+        this.scheduleData.special.forEach(show => {
+            // Get date part of special show
+            const showDateStr = new Date(show.startTime).toISOString().split('T')[0];
+            
+            // Check if this special show falls on the current date
+            if (showDateStr === dateStr) {
+                schedule.push({...show});
+            }
+        });
+    }
+    
+    /**
+     * Update the schedule view with generated schedule
+     */
+    updateScheduleView(schedule) {
+        if (!schedule || !schedule.length) {
+            this.scheduleContainer.innerHTML = '<p class="no-data-message">No scheduled shows for the upcoming week</p>';
+            return;
+        }
+        
         // Group shows by date
-        const groupedShows = this.groupShowsByDate(this.scheduleData);
+        const groupedShows = this.groupShowsByDate(schedule);
         
         // Clear the container
         this.scheduleContainer.innerHTML = '';
@@ -147,7 +259,6 @@ class ScheduleManager {
     
     /**
      * Check if a show is currently on air
-     * This method handles shows without explicit end times by looking at the next show
      */
     isShowOnAir(show, currentTime, allShows) {
         const startTime = new Date(show.startTime);
@@ -157,8 +268,14 @@ class ScheduleManager {
             return false;
         }
         
-        // Find the next show after this one
-        const sortedShows = [...allShows].sort((a, b) => 
+        // Find the next show after this one on the same day
+        const showDate = startTime.toISOString().split('T')[0];
+        const sameDayShows = allShows.filter(s => {
+            const sDate = new Date(s.startTime).toISOString().split('T')[0];
+            return sDate === showDate;
+        });
+        
+        const sortedShows = [...sameDayShows].sort((a, b) => 
             new Date(a.startTime) - new Date(b.startTime)
         );
         
@@ -209,65 +326,41 @@ class ScheduleManager {
     
     /**
      * Mock schedule data for testing
-     * This provides fallback data when the actual API is unavailable
      */
     async mockScheduleData() {
-        // Current date
-        const today = new Date();
-        const monday = new Date(today);
-        
-        // Adjust to get the next Monday if we're past Monday already
-        const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday
-        const daysToAdd = (dayOfWeek <= 1) ? (1 - dayOfWeek) : (8 - dayOfWeek);
-        monday.setDate(today.getDate() + daysToAdd);
-        
-        // Format dates to YYYY-MM-DD
-        const todayStr = today.toISOString().split('T')[0];
-        const mondayStr = monday.toISOString().split('T')[0];
-        
-        // Create some mock shows based on the mockup
-        return [
-            {
-                id: 1,
-                title: "The Newer New Wave Show",
-                presenter: "Dmitri Baughman",
-                description: "The freshest new wave, post-punk, and synth-pop tracks.",
-                image: "/player/NWR_text_logo_angle.png",
-                startTime: `${todayStr}T12:00:00`
-            },
-            {
-                id: 2,
-                title: "Flashback",
-                presenter: "DJ Retro",
-                description: "Classic hits from the 80s and 90s.",
-                image: "/player/NWR_text_logo_angle.png",
-                startTime: `${todayStr}T15:00:00`
-            },
-            {
-                id: 3,
-                title: "Now Wave Mix",
-                presenter: "Mix Master",
-                description: "Continuous mix of the latest electronic beats.",
-                image: "/player/NWR_text_logo_angle.png",
-                startTime: `${todayStr}T17:00:00`
-            },
-            {
-                id: 4,
-                title: "Now Wave Nights",
-                presenter: "Night Owl",
-                description: "Late night vibes for the night owls.",
-                image: "/player/NWR_text_logo_angle.png",
-                startTime: `${todayStr}T21:00:00`
-            },
-            {
-                id: 5,
-                title: "Steve Machine",
-                presenter: "Steve",
-                description: "Eclectic selection of underground electronic music.",
-                image: "/player/NWR_text_logo_angle.png",
-                startTime: `${mondayStr}T00:00:00`
-            }
-        ];
+        return {
+            "weekly": [
+                {
+                    "id": 1,
+                    "title": "The Newer New Wave Show",
+                    "presenter": "Dmitri Baughman",
+                    "description": "The freshest new wave, post-punk, and synth-pop tracks.",
+                    "image": "/player/NWR_text_logo_angle.png",
+                    "day": 5, // Friday
+                    "startTime": "12:00"
+                },
+                {
+                    "id": 2,
+                    "title": "Flashback",
+                    "presenter": "DJ Retro",
+                    "description": "Classic hits from the 80s and 90s.",
+                    "image": "/player/NWR_text_logo_angle.png",
+                    "day": 5, // Friday
+                    "startTime": "15:00"
+                }
+            ],
+            "weekdays": [
+                {
+                    "id": 3,
+                    "title": "Morning Wave",
+                    "presenter": "Early Riser",
+                    "description": "Start your day with the best new wave tracks.",
+                    "image": "/player/NWR_text_logo_angle.png",
+                    "startTime": "08:00"
+                }
+            ],
+            "special": []
+        };
     }
 }
 
