@@ -50,7 +50,7 @@ class ScheduleManager {
         
         console.log('Fetching schedule from:', url);
         
-        fetch(url)
+        return fetch(url)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -67,24 +67,27 @@ class ScheduleManager {
                 } catch (genError) {
                     console.error('Error generating schedule:', genError);
                     console.log('Falling back to mock data due to generation error');
-                    this.mockScheduleData().then(mockData => {
+                    return this.mockScheduleData().then(mockData => {
                         this.scheduleData = mockData;
                         this.generateSchedule();
                     });
                 }
+                
+                return data;
             })
             .catch(error => {
                 console.error('Error fetching schedule:', error);
                 console.error('Attempted to fetch from:', url);
                 // Fall back to mock data in case of error
                 console.log('Falling back to mock data due to fetch error');
-                this.mockScheduleData().then(mockData => {
+                return this.mockScheduleData().then(mockData => {
                     this.scheduleData = mockData;
                     this.generateSchedule();
+                    return mockData;
                 });
             });
     }
-            
+                
     /**
      * Generate a schedule for the current week based on patterns
      */
@@ -97,13 +100,12 @@ class ScheduleManager {
             return;
         }
         
-        // Get the current date and time for accurate "today" determination
-        const now = new Date();
-        // Start with today at midnight
-        const today = new Date(now);
-        today.setHours(0, 0, 0, 0);
+        // Get the ACTUAL current date - this is crucial for correct scheduling
+        const actualNow = new Date();
+        console.log('Actual current date and time:', actualNow.toISOString());
         
-        console.log('Current date and time:', now.toISOString());
+        // Start with actual today at midnight
+        const today = new Date(actualNow.getFullYear(), actualNow.getMonth(), actualNow.getDate());
         console.log('Base date for schedule (today midnight):', today.toISOString());
         
         const generatedSchedule = [];
@@ -142,14 +144,14 @@ class ScheduleManager {
             generatedSchedule.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
             
             // Update the view with the generated schedule
-            this.updateScheduleView(generatedSchedule);
+            this.updateScheduleView(generatedSchedule, actualNow);
             
         } catch (error) {
             console.error('Error in schedule generation:', error);
             this.scheduleContainer.innerHTML = '<p class="no-data-message">Error generating schedule</p>';
         }
     }
-                
+                    
     /**
      * Add weekly shows for a specific date
      */
@@ -279,9 +281,10 @@ class ScheduleManager {
     /**
      * Update the schedule view with generated schedule
      */
-    updateScheduleView(schedule) {
+    updateScheduleView(schedule, actualNow) {
         try {
             console.log('Updating schedule view with', schedule.length, 'shows');
+            console.log('Current time for On Air status:', actualNow.toISOString());
             
             if (!schedule || !schedule.length) {
                 this.scheduleContainer.innerHTML = '<p class="no-data-message">No scheduled shows for the upcoming week</p>';
@@ -294,9 +297,6 @@ class ScheduleManager {
             
             // Clear the container
             this.scheduleContainer.innerHTML = '';
-            
-            // Get current date and time for "On Air" status
-            const now = new Date();
             
             // Process each date group
             Object.keys(groupedShows).forEach(dateKey => {
@@ -315,7 +315,7 @@ class ScheduleManager {
                     // Create show items
                     shows.forEach((show, index) => {
                         try {
-                            const showElement = this.createShowElement(show, now, schedule);
+                            const showElement = this.createShowElement(show, actualNow, schedule);
                             this.scheduleContainer.appendChild(showElement);
                         } catch (showError) {
                             console.error(`Error creating show element for show #${index} on ${dateKey}:`, showError);
@@ -332,7 +332,7 @@ class ScheduleManager {
             this.scheduleContainer.innerHTML = '<p class="no-data-message">Error displaying schedule</p>';
         }
     }
-        
+            
     /**
      * Group shows by date
      */
@@ -390,76 +390,116 @@ class ScheduleManager {
     isShowOnAir(show, currentTime, allShows) {
         try {
             if (!show.startTime) {
-                console.warn('Show missing startTime in isShowOnAir check:', show);
                 return false;
             }
             
-            // Get current time for comparison - refresh this on each check
-            const now = new Date();
+            const showStartTime = new Date(show.startTime);
             
-            const startTime = new Date(show.startTime);
-            
-            // If current time is before the show starts, it's not on air
-            if (now < startTime) {
+            // If show hasn't started yet, it's not on air
+            if (currentTime < showStartTime) {
                 return false;
             }
             
-            // Find the next show after this one on the same day
-            const showDate = startTime.toISOString().split('T')[0];
+            // Get the date string (YYYY-MM-DD) of the show
+            const showDateStr = showStartTime.toISOString().split('T')[0];
             
-            // Filter shows on the same day with valid startTime
-            const sameDayShows = (allShows || []).filter(s => {
-                if (!s || !s.startTime) return false;
-                try {
-                    const sTime = new Date(s.startTime);
-                    const sDate = sTime.toISOString().split('T')[0];
-                    return sDate === showDate;
-                } catch (e) {
-                    return false;
-                }
+            // Find all shows on the same day
+            const sameDayShows = allShows.filter(s => {
+                if (!s.startTime) return false;
+                const sDateStr = new Date(s.startTime).toISOString().split('T')[0];
+                return sDateStr === showDateStr;
             });
             
-            if (sameDayShows.length === 0) {
-                console.warn('No valid shows found for day in isShowOnAir:', showDate);
-                return false;
-            }
+            // Sort by start time
+            const sortedShows = sameDayShows.sort((a, b) => 
+                new Date(a.startTime) - new Date(b.startTime)
+            );
             
-            // Sort shows by start time
-            const sortedShows = [...sameDayShows].sort((a, b) => {
-                try {
-                    return new Date(a.startTime) - new Date(b.startTime);
-                } catch (e) {
-                    return 0;
-                }
-            });
-            
-            // Find the current show's index
+            // Find the position of the current show
             const currentIndex = sortedShows.findIndex(s => s.id === show.id);
-            if (currentIndex === -1) {
-                console.warn('Show not found in sorted list:', show.id);
-                return false;
-            }
+            if (currentIndex === -1) return false;
             
-            // Check if there's a next show
-            const nextShow = sortedShows[currentIndex + 1];
-            
-            // If there is a next show, check if current time is before it starts
-            if (nextShow && nextShow.startTime) {
+            // If there's a next show, check if current time is before it starts
+            if (currentIndex < sortedShows.length - 1) {
+                const nextShow = sortedShows[currentIndex + 1];
                 const nextShowStart = new Date(nextShow.startTime);
-                return now < nextShowStart;
+                return currentTime < nextShowStart;
             }
             
-            // If this is the last show of the day, consider it on air until end of day
-            const endOfDay = new Date(startTime);
+            // If it's the last show of the day, it's on air until end of the day
+            const endOfDay = new Date(showDateStr);
             endOfDay.setHours(23, 59, 59, 999);
             
-            return now <= endOfDay;
+            return currentTime <= endOfDay;
         } catch (error) {
             console.error('Error in isShowOnAir:', error);
-            return false; // Default to not on air if there's an error
+            return false;
         }
     }
+                    
+    debugOnAirStatus() {
+        const now = new Date();
+        console.log("CURRENT ACTUAL TIME:", now.toISOString());
+        
+        this.fetchSchedule()
+            .then(() => {
+                if (!this.scheduleData) {
+                    console.error("No schedule data available");
+                    return;
+                }
                 
+                console.log("CHECKING ON AIR STATUS FOR ALL SHOWS:");
+                
+                // Generate a full schedule
+                const generatedSchedule = [];
+                
+                // Start with today
+                const today = new Date(now);
+                today.setHours(0, 0, 0, 0);
+                
+                // Process a full week
+                for (let i = 0; i < 7; i++) {
+                    const currentDate = new Date(today);
+                    currentDate.setDate(today.getDate() + i);
+                    
+                    // Add all types of shows
+                    this.addWeeklyShows(generatedSchedule, currentDate);
+                    this.addWeekdayShows(generatedSchedule, currentDate);
+                    this.addSpecialShows(generatedSchedule, currentDate);
+                }
+                
+                // Sort by start time
+                generatedSchedule.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+                
+                // Check each show
+                generatedSchedule.forEach(show => {
+                    const startTime = new Date(show.startTime);
+                    const isOnAir = this.isShowOnAir(show, now, generatedSchedule);
+                    
+                    console.log(
+                        `Show: ${show.title}, ` +
+                        `StartTime: ${startTime.toLocaleString()}, ` +
+                        `On Air: ${isOnAir ? "YES" : "no"}`
+                    );
+                });
+                
+                // Find the currently playing show
+                const currentShow = generatedSchedule.find(show => 
+                    this.isShowOnAir(show, now, generatedSchedule)
+                );
+                
+                if (currentShow) {
+                    console.log("CURRENTLY ON AIR: ", currentShow.title, 
+                        "at", new Date(currentShow.startTime).toLocaleString());
+                } else {
+                    console.log("NO SHOW CURRENTLY ON AIR");
+                }
+            })
+            .catch(error => {
+                console.error("Error in debugOnAirStatus:", error);
+            });
+    }
+    
     /**
      * Create a show element
      */
