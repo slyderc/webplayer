@@ -563,21 +563,56 @@ class ScheduleManager {
      */
     createShowElement(show, currentTime, allShows) {
         try {
-            const isOnAir = this.isShowOnAir(show, currentTime, allShows);
+            // Validate show object
+            if (!show || typeof show !== 'object') {
+                console.error('Invalid show object:', show);
+                throw new Error('Invalid show object');
+            }
             
-            const showElement = document.createElement('div');
-            showElement.className = `schedule-item${isOnAir ? ' on-air' : ''}`;
+            // Log entire show object for debugging
+            console.log('Creating element for show:', JSON.stringify(show));
             
-            // Safe access to properties with fallbacks
+            // Check if show has necessary properties with fallbacks
+            const showId = show.id || Math.random().toString(36).substr(2, 9); // Generate random ID if missing
             const title = show.title || 'Untitled Show';
             const presenter = show.presenter || 'Unknown Presenter';
             const description = show.description || '';
             const image = show.image || '/player/NWR_text_logo_angle.png';
-            const formattedTime = this.formatTime(show.startTime);
+            
+            // Format the time with extra validation
+            let formattedTime = '';
+            try {
+                if (show.startTime) {
+                    formattedTime = this.formatTime(show.startTime);
+                } else {
+                    formattedTime = 'Time TBD';
+                    console.warn('Show missing startTime:', title);
+                }
+            } catch (timeError) {
+                formattedTime = 'Time Error';
+                console.error('Error formatting time for show:', title, timeError);
+            }
+            
+            // Check if show is on air with extra error handling
+            let isOnAir = false;
+            try {
+                if (allShows && Array.isArray(allShows)) {
+                    isOnAir = this.isShowOnAir(show, currentTime, allShows);
+                } else {
+                    console.warn('allShows is not an array:', allShows);
+                    isOnAir = false;
+                }
+            } catch (onAirError) {
+                console.error('Error checking if show is on air:', title, onAirError);
+            }
+            
+            // Create the element
+            const showElement = document.createElement('div');
+            showElement.className = `schedule-item${isOnAir ? ' on-air' : ''}`;
             
             showElement.innerHTML = `
                 <div class="schedule-item-image">
-                    <img src="${image}" alt="${title}">
+                    <img src="${image}" alt="${title}" onerror="this.src='/player/NWR_text_logo_angle.png'">
                 </div>
                 <div class="schedule-item-content">
                     <div class="schedule-item-title-row">
@@ -592,18 +627,57 @@ class ScheduleManager {
                 </div>
             `;
             
+            // Log successful element creation for debugging
+            console.log(`Successfully created element for show: ${title}`);
+            
             return showElement;
         } catch (error) {
-            console.error('Error creating show element:', error);
+            console.error('Error creating show element:', error, show);
+            
             // Return a minimal error element instead of failing completely
             const errorElement = document.createElement('div');
             errorElement.className = 'schedule-item error';
-            errorElement.innerHTML = '<p>Error displaying show</p>';
+            
+            // Include more helpful error information
+            let errorMessage = 'Error displaying show';
+            try {
+                if (show && show.title) {
+                    errorMessage += `: ${show.title}`;
+                }
+            } catch (e) {}
+            
+            errorElement.innerHTML = `<p>${errorMessage}</p>`;
             return errorElement;
         }
     }
     
-        
+     /**
+     * Format time for display with enhanced error handling
+     */  
+        formatTime(dateString) {
+        try {
+            const date = new Date(dateString);
+            
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                console.warn('Invalid date for formatting:', dateString);
+                return 'Time TBD';
+            }
+            
+            let hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Convert 0 to 12
+            
+            return `${hours}:${minutes} ${ampm}`;
+        } catch (error) {
+            console.error('Error formatting time:', error, dateString);
+            return 'Time Error';
+        }
+    }
+    
     /**
      * Mock schedule data for testing
      */
