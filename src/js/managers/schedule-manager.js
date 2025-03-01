@@ -42,22 +42,33 @@ class ScheduleManager {
         const timestamp = new Date().getTime();
         const url = `${this.options.scheduleUrl}?t=${timestamp}`;
         
+        console.log('Fetching schedule from:', url);
+        
         fetch(url)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                console.log('Schedule fetch successful');
+                return response.json();
+            })
             .then(data => {
+                console.log('Schedule data parsed successfully:', data);
                 this.scheduleData = data;
                 this.generateSchedule();
             })
             .catch(error => {
                 console.error('Error fetching schedule:', error);
+                console.error('Attempted to fetch from:', url);
                 // Fall back to mock data in case of error
+                console.log('Falling back to mock data');
                 this.mockScheduleData().then(mockData => {
                     this.scheduleData = mockData;
                     this.generateSchedule();
                 });
             });
     }
-    
+        
     /**
      * Generate a schedule for the current week based on patterns
      */
