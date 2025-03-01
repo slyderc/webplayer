@@ -72,40 +72,48 @@ class ScheduleManager {
     /**
      * Generate a schedule for the current week based on patterns
      */
-    generateSchedule() {
-        if (!this.scheduleData) {
-            this.scheduleContainer.innerHTML = '<p class="no-data-message">Schedule information is currently unavailable</p>';
-            return;
-        }
+    fetchSchedule() {
+        // Add cache-busting timestamp parameter
+        const timestamp = new Date().getTime();
+        const url = `${this.options.scheduleUrl}?t=${timestamp}`;
         
-        // Start with today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize to start of day
+        console.log('Fetching schedule from:', url);
         
-        const generatedSchedule = [];
-        
-        // Generate schedule for the specified number of days
-        for (let i = 0; i < this.options.daysToShow; i++) {
-            const currentDate = new Date(today);
-            currentDate.setDate(today.getDate() + i);
-            
-            // Add weekly shows for this day of week
-            this.addWeeklyShows(generatedSchedule, currentDate);
-            
-            // Add weekday shows (Mon-Fri)
-            this.addWeekdayShows(generatedSchedule, currentDate);
-            
-            // Add special shows that fall on this date
-            this.addSpecialShows(generatedSchedule, currentDate);
-        }
-        
-        // Sort the schedule by start time
-        generatedSchedule.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-        
-        // Update the view with the generated schedule
-        this.updateScheduleView(generatedSchedule);
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                console.log('Schedule fetch successful');
+                return response.json();
+            })
+            .then(data => {
+                console.log('Schedule data parsed successfully:', data);
+                this.scheduleData = data;
+                
+                try {
+                    this.generateSchedule();
+                } catch (genError) {
+                    console.error('Error generating schedule:', genError);
+                    console.log('Falling back to mock data due to generation error');
+                    this.mockScheduleData().then(mockData => {
+                        this.scheduleData = mockData;
+                        this.generateSchedule();
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching schedule:', error);
+                console.error('Attempted to fetch from:', url);
+                // Fall back to mock data in case of error
+                console.log('Falling back to mock data due to fetch error');
+                this.mockScheduleData().then(mockData => {
+                    this.scheduleData = mockData;
+                    this.generateSchedule();
+                });
+            });
     }
-    
+        
     /**
      * Add weekly shows for a specific date
      */
@@ -282,7 +290,9 @@ class ScheduleManager {
         // Find the next show after this one on the same day
         const showDate = startTime.toISOString().split('T')[0];
         const sameDayShows = allShows.filter(s => {
-            const sDate = new Date(s.startTime).toISOString().split('T')[0];
+            if (!s.startTime) return false; // Skip items without startTime
+            const sTime = new Date(s.startTime);
+            const sDate = sTime.toISOString().split('T')[0];
             return sDate === showDate;
         });
         
@@ -291,6 +301,8 @@ class ScheduleManager {
         );
         
         const currentIndex = sortedShows.findIndex(s => s.id === show.id);
+        if (currentIndex === -1) return false; // Safety check
+        
         const nextShow = sortedShows[currentIndex + 1];
         
         // If there is a next show, check if current time is before it starts
@@ -305,7 +317,7 @@ class ScheduleManager {
         
         return currentTime <= endOfDay;
     }
-    
+        
     /**
      * Create a show element
      */
