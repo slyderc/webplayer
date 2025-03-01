@@ -316,8 +316,12 @@ class ScheduleManager {
             // Clear the container
             this.scheduleContainer.innerHTML = '';
             
-            // Process each date group
-            Object.keys(groupedShows).forEach(dateKey => {
+            // Get array of date keys and sort them chronologically
+            const dateKeys = Object.keys(groupedShows).sort((a, b) => new Date(a) - new Date(b));
+            console.log('Sorted date keys:', dateKeys);
+            
+            // Process each date group IN CHRONOLOGICAL ORDER
+            dateKeys.forEach(dateKey => {
                 try {
                     const shows = groupedShows[dateKey];
                     const dateObj = new Date(dateKey);
@@ -350,7 +354,7 @@ class ScheduleManager {
             this.scheduleContainer.innerHTML = '<p class="no-data-message">Error displaying schedule</p>';
         }
     }
-            
+                
     /**
      * Group shows by date
      */
@@ -358,50 +362,49 @@ class ScheduleManager {
         const grouped = {};
         
         shows.forEach(show => {
-            // Get date part only (YYYY-MM-DD)
-            const showDate = new Date(show.startTime);
-            const dateKey = showDate.toISOString().split('T')[0];
-            
-            if (!grouped[dateKey]) {
-                grouped[dateKey] = [];
+            if (!show.startTime) {
+                console.warn("Show missing startTime:", show);
+                return;
             }
             
-            grouped[dateKey].push(show);
+            try {
+                // Get date part only (YYYY-MM-DD)
+                const showDate = new Date(show.startTime);
+                const dateKey = showDate.toISOString().split('T')[0];
+                
+                if (!grouped[dateKey]) {
+                    grouped[dateKey] = [];
+                }
+                
+                grouped[dateKey].push(show);
+            } catch (e) {
+                console.error("Error grouping show by date:", e, show);
+            }
         });
         
         return grouped;
     }
-    
+        
     /**
      * Format date for header display
      */
     formatDateHeader(date) {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const day = days[date.getDay()];
-        
-        // Format date as MM/DD/YYYY
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const dayOfMonth = String(date.getDate()).padStart(2, '0');
-        const year = date.getFullYear();
-        
-        return `${day} - ${month}/${dayOfMonth}/${year}`;
+        try {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const day = days[date.getDay()];
+            
+            // Format date as MM/DD/YYYY
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const dayOfMonth = String(date.getDate()).padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `${day} - ${month}/${dayOfMonth}/${year}`;
+        } catch (e) {
+            console.error("Error formatting date header:", e, date);
+            return "Unknown Date";
+        }
     }
-    
-    /**
-     * Format time for display (12-hour format with AM/PM)
-     */
-    formatTime(dateString) {
-        const date = new Date(dateString);
-        let hours = date.getHours();
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
         
-        hours = hours % 12;
-        hours = hours ? hours : 12; // Convert 0 to 12
-        
-        return `${hours}:${minutes} ${ampm}`;
-    }
-    
     /**
      * Check if a show is currently on air
      */
