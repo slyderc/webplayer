@@ -32,6 +32,7 @@ class NowWavePlayer {
         });
         
         // Initialize managers
+        this.scheduleManager = new ScheduleManager();      
         this.trackManager = new TrackManager({
             maxRecentTracks: 25,
             storageService: this.storageService
@@ -41,7 +42,6 @@ class NowWavePlayer {
         this.viewManager = new ViewManager({
             trackManager: this.trackManager
         });
-        this.scheduleManager = new ScheduleManager();      
 
         // Setup event handlers
         this.setupEventHandlers();
@@ -69,9 +69,24 @@ class NowWavePlayer {
         
         // Register tab callbacks
         this.viewManager
-            .registerTabCallback('recent', () => this.updateRecentView())
-            .registerTabCallback('live', () => this.updateLiveView())
-            .registerTabCallback('schedule', () => this.updateScheduleView()); // Add this line
+            .registerTabCallback('recent', () => {
+                console.log('Recent tab activated');
+                this.updateRecentView();
+            })
+            .registerTabCallback('live', () => {
+                console.log('Live tab activated');
+                this.updateLiveView();
+            })
+            .registerTabCallback('schedule', () => {
+                console.log('Schedule tab activated');
+                if (this.scheduleManager) {
+                    this.scheduleManager.handleTabActivation();
+                } else {
+                    console.error('Schedule manager not available');
+                }
+            });
+    
+        this.scheduleManager.initialize();
         
         // Audio service event listeners
         this.audioService

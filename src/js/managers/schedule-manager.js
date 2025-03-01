@@ -32,15 +32,20 @@ class ScheduleManager {
      * Initialize the schedule manager
      */
     initialize() {
-        // Add the schedule container to the view with improved scrolling styles
-        this.scheduleView.innerHTML = '<div class="schedule-container"></div>';
-        this.scheduleContainer = this.scheduleView.querySelector('.schedule-container');
+        // First verify DOM elements are found
+        if (!this.scheduleView) {
+            console.error('Schedule view element not found');
+            return this;
+        }
         
-        // Set explicit height and overflow for better scrolling
-        this.scheduleContainer.style.height = 'calc(100vh - 250px)'; // Adjust based on your player controls
-        this.scheduleContainer.style.overflowY = 'auto';
-        this.scheduleContainer.style.paddingBottom = '100px'; // Add padding at bottom for better scrolling
-        this.scheduleContainer.style.scrollBehavior = 'smooth';
+        console.log('Initializing schedule manager');
+        
+        // Add the schedule container to the view
+        this.scheduleView.innerHTML = '';
+        const container = document.createElement('div');
+        container.className = 'schedule-container';
+        this.scheduleView.appendChild(container);
+        this.scheduleContainer = container;
         
         // Initial schedule fetch
         this.fetchSchedule();
@@ -48,9 +53,52 @@ class ScheduleManager {
         // Set up polling for schedule updates
         setInterval(() => this.fetchSchedule(), this.options.pollInterval);
         
+        // Make this instance available globally
+        window.scheduleManager = this;
+        
         return this;
     }
+
+    handleTabActivation() {
+        console.log('Schedule tab activated - handling activation');
         
+        // First ensure we have a valid scheduleView reference
+        if (!this.scheduleView) {
+            this.scheduleView = document.getElementById('scheduleView');
+            if (!this.scheduleView) {
+                console.error('Cannot find scheduleView element');
+                return;
+            }
+        }
+        
+        // Check if the container exists, recreate if needed
+        if (!this.scheduleContainer || !this.scheduleView.contains(this.scheduleContainer)) {
+            console.log('Recreating schedule container');
+            this.scheduleView.innerHTML = '';
+            const container = document.createElement('div');
+            container.className = 'schedule-container';
+            this.scheduleView.appendChild(container);
+            this.scheduleContainer = container;
+        }
+        
+        // If we have cached schedule data, use it
+        if (this.generatedSchedule && this.generatedSchedule.length > 0) {
+            console.log('Using cached schedule data with', this.generatedSchedule.length, 'shows');
+            const now = new Date();
+            this.updateScheduleView(this.generatedSchedule, now);
+        } 
+        // Otherwise fetch fresh data
+        else {
+            console.log('No cached data - fetching schedule');
+            this.fetchSchedule().catch(err => {
+                console.error('Error fetching schedule:', err);
+                if (this.scheduleContainer) {
+                    this.scheduleContainer.innerHTML = '<p class="no-data-message">Error loading schedule</p>';
+                }
+            });
+        }
+    }
+            
     /**
      * Fetch schedule data
      */
@@ -107,69 +155,60 @@ class ScheduleManager {
         
         if (!this.scheduleData) {
             console.error('No schedule data available');
-            this.scheduleContainer.innerHTML = '<p class="no-data-message">Schedule information is currently unavailable</p>';
+            if (this.scheduleContainer) {
+                this.scheduleContainer.innerHTML = '<p class="no-data-message">Schedule information is currently unavailable</p>';
+            }
             return;
         }
         
-        // Get the ACTUAL current date - this is crucial for correct scheduling
+        // Get the current date
         const actualNow = new Date();
-        
-        // Debug info
-        console.log('========================');
-        console.log('SCHEDULE DEBUG INFO:');
-        console.log('Current date and time:', actualNow.toISOString());
-        console.log('Current day of week:', actualNow.getDay(), '(0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)');
-        console.log('========================');
         
         // Start with actual today at midnight
         const today = new Date(actualNow.getFullYear(), actualNow.getMonth(), actualNow.getDate());
-        console.log('Base date for schedule (today midnight):', today.toISOString());
         
+        // Generate schedule from patterns
         const generatedSchedule = [];
         
-        // Generate schedule for the specified number of days
         try {
+            // Generate schedule for each day
             for (let i = 0; i < this.options.daysToShow; i++) {
                 const currentDate = new Date(today);
                 currentDate.setDate(today.getDate() + i);
-                const dayOfWeek = currentDate.getDay();
-                console.log(`Processing day ${i+1}: ${currentDate.toISOString()}, Day of week: ${dayOfWeek} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayOfWeek]})`);
                 
-                try {
-                    // Add weekly shows for this day of week
-                    this.addWeeklyShows(generatedSchedule, currentDate);
-                    
-                    // Add weekday shows (Mon-Fri)
-                    this.addWeekdayShows(generatedSchedule, currentDate);
-                    
-                    // Add special shows that fall on this date
-                    this.addSpecialShows(generatedSchedule, currentDate);
-                } catch (dayError) {
-                    console.error(`Error processing day ${i+1}:`, dayError);
-                    // Continue with next day despite errors
-                }
+                // Add all types of shows
+                this.addWeeklyShows(generatedSchedule, currentDate);
+                this.addWeekdayShows(generatedSchedule, currentDate);
+                this.addSpecialShows(generatedSchedule, currentDate);
             }
             
             console.log(`Generated ${generatedSchedule.length} total shows`);
             
             if (generatedSchedule.length === 0) {
                 console.warn('No shows were generated');
-                this.scheduleContainer.innerHTML = '<p class="no-data-message">No scheduled shows for the upcoming week</p>';
+                if (this.scheduleContainer) {
+                    this.scheduleContainer.innerHTML = '<p class="no-data-message">No scheduled shows for the upcoming week</p>';
+                }
                 return;
             }
             
             // Sort the schedule by start time
             generatedSchedule.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
             
-            // Update the view with the generated schedule
+            // Cache the generated schedule for reuse
+            this.generatedSchedule = generatedSchedule;
+            
+            // Update the view
             this.updateScheduleView(generatedSchedule, actualNow);
             
         } catch (error) {
             console.error('Error in schedule generation:', error);
-            this.scheduleContainer.innerHTML = '<p class="no-data-message">Error generating schedule</p>';
+            if (this.scheduleContainer) {
+                this.scheduleContainer.innerHTML = '<p class="no-data-message">Error generating schedule</p>';
+            }
         }
     }
-                        
+                            
     /**
      * Add weekly shows for a specific date
      */
@@ -300,61 +339,78 @@ class ScheduleManager {
      * Update the schedule view with generated schedule
      */
     updateScheduleView(schedule, actualNow) {
-        try {
-            console.log('Updating schedule view with', schedule.length, 'shows');
-            console.log('Current time for On Air status:', actualNow.toISOString());
+        console.log('⭐⭐⭐ Starting schedule view update ⭐⭐⭐');
+        
+        // Fail fast if container not found
+        if (!this.scheduleContainer) {
+            console.error('Schedule container not found');
+            return;
+        }
+        
+        // Clear existing content completely
+        this.scheduleContainer.innerHTML = '';
+        
+        if (!schedule || !schedule.length) {
+            this.scheduleContainer.innerHTML = '<p class="no-data-message">No shows available</p>';
+            return;
+        }
+        
+        // Group shows by date
+        const groupedShows = {};
+        schedule.forEach(show => {
+            if (!show.startTime) return;
             
-            if (!schedule || !schedule.length) {
-                this.scheduleContainer.innerHTML = '<p class="no-data-message">No scheduled shows for the upcoming week</p>';
-                return;
+            const date = new Date(show.startTime);
+            const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            if (!groupedShows[dateKey]) {
+                groupedShows[dateKey] = [];
             }
             
-            // Group shows by date
-            const groupedShows = this.groupShowsByDate(schedule);
-            console.log('Grouped shows by date:', Object.keys(groupedShows));
+            groupedShows[dateKey].push(show);
+        });
+        
+        // Get date keys and sort chronologically
+        const dateKeys = Object.keys(groupedShows).sort();
+        console.log('Processing dates:', dateKeys);
+        
+        // Process each date group
+        dateKeys.forEach(dateKey => {
+            const shows = groupedShows[dateKey];
+            const dateObj = new Date(dateKey + 'T00:00:00');
             
-            // Clear the container
-            this.scheduleContainer.innerHTML = '';
+            console.log(`Adding date header for ${dateKey} with ${shows.length} shows`);
             
-            // Get array of date keys and sort them chronologically
-            const dateKeys = Object.keys(groupedShows).sort((a, b) => new Date(a) - new Date(b));
-            console.log('Sorted date keys:', dateKeys);
+            // Create date header
+            const dateHeader = document.createElement('div');
+            dateHeader.className = 'date-header';
             
-            // Process each date group IN CHRONOLOGICAL ORDER
-            dateKeys.forEach(dateKey => {
+            // Format date as "Day - MM/DD/YYYY"
+            const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dateObj.getDay()];
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            
+            dateHeader.innerHTML = `<h2>${dayName} - ${month}/${day}/${year}</h2>`;
+            this.scheduleContainer.appendChild(dateHeader);
+            
+            // Sort shows for this date by time
+            shows.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+            
+            // Add each show
+            shows.forEach(show => {
                 try {
-                    const shows = groupedShows[dateKey];
-                    const dateObj = new Date(dateKey);
-                    
-                    console.log(`Creating date header for ${dateKey} with ${shows.length} shows`);
-                    
-                    // Create date header
-                    const dateHeader = document.createElement('div');
-                    dateHeader.className = 'date-header';
-                    dateHeader.innerHTML = `<h2>${this.formatDateHeader(dateObj)}</h2>`;
-                    this.scheduleContainer.appendChild(dateHeader);
-                    
-                    // Create show items
-                    shows.forEach((show, index) => {
-                        try {
-                            const showElement = this.createShowElement(show, actualNow, schedule);
-                            this.scheduleContainer.appendChild(showElement);
-                        } catch (showError) {
-                            console.error(`Error creating show element for show #${index} on ${dateKey}:`, showError);
-                        }
-                    });
-                } catch (dateError) {
-                    console.error(`Error processing date group ${dateKey}:`, dateError);
+                    const showElement = this.createShowElement(show, actualNow, schedule);
+                    this.scheduleContainer.appendChild(showElement);
+                } catch (e) {
+                    console.error('Failed to create show element:', e);
                 }
             });
-            
-            console.log('Schedule view update complete');
-        } catch (error) {
-            console.error('Error in updateScheduleView:', error);
-            this.scheduleContainer.innerHTML = '<p class="no-data-message">Error displaying schedule</p>';
-        }
+        });
+        
+        console.log('Schedule view update complete');
     }
-                
+                        
     /**
      * Group shows by date
      */
@@ -562,63 +618,40 @@ class ScheduleManager {
      * Create a show element
      */
     createShowElement(show, currentTime, allShows) {
+        // Create the main container
+        const element = document.createElement('div');
+        
         try {
-            // Validate show object
-            if (!show || typeof show !== 'object') {
-                console.error('Invalid show object:', show);
-                throw new Error('Invalid show object');
-            }
+            // Detect if show is currently on air
+            const isOnAir = this.isShowOnAir(show, currentTime, allShows);
+            element.className = isOnAir ? 'schedule-item on-air' : 'schedule-item';
             
-            // Log entire show object for debugging
-            console.log('Creating element for show:', JSON.stringify(show));
-            
-            // Check if show has necessary properties with fallbacks
-            const showId = show.id || Math.random().toString(36).substr(2, 9); // Generate random ID if missing
+            // Extract basic show info with fallbacks
             const title = show.title || 'Untitled Show';
-            const presenter = show.presenter || 'Unknown Presenter';
+            const presenter = show.presenter || 'Unknown';
             const description = show.description || '';
-            const image = show.image || '/player/NWR_text_logo_angle.png';
+            const imgSrc = show.image || '/player/NWR_text_logo_angle.png';
             
-            // Format the time with extra validation
-            let formattedTime = '';
-            try {
-                if (show.startTime) {
-                    formattedTime = this.formatTime(show.startTime);
-                } else {
-                    formattedTime = 'Time TBD';
-                    console.warn('Show missing startTime:', title);
-                }
-            } catch (timeError) {
-                formattedTime = 'Time Error';
-                console.error('Error formatting time for show:', title, timeError);
+            // Format time - simplified version
+            let timeStr = 'TBD';
+            if (show.startTime) {
+                const date = new Date(show.startTime);
+                const hours = date.getHours() % 12 || 12;
+                const mins = date.getMinutes().toString().padStart(2, '0');
+                const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
+                timeStr = `${hours}:${mins} ${ampm}`;
             }
             
-            // Check if show is on air with extra error handling
-            let isOnAir = false;
-            try {
-                if (allShows && Array.isArray(allShows)) {
-                    isOnAir = this.isShowOnAir(show, currentTime, allShows);
-                } else {
-                    console.warn('allShows is not an array:', allShows);
-                    isOnAir = false;
-                }
-            } catch (onAirError) {
-                console.error('Error checking if show is on air:', title, onAirError);
-            }
-            
-            // Create the element
-            const showElement = document.createElement('div');
-            showElement.className = `schedule-item${isOnAir ? ' on-air' : ''}`;
-            
-            showElement.innerHTML = `
+            // Build HTML directly
+            const html = `
                 <div class="schedule-item-image">
-                    <img src="${image}" alt="${title}" onerror="this.src='/player/NWR_text_logo_angle.png'">
+                    <img src="${imgSrc}" alt="${title}">
                 </div>
                 <div class="schedule-item-content">
                     <div class="schedule-item-title-row">
                         <h3 class="schedule-item-title">${title}</h3>
                         <div class="schedule-item-time">
-                            <span>${formattedTime}</span>
+                            <span>${timeStr}</span>
                             <div class="on-air-badge">On Air</div>
                         </div>
                     </div>
@@ -627,34 +660,40 @@ class ScheduleManager {
                 </div>
             `;
             
-            // Log successful element creation for debugging
-            console.log(`Successfully created element for show: ${title}`);
-            
-            return showElement;
+            element.innerHTML = html;
         } catch (error) {
-            console.error('Error creating show element:', error, show);
-            
-            // Return a minimal error element instead of failing completely
-            const errorElement = document.createElement('div');
-            errorElement.className = 'schedule-item error';
-            
-            // Include more helpful error information
-            let errorMessage = 'Error displaying show';
-            try {
-                if (show && show.title) {
-                    errorMessage += `: ${show.title}`;
-                }
-            } catch (e) {}
-            
-            errorElement.innerHTML = `<p>${errorMessage}</p>`;
-            return errorElement;
+            console.error('Error creating show element:', error);
+            element.className = 'schedule-item error';
+            element.textContent = 'Error displaying show';
+        }
+        
+        return element;
+    }
+    
+    /**
+     * Debugging function to log HTML structure
+     */
+    inspectElement(element) {
+        if (!element) return 'null';
+        try {
+            return {
+                tagName: element.tagName,
+                className: element.className,
+                id: element.id,
+                childNodes: element.childNodes.length,
+                innerHTML: element.innerHTML.substring(0, 100) + '...',
+                outerHTML: element.outerHTML.substring(0, 100) + '...'
+            };
+        } catch (e) {
+            return 'Error inspecting: ' + e.message;
         }
     }
     
-     /**
+    
+    /**
      * Format time for display with enhanced error handling
      */  
-        formatTime(dateString) {
+    formatTime(dateString) {
         try {
             const date = new Date(dateString);
             
