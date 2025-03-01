@@ -33,7 +33,7 @@ class NowWavePlayer {
         
         // Initialize managers
         this.trackManager = new TrackManager({
-            maxRecentTracks: 5,
+            maxRecentTracks: 25,
             storageService: this.storageService
         });
         this.backgroundManager = new BackgroundManager();
@@ -164,7 +164,7 @@ class NowWavePlayer {
             this.scheduleManager.updateScheduleView();
         }
     }
-    
+
     updateRecentView() {
         const tracks = this.trackManager.getRecentTracks();
         this.viewManager.updateRecentTracksView(

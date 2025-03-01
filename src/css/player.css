@@ -481,9 +481,30 @@ body[data-active-tab="live"] .artwork-background {
 
 /* ---- RECENT TAB STYLING ---- */
 /* Recent view specific styles */
-#recentView, #recentTracksContainer {
-    background-color: transparent;
-    padding: 1rem;
+#recentView {
+    overflow: hidden;
+    max-height: calc(100vh - 200px); /* Adjust based on your player bar height */
+}
+
+#recentTracksContainer {
+    overflow-y: auto;
+    height: 100%;
+    padding: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+#recentTracksContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+#recentTracksContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#recentTracksContainer::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
 }
 
 .track-item {

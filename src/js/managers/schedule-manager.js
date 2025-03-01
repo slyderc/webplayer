@@ -5,7 +5,7 @@ class ScheduleManager {
     constructor(options = {}) {
         this.options = {
             scheduleUrl: './schedule.json',
-            pollInterval: 3600000, // 1 hour
+            pollInterval: 900000, // 15 minutes
             ...options
         };
         

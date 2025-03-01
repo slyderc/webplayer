@@ -4,7 +4,7 @@
 class TrackManager {
     constructor(options = {}) {
         this.options = {
-            maxRecentTracks: 5,
+            maxRecentTracks: 25,
             ...options
         };
         

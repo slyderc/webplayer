@@ -78,9 +78,16 @@ class ViewManager {
     // Helper methods for updating different views
     updateRecentTracksView(tracks, lovedCallback) {
         if (!tracks || !tracks.length) {
-            this.views.recent.innerHTML = '<p>No recent tracks to display</p>';
+            this.views.recent.innerHTML = '<div id="recentTracksContainer"><p>No recent tracks to display</p></div>';
             return;
         }
+        
+        // Create container if it doesn't exist
+        if (!this.views.recent.querySelector('#recentTracksContainer')) {
+            this.views.recent.innerHTML = '<div id="recentTracksContainer"></div>';
+        }
+        
+        const container = this.views.recent.querySelector('#recentTracksContainer');
         
         const tracksHTML = tracks.map(track => `
             <div class="track-item">
@@ -103,12 +110,12 @@ class ViewManager {
                 </div>
             </div>
         `).join('');
-
-        this.views.recent.innerHTML = tracksHTML;
+    
+        container.innerHTML = tracksHTML;
         
         // Add click handlers for the heart buttons
         if (lovedCallback) {
-            this.views.recent.querySelectorAll('.heart-button').forEach(button => {
+            container.querySelectorAll('.heart-button').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const trackId = e.currentTarget.dataset.trackId;
                     lovedCallback(trackId);
@@ -116,7 +123,7 @@ class ViewManager {
             });
         }
     }
-    
+        
     updateScheduleView(data) {
         this.views.schedule.innerHTML = data ? data : '<p>Show schedule will appear here</p>';
     }
