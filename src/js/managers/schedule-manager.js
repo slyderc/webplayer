@@ -21,9 +21,15 @@ class ScheduleManager {
      * Initialize the schedule manager
      */
     initialize() {
-        // Add the schedule container to the view
+        // Add the schedule container to the view with improved scrolling styles
         this.scheduleView.innerHTML = '<div class="schedule-container"></div>';
         this.scheduleContainer = this.scheduleView.querySelector('.schedule-container');
+        
+        // Set explicit height and overflow for better scrolling
+        this.scheduleContainer.style.height = 'calc(100vh - 250px)'; // Adjust based on your player controls
+        this.scheduleContainer.style.overflowY = 'auto';
+        this.scheduleContainer.style.paddingBottom = '100px'; // Add padding at bottom for better scrolling
+        this.scheduleContainer.style.scrollBehavior = 'smooth';
         
         // Initial schedule fetch
         this.fetchSchedule();
@@ -33,7 +39,7 @@ class ScheduleManager {
         
         return this;
     }
-    
+        
     /**
      * Fetch schedule data
      */
@@ -91,12 +97,14 @@ class ScheduleManager {
             return;
         }
         
-        console.log('Schedule data structure:', JSON.stringify(this.scheduleData).substring(0, 100) + '...');
+        // Get the current date and time for accurate "today" determination
+        const now = new Date();
+        // Start with today at midnight
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
         
-        // Start with today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize to start of day
-        console.log('Base date for schedule:', today.toISOString());
+        console.log('Current date and time:', now.toISOString());
+        console.log('Base date for schedule (today midnight):', today.toISOString());
         
         const generatedSchedule = [];
         
@@ -105,7 +113,7 @@ class ScheduleManager {
             for (let i = 0; i < this.options.daysToShow; i++) {
                 const currentDate = new Date(today);
                 currentDate.setDate(today.getDate() + i);
-                console.log(`Processing day ${i+1}: ${currentDate.toISOString()}`);
+                console.log(`Processing day ${i+1}: ${currentDate.toISOString()}, Day of week: ${currentDate.getDay()}`);
                 
                 try {
                     // Add weekly shows for this day of week
@@ -141,7 +149,7 @@ class ScheduleManager {
             this.scheduleContainer.innerHTML = '<p class="no-data-message">Error generating schedule</p>';
         }
     }
-            
+                
     /**
      * Add weekly shows for a specific date
      */
@@ -153,7 +161,7 @@ class ScheduleManager {
             }
             
             const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-            console.log(`Looking for shows on day ${dayOfWeek}`);
+            console.log(`Looking for shows on day ${dayOfWeek} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayOfWeek]})`);
             
             this.scheduleData.weekly.forEach((show, index) => {
                 try {
@@ -162,9 +170,9 @@ class ScheduleManager {
                         return; // Skip this show
                     }
                     
-                    // Check if this show runs on this day of week
+                    // Check if this show runs on this day of week - with explicit log
                     if (show.day === dayOfWeek) {
-                        console.log(`Found show "${show.title}" for day ${dayOfWeek}`);
+                        console.log(`Found show "${show.title}" for day ${dayOfWeek} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayOfWeek]})`);
                         
                         if (!show.startTime) {
                             console.warn(`Show "${show.title}" is missing startTime property`);
@@ -182,7 +190,7 @@ class ScheduleManager {
                                 startTime: startTime.toISOString()
                             });
                             
-                            console.log(`Added weekly show "${show.title}" at ${startTime.toISOString()}`);
+                            console.log(`Added weekly show "${show.title}" at ${startTime.toISOString()} (${hours}:${minutes})`);
                         } catch (timeError) {
                             console.error(`Error processing time for "${show.title}":`, timeError);
                         }
@@ -195,7 +203,7 @@ class ScheduleManager {
             console.error('Error in addWeeklyShows:', error);
         }
     }
-        
+            
     /**
      * Add weekday shows (Mon-Fri) for a specific date
      */
@@ -386,10 +394,13 @@ class ScheduleManager {
                 return false;
             }
             
+            // Get current time for comparison - refresh this on each check
+            const now = new Date();
+            
             const startTime = new Date(show.startTime);
             
             // If current time is before the show starts, it's not on air
-            if (currentTime < startTime) {
+            if (now < startTime) {
                 return false;
             }
             
@@ -435,20 +446,20 @@ class ScheduleManager {
             // If there is a next show, check if current time is before it starts
             if (nextShow && nextShow.startTime) {
                 const nextShowStart = new Date(nextShow.startTime);
-                return currentTime < nextShowStart;
+                return now < nextShowStart;
             }
             
             // If this is the last show of the day, consider it on air until end of day
             const endOfDay = new Date(startTime);
             endOfDay.setHours(23, 59, 59, 999);
             
-            return currentTime <= endOfDay;
+            return now <= endOfDay;
         } catch (error) {
             console.error('Error in isShowOnAir:', error);
             return false; // Default to not on air if there's an error
         }
     }
-            
+                
     /**
      * Create a show element
      */

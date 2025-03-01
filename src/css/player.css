@@ -595,7 +595,7 @@ body[data-active-tab="live"] .artwork-background {
 
 /* ---- OTHER TABS STYLING ---- */
 /* Schedule, Catch Up, and Favorites tab styling */
-#scheduleView, #catchUpView, #favoritesView {
+#catchUpView, #favoritesView {
     background-color: transparent;
     color: white;
     padding: 1rem;
@@ -938,22 +938,44 @@ body[data-active-tab="live"] .contact-button-container {
    10. Schedule video tab
    ========================================================================== */
 /* Schedule View Styles */
+#scheduleView {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+}
+
 .schedule-container {
-    padding: 0.5rem;
-    color: white;
+    height: calc(100vh - 250px); /* Adjust based on your player bar height */
     overflow-y: auto;
-    max-height: calc(100vh - 200px); /* Adjust based on your player bar height */
+    padding-bottom: 100px; /* Add extra padding at the bottom */
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+.schedule-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.schedule-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.schedule-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
 }
 
 /* Date Header */
 .date-header {
-    background: rgba(15, 15, 15, 0.6);
+    background: rgba(15, 15, 15, 0.9);
     padding: 0.75rem 1rem;
-    margin: 1rem 0 0.5rem 0;
+    margin: 0.5rem 0;
     border-radius: 4px;
     position: sticky;
     top: 0;
-    z-index: 2;
+    z-index: 5;
 }
 
 .date-header h2 {
@@ -985,6 +1007,10 @@ body[data-active-tab="live"] .contact-button-container {
 
 .schedule-item.on-air:hover {
     background: rgba(30, 64, 175, 0.4);
+}
+
+.schedule-item:last-child {
+    margin-bottom: 60px;
 }
 
 /* Show Image */
@@ -1093,5 +1119,16 @@ body[data-active-tab="live"] .contact-button-container {
     
     .schedule-item-description {
         font-size: 0.75rem;
+    }
+
+    .schedule-container {
+        height: calc(100vh - 200px);
+        padding-bottom: 80px;
+    }
+}
+
+@media screen and (max-height: 600px) {
+    .schedule-container {
+        height: calc(100vh - 200px);
     }
 }
