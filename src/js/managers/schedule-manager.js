@@ -1,11 +1,19 @@
 /**
  * ScheduleManager - Handles schedule data and display with support for recurring patterns
  */
+window.debugSchedule = function() {
+    if (window.scheduleManager) {
+        window.scheduleManager.debugOnAirStatus();
+    } else {
+        console.error("scheduleManager not found on window object");
+    }
+};
+
 class ScheduleManager {
     constructor(options = {}) {
         this.options = {
             scheduleUrl: './schedule.json',
-            pollInterval: 900000, // 1 hour
+            pollInterval: 900000, // 15 minutes
             daysToShow: 7, // Number of days to display in the schedule
             ...options
         };
@@ -15,8 +23,11 @@ class ScheduleManager {
         
         // Cache DOM elements
         this.scheduleView = document.getElementById('scheduleView');
+        
+        // Make this instance available for debugging
+        window.scheduleManager = this;
     }
-    
+        
     /**
      * Initialize the schedule manager
      */
@@ -102,7 +113,13 @@ class ScheduleManager {
         
         // Get the ACTUAL current date - this is crucial for correct scheduling
         const actualNow = new Date();
-        console.log('Actual current date and time:', actualNow.toISOString());
+        
+        // Debug info
+        console.log('========================');
+        console.log('SCHEDULE DEBUG INFO:');
+        console.log('Current date and time:', actualNow.toISOString());
+        console.log('Current day of week:', actualNow.getDay(), '(0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)');
+        console.log('========================');
         
         // Start with actual today at midnight
         const today = new Date(actualNow.getFullYear(), actualNow.getMonth(), actualNow.getDate());
@@ -115,7 +132,8 @@ class ScheduleManager {
             for (let i = 0; i < this.options.daysToShow; i++) {
                 const currentDate = new Date(today);
                 currentDate.setDate(today.getDate() + i);
-                console.log(`Processing day ${i+1}: ${currentDate.toISOString()}, Day of week: ${currentDate.getDay()}`);
+                const dayOfWeek = currentDate.getDay();
+                console.log(`Processing day ${i+1}: ${currentDate.toISOString()}, Day of week: ${dayOfWeek} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayOfWeek]})`);
                 
                 try {
                     // Add weekly shows for this day of week
@@ -151,7 +169,7 @@ class ScheduleManager {
             this.scheduleContainer.innerHTML = '<p class="no-data-message">Error generating schedule</p>';
         }
     }
-                    
+                        
     /**
      * Add weekly shows for a specific date
      */
@@ -389,11 +407,25 @@ class ScheduleManager {
      */
     isShowOnAir(show, currentTime, allShows) {
         try {
+            // For debugging specific problematic shows
+            const isWeekendShow = show.title === "Weekend Wave";
+            
+            if (isWeekendShow) {
+                console.log("==== CHECKING ON-AIR STATUS FOR WEEKEND WAVE ====");
+                console.log("Current time:", currentTime.toLocaleString());
+            }
+            
             if (!show.startTime) {
+                if (isWeekendShow) console.log("No start time, not on air");
                 return false;
             }
             
             const showStartTime = new Date(show.startTime);
+            
+            if (isWeekendShow) {
+                console.log("Show start time:", showStartTime.toLocaleString());
+                console.log("Has show started?", currentTime >= showStartTime);
+            }
             
             // If show hasn't started yet, it's not on air
             if (currentTime < showStartTime) {
@@ -410,6 +442,10 @@ class ScheduleManager {
                 return sDateStr === showDateStr;
             });
             
+            if (isWeekendShow) {
+                console.log(`Found ${sameDayShows.length} shows on the same day`);
+            }
+            
             // Sort by start time
             const sortedShows = sameDayShows.sort((a, b) => 
                 new Date(a.startTime) - new Date(b.startTime)
@@ -417,12 +453,26 @@ class ScheduleManager {
             
             // Find the position of the current show
             const currentIndex = sortedShows.findIndex(s => s.id === show.id);
-            if (currentIndex === -1) return false;
+            
+            if (isWeekendShow) {
+                console.log(`Show position in day's lineup: ${currentIndex + 1} of ${sortedShows.length}`);
+            }
+            
+            if (currentIndex === -1) {
+                if (isWeekendShow) console.log("Show not found in sorted list");
+                return false;
+            }
             
             // If there's a next show, check if current time is before it starts
             if (currentIndex < sortedShows.length - 1) {
                 const nextShow = sortedShows[currentIndex + 1];
                 const nextShowStart = new Date(nextShow.startTime);
+                
+                if (isWeekendShow) {
+                    console.log(`Next show: ${nextShow.title} at ${nextShowStart.toLocaleString()}`);
+                    console.log(`Is before next show? ${currentTime < nextShowStart}`);
+                }
+                
                 return currentTime < nextShowStart;
             }
             
@@ -430,13 +480,18 @@ class ScheduleManager {
             const endOfDay = new Date(showDateStr);
             endOfDay.setHours(23, 59, 59, 999);
             
+            if (isWeekendShow) {
+                console.log(`Last show of the day, on until ${endOfDay.toLocaleString()}`);
+                console.log(`Is before end of day? ${currentTime <= endOfDay}`);
+            }
+            
             return currentTime <= endOfDay;
         } catch (error) {
-            console.error('Error in isShowOnAir:', error);
+            console.error('Error in isShowOnAir:', error, show);
             return false;
         }
     }
-                    
+                        
     debugOnAirStatus() {
         const now = new Date();
         console.log("CURRENT ACTUAL TIME:", now.toISOString());
