@@ -451,6 +451,56 @@ class ScheduleManager {
         const existingItems = this.scheduleContainer.querySelectorAll('.schedule-item');
         const isRefresh = existingItems.length > 0;
         
+        // Find the current on-air show BEFORE we start updating the UI
+        let currentOnAirShow = null;
+        const currentDateStr = actualNow.toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        // First go through all of today's shows to find which is on air
+        const todaysShows = schedule.filter(show => {
+            if (!show.startTime) return false;
+            const showDate = new Date(show.startTime);
+            const showDateStr = showDate.toISOString().split('T')[0];
+            return showDateStr === currentDateStr;
+        });
+        
+        console.log(`Found ${todaysShows.length} shows for today (${currentDateStr})`);
+        
+        // Sort today's shows by start time
+        todaysShows.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+        
+        // Find the current show - the one that has started but the next one hasn't
+        for (let i = 0; i < todaysShows.length; i++) {
+            const show = todaysShows[i];
+            const showStartTime = new Date(show.startTime);
+            
+            // If this show has started
+            if (actualNow >= showStartTime) {
+                // If there's a next show and it hasn't started yet
+                if (i < todaysShows.length - 1) {
+                    const nextShow = todaysShows[i + 1];
+                    const nextShowStartTime = new Date(nextShow.startTime);
+                    
+                    if (actualNow < nextShowStartTime) {
+                        currentOnAirShow = show;
+                        break;
+                    }
+                } else {
+                    // This is the last show of the day
+                    currentOnAirShow = show;
+                    break;
+                }
+            }
+        }
+        
+        if (currentOnAirShow) {
+            console.log(`Current on-air show: ${currentOnAirShow.title} at ${new Date(currentOnAirShow.startTime).toLocaleTimeString()}`);
+        } else {
+            console.log('No show currently on air');
+        }
+        
+        // Cache the current on-air show
+        this.currentOnAirShow = currentOnAirShow;
+        
         if (!isRefresh) {
             // FULL REBUILD - Clear existing content completely
             this.scheduleContainer.innerHTML = '';
@@ -464,8 +514,7 @@ class ScheduleManager {
                 // Create a date object from the ISO string
                 const showDate = new Date(show.startTime);
                 
-                // Use the show's assigned day info if available (from our enhanced debug data)
-                // This is the KEY FIX - we preserve the original day assignment
+                // Use the show's assigned day info if available
                 const dateKey = show._dateStr || showDate.toDateString();
                 
                 if (!groupedShows[dateKey]) {
@@ -511,7 +560,9 @@ class ScheduleManager {
                 // Add each show
                 shows.forEach(show => {
                     try {
-                        const showElement = this.createShowElement(show, actualNow, schedule);
+                        // For on-air detection, now check against our pre-determined currentOnAirShow
+                        const isOnAir = currentOnAirShow && show.startTime === currentOnAirShow.startTime;
+                        const showElement = this.createShowElement(show, isOnAir);
                         this.scheduleContainer.appendChild(showElement);
                     } catch (e) {
                         console.error('Failed to create show element:', e);
@@ -523,57 +574,40 @@ class ScheduleManager {
             // REFRESH ONLY - Just update the "on air" status of existing items
             console.log('Refreshing "On Air" status of existing schedule items');
             
-            // Get the current on-air show
-            let currentOnAirShow = null;
-            
-            // Process all schedule elements
+            // First, remove on-air class from all items
             existingItems.forEach(item => {
-                // Get show ID from the element (stored as data attribute)
-                const showId = item.getAttribute('data-show-id');
-                
-                if (!showId) {
-                    console.warn('Schedule item missing show ID');
-                    return;
-                }
-                
-                // Find the show in our schedule data
-                const show = schedule.find(s => String(s.id) === String(showId));
-                
-                if (!show) {
-                    console.warn(`Show with ID ${showId} not found in schedule data`);
-                    return;
-                }
-                
-                // Check if the show is on air
-                const isOnAir = this.isShowOnAir(show, actualNow, schedule);
-                
-                // Update the element's class
-                if (isOnAir) {
-                    item.classList.add('on-air');
-                    currentOnAirShow = show;
-                } else {
-                    item.classList.remove('on-air');
-                }
+                item.classList.remove('on-air');
             });
             
-            // Store the current on-air show for reference
-            this.currentOnAirShow = currentOnAirShow;
-            
-            // If we found an on-air show, scroll to it
-            if (currentOnAirShow && this.viewManager && this.viewManager.getCurrentTab() === 'schedule') {
-                // Find the element for the current show
-                const onAirElement = this.scheduleContainer.querySelector(`.schedule-item[data-show-id="${currentOnAirShow.id}"]`);
+            // If we have a current show, find and highlight it
+            if (currentOnAirShow) {
+                const currentShowStartTime = new Date(currentOnAirShow.startTime).toISOString();
+                
+                // Find the element for the current show using the unique show ID and start time
+                const onAirElement = Array.from(existingItems).find(item => {
+                    const itemId = item.getAttribute('data-show-id');
+                    const itemStartTime = item.getAttribute('data-start-time');
+                    return String(itemId) === String(currentOnAirShow.id) && itemStartTime === currentShowStartTime;
+                });
                 
                 if (onAirElement) {
-                    // Scroll to the element with a small offset
-                    onAirElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    onAirElement.classList.add('on-air');
+                    console.log(`Found and highlighted on-air show: ${currentOnAirShow.title}`);
+                    
+                    // Scroll to the element with a small offset if we're on the schedule tab
+                    if (this.viewManager && this.viewManager.getCurrentTab() === 'schedule') {
+                        onAirElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                } else {
+                    console.warn(`Could not find element for on-air show: ${currentOnAirShow.title}`);
                 }
             }
         }
         
         console.log('Schedule view update complete');
     }
-                        
+ 
+
     /**
      * Check if a show is currently on air
      */
@@ -670,22 +704,16 @@ class ScheduleManager {
     /**
      * Create a show element
      */
-    createShowElement(show, currentTime, allShows) {
+    createShowElement(show, isOnAir) {
         // Create the main container
         const element = document.createElement('div');
         
         try {
-            // Detect if show is currently on air
-            const isOnAir = this.isShowOnAir(show, currentTime, allShows);
             element.className = isOnAir ? 'schedule-item on-air' : 'schedule-item';
             
-            // Store this as the current on-air show if applicable
-            if (isOnAir) {
-                this.currentOnAirShow = show;
-            }
-            
-            // Add data attributes for debugging and identification
+            // Add data attributes for identification and updates
             element.setAttribute('data-show-id', show.id);
+            element.setAttribute('data-start-time', new Date(show.startTime).toISOString());
             
             if (show._assignedDay !== undefined) {
                 element.dataset.assignedDay = show._assignedDay;
@@ -736,7 +764,7 @@ class ScheduleManager {
         
         return element;
     }
-    
+        
     /**
      * Get the currently on-air show, if any
      */
