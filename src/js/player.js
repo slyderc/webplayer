@@ -159,6 +159,21 @@ class NowWavePlayer {
         if (this.viewManager.getCurrentTab() === 'recent') {
             this.updateRecentView();
         }
+        
+        // NEW: Update schedule view if active to refresh "On Air" status
+        if (this.viewManager.getCurrentTab() === 'schedule') {
+            this.updateScheduleOnAirStatus();
+        }
+    }
+    
+    // NEW: Method to update only the "On Air" status in the schedule without full reload
+    updateScheduleOnAirStatus() {
+        if (this.scheduleManager && this.scheduleManager.generatedSchedule) {
+            const now = new Date();
+            // Update the view using the existing schedule data but with current time
+            this.scheduleManager.updateScheduleView(this.scheduleManager.generatedSchedule, now);
+            console.log('Schedule "On Air" status updated due to metadata change');
+        }
     }
     
     handleArtworkLoad(imageUrl) {
@@ -205,4 +220,3 @@ class NowWavePlayer {
         this.uiManager.resetToDefault();
     }
 }
-

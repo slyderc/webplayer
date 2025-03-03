@@ -1,5 +1,5 @@
 /**
- * ScheduleManager - Enhanced version with timezone handling fix
+ * ScheduleManager - Enhanced version with improved On-Air detection
  */
 class ScheduleManager {
     constructor(options = {}) {
@@ -13,6 +13,7 @@ class ScheduleManager {
         this.scheduleData = null;
         this.lastFetchTime = 0;
         this.fetchError = false;
+        this.currentOnAirShow = null;
         
         // Cache DOM elements
         this.scheduleView = document.getElementById('scheduleView');
@@ -40,7 +41,7 @@ class ScheduleManager {
         this.scheduleView.appendChild(container);
         this.scheduleContainer = container;
         
-        // Initial schedule fetch
+        // Initial schedule fetch - using try/catch to ensure proper error handling
         this.fetchSchedule()
             .then(() => console.log('Initial schedule fetch complete'))
             .catch(err => console.error('Error during initial schedule fetch:', err));
@@ -92,7 +93,7 @@ class ScheduleManager {
     }
             
     /**
-     * Fetch schedule data
+     * Fetch schedule data with improved error handling
      */
     async fetchSchedule() {
         // Reset fetch error flag
@@ -198,12 +199,14 @@ class ScheduleManager {
             // Sort the schedule by start time
             generatedSchedule.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
             
-            // Debug output for generated shows
-            console.log('First 10 generated shows:');
-            generatedSchedule.slice(0, 10).forEach(show => {
-                const showDate = new Date(show.startTime);
-                console.log(`- ${show.title} (${show.id}) on ${showDate.toDateString()} at ${showDate.toLocaleTimeString()} (source: ${show.source})`);
-            });
+            // Debug output for first few generated shows
+            const showSample = generatedSchedule.slice(0, 5);
+            console.log('Sample of generated shows:', showSample.map(show => ({
+                title: show.title,
+                startTime: new Date(show.startTime).toLocaleString(),
+                dayOfWeek: new Date(show.startTime).getDay(),
+                presenter: show.presenter
+            })));
             
             // Cache the generated schedule for reuse
             this.generatedSchedule = generatedSchedule;
@@ -221,7 +224,7 @@ class ScheduleManager {
     }
                             
     /**
-     * Add weekly shows for a specific date - fixed to ensure correct day mapping
+     * Add weekly shows for a specific date
      */
     addWeeklyShows(schedule, date) {
         try {
@@ -246,7 +249,7 @@ class ScheduleManager {
                     // Explicitly log show details for debugging
                     console.log(`Checking show "${show.title}" (day=${show.day}) against current day ${dayOfWeek}`);
                     
-                    // Check if this show runs on this day of week - force numeric comparison
+                    // Check if this show runs on this day of week
                     if (Number(show.day) === dayOfWeek) {
                         console.log(`✓ Show "${show.title}" matches day ${dayOfWeek} (${dayNames[dayOfWeek]})`);
                         
@@ -427,7 +430,8 @@ class ScheduleManager {
     }
     
     /**
-     * Update the schedule view with generated schedule - FIXED TIMEZONE HANDLING
+     * Update the schedule view with generated schedule
+     * Enhanced to work both for full updates and on-air status updates only
      */
     updateScheduleView(schedule, actualNow) {
         console.log('⭐⭐⭐ Starting schedule view update ⭐⭐⭐');
@@ -438,77 +442,134 @@ class ScheduleManager {
             return;
         }
         
-        // Clear existing content completely
-        this.scheduleContainer.innerHTML = '';
-        
         if (!schedule || !schedule.length) {
             this.scheduleContainer.innerHTML = '<p class="no-data-message">No shows available</p>';
             return;
         }
         
-        // Group shows by date - USING PROPER DATE HANDLING
-        const groupedShows = {};
+        // Check if we already have schedule items rendered
+        const existingItems = this.scheduleContainer.querySelectorAll('.schedule-item');
+        const isRefresh = existingItems.length > 0;
         
-        schedule.forEach(show => {
-            if (!show.startTime) return;
+        if (!isRefresh) {
+            // FULL REBUILD - Clear existing content completely
+            this.scheduleContainer.innerHTML = '';
             
-            // Create a date object from the ISO string
-            const showDate = new Date(show.startTime);
+            // Group shows by date - USING PROPER DATE HANDLING
+            const groupedShows = {};
             
-            // Use the show's assigned day info if available (from our enhanced debug data)
-            // This is the KEY FIX - we preserve the original day assignment
-            const dateKey = show._dateStr || showDate.toDateString();
+            schedule.forEach(show => {
+                if (!show.startTime) return;
+                
+                // Create a date object from the ISO string
+                const showDate = new Date(show.startTime);
+                
+                // Use the show's assigned day info if available (from our enhanced debug data)
+                // This is the KEY FIX - we preserve the original day assignment
+                const dateKey = show._dateStr || showDate.toDateString();
+                
+                if (!groupedShows[dateKey]) {
+                    groupedShows[dateKey] = {
+                        date: showDate,
+                        shows: []
+                    };
+                }
+                
+                groupedShows[dateKey].shows.push(show);
+            });
             
-            if (!groupedShows[dateKey]) {
-                groupedShows[dateKey] = {
-                    date: showDate,
-                    shows: []
-                };
-            }
+            // Get date keys and sort chronologically
+            const dateKeys = Object.keys(groupedShows);
+            dateKeys.sort((a, b) => new Date(a) - new Date(b));
             
-            groupedShows[dateKey].shows.push(show);
-        });
-        
-        // Get date keys and sort chronologically
-        const dateKeys = Object.keys(groupedShows);
-        dateKeys.sort((a, b) => new Date(a) - new Date(b));
-        
-        console.log('Processing dates:', dateKeys);
-        
-        // Process each date group
-        dateKeys.forEach(dateKey => {
-            const dateGroup = groupedShows[dateKey];
-            const dateObj = dateGroup.date;
-            const shows = dateGroup.shows;
+            console.log('Processing dates:', dateKeys);
             
-            console.log(`Adding date header for ${dateKey} with ${shows.length} shows`);
+            // Process each date group
+            dateKeys.forEach(dateKey => {
+                const dateGroup = groupedShows[dateKey];
+                const dateObj = dateGroup.date;
+                const shows = dateGroup.shows;
+                
+                console.log(`Adding date header for ${dateKey} with ${shows.length} shows`);
+                
+                // Create date header
+                const dateHeader = document.createElement('div');
+                dateHeader.className = 'date-header';
+                
+                // Format date as "Day - MM/DD/YYYY"
+                const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dateObj.getDay()];
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                
+                dateHeader.innerHTML = `<h2>${dayName} - ${month}/${day}/${year}</h2>`;
+                this.scheduleContainer.appendChild(dateHeader);
+                
+                // Sort shows for this date by time
+                shows.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+                
+                // Add each show
+                shows.forEach(show => {
+                    try {
+                        const showElement = this.createShowElement(show, actualNow, schedule);
+                        this.scheduleContainer.appendChild(showElement);
+                    } catch (e) {
+                        console.error('Failed to create show element:', e);
+                    }
+                });
+            });
+        }
+        else {
+            // REFRESH ONLY - Just update the "on air" status of existing items
+            console.log('Refreshing "On Air" status of existing schedule items');
             
-            // Create date header
-            const dateHeader = document.createElement('div');
-            dateHeader.className = 'date-header';
+            // Get the current on-air show
+            let currentOnAirShow = null;
             
-            // Format date as "Day - MM/DD/YYYY"
-            const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dateObj.getDay()];
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            const year = dateObj.getFullYear();
-            
-            dateHeader.innerHTML = `<h2>${dayName} - ${month}/${day}/${year}</h2>`;
-            this.scheduleContainer.appendChild(dateHeader);
-            
-            // Sort shows for this date by time
-            shows.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-            
-            // Add each show
-            shows.forEach(show => {
-                try {
-                    const showElement = this.createShowElement(show, actualNow, schedule);
-                    this.scheduleContainer.appendChild(showElement);
-                } catch (e) {
-                    console.error('Failed to create show element:', e);
+            // Process all schedule elements
+            existingItems.forEach(item => {
+                // Get show ID from the element (stored as data attribute)
+                const showId = item.getAttribute('data-show-id');
+                
+                if (!showId) {
+                    console.warn('Schedule item missing show ID');
+                    return;
+                }
+                
+                // Find the show in our schedule data
+                const show = schedule.find(s => String(s.id) === String(showId));
+                
+                if (!show) {
+                    console.warn(`Show with ID ${showId} not found in schedule data`);
+                    return;
+                }
+                
+                // Check if the show is on air
+                const isOnAir = this.isShowOnAir(show, actualNow, schedule);
+                
+                // Update the element's class
+                if (isOnAir) {
+                    item.classList.add('on-air');
+                    currentOnAirShow = show;
+                } else {
+                    item.classList.remove('on-air');
                 }
             });
-        });
+            
+            // Store the current on-air show for reference
+            this.currentOnAirShow = currentOnAirShow;
+            
+            // If we found an on-air show, scroll to it
+            if (currentOnAirShow && this.viewManager && this.viewManager.getCurrentTab() === 'schedule') {
+                // Find the element for the current show
+                const onAirElement = this.scheduleContainer.querySelector(`.schedule-item[data-show-id="${currentOnAirShow.id}"]`);
+                
+                if (onAirElement) {
+                    // Scroll to the element with a small offset
+                    onAirElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
         
         console.log('Schedule view update complete');
     }
@@ -519,7 +580,7 @@ class ScheduleManager {
     isShowOnAir(show, currentTime, allShows) {
         try {
             // For debugging
-            const debugging = show.title.includes("Dark Side");
+            const debugging = show.title === "Tracks From the Dark Side";
             
             if (debugging) {
                 console.log("==== CHECKING ON-AIR STATUS FOR TRACKED SHOW ====");
@@ -618,7 +679,14 @@ class ScheduleManager {
             const isOnAir = this.isShowOnAir(show, currentTime, allShows);
             element.className = isOnAir ? 'schedule-item on-air' : 'schedule-item';
             
-            // Add data attributes for debugging
+            // Store this as the current on-air show if applicable
+            if (isOnAir) {
+                this.currentOnAirShow = show;
+            }
+            
+            // Add data attributes for debugging and identification
+            element.setAttribute('data-show-id', show.id);
+            
             if (show._assignedDay !== undefined) {
                 element.dataset.assignedDay = show._assignedDay;
                 element.dataset.dayName = show._dayName || '';
@@ -670,65 +738,35 @@ class ScheduleManager {
     }
     
     /**
-     * Debug utility function to analyze show timezones
+     * Get the currently on-air show, if any
      */
-    debugShowTimezones() {
-        if (!this.generatedSchedule) {
-            console.error('No schedule available to debug');
-            return;
+    getCurrentOnAirShow() {
+        // If we already have a cached on-air show, return it
+        if (this.currentOnAirShow) {
+            const now = new Date();
+            // Check if it's still on air
+            if (this.isShowOnAir(this.currentOnAirShow, now, this.generatedSchedule)) {
+                return this.currentOnAirShow;
+            }
         }
         
-        console.log('===== TIMEZONE DEBUG =====');
-        console.log('Browser timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
-        console.log('Local timezone offset:', new Date().getTimezoneOffset() / -60);
-        
-        // Group by day and analyze
-        const dayGroups = {};
-        
-        this.generatedSchedule.forEach(show => {
-            if (!show.startTime) return;
+        // Otherwise, find the current on-air show
+        if (this.generatedSchedule && this.generatedSchedule.length > 0) {
+            const now = new Date();
+            const onAirShow = this.generatedSchedule.find(show => 
+                this.isShowOnAir(show, now, this.generatedSchedule)
+            );
             
-            const showDate = new Date(show.startTime);
-            const dateStr = showDate.toDateString();
-            const dayNum = showDate.getDay();
-            
-            if (!dayGroups[dateStr]) {
-                dayGroups[dateStr] = {
-                    dayOfWeek: dayNum,
-                    dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayNum],
-                    shows: []
-                };
-            }
-            
-            dayGroups[dateStr].shows.push({
-                id: show.id,
-                title: show.title,
-                source: show.source,
-                assignedDay: show._assignedDay,
-                actualDay: dayNum,
-                dayMismatch: show._assignedDay !== undefined && show._assignedDay !== dayNum
-            });
-        });
+            // Cache it for future reference
+            this.currentOnAirShow = onAirShow || null;
+            return this.currentOnAirShow;
+        }
         
-        console.log('Day groups analysis:');
-        Object.entries(dayGroups).forEach(([dateStr, group]) => {
-            console.log(`${dateStr} (${group.dayName}) - ${group.shows.length} shows`);
-            
-            // Check for mismatches
-            const mismatches = group.shows.filter(s => s.dayMismatch);
-            if (mismatches.length > 0) {
-                console.warn(`⚠️ ${mismatches.length} shows with day mismatches:`);
-                mismatches.forEach(show => {
-                    console.warn(`  - ${show.title} (${show.id}): assigned to day ${show.assignedDay} but actually on day ${show.actualDay}`);
-                });
-            }
-        });
-        
-        console.log('========================');
+        return null;
     }
     
     /**
-     * Mock schedule data for testing - should NEVER be used in production
+     * Mock schedule data for testing - only use as last resort
      */
     async mockScheduleData() {
         console.warn('⚠️ Using mock schedule data - this should only happen in development ⚠️');
