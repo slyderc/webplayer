@@ -11,6 +11,7 @@ class NowWavePlayer {
             pollInterval: 30000,
             defaultVolume: 1.0,
             defaultArtwork: '/player/NWR_text_logo_angle.png',
+            cachedArtworkPath: '/player/ca/',
             defaultTitle: 'Now Wave Radio',
             defaultArtist: 'The Next Wave Today',
             defaultProgram: '🛜 NowWave.Radio',
@@ -33,23 +34,26 @@ class NowWavePlayer {
         
         // Initialize managers
         this.scheduleManager = new ScheduleManager();      
-        this.trackManager = new TrackManager({
-            maxRecentTracks: 25,
-            storageService: this.storageService
-        });
-        this.backgroundManager = new BackgroundManager();
-        this.uiManager = new UIManager(this.config);
-        this.viewManager = new ViewManager({
-            trackManager: this.trackManager
-        });
 
-        // Setup event handlers
+        this.trackManager = new TrackManager({
+            maxRecentTracks: 30,
+            storageService: this.storageService,
+            cachedArtworkPath: this.config.cachedArtworkPath,
+            defaultArtwork: this.config.defaultArtwork
+        });
+        
+        this.backgroundManager = new BackgroundManager();
+
+        this.uiManager = new UIManager(this.config);
+
+        this.viewManager = new ViewManager({
+            trackManager: this.trackManager,
+            cachedArtworkPath: this.config.cachedArtworkPath,
+            defaultArtwork: this.config.defaultArtwork
+        });
+        
         this.setupEventHandlers();
-        
-        // Start metadataService polling and handle updates
-        this.setupMetadataHandling();
-        
-        // Initialize to default state
+        this.setupMetadataHandling();       
         this.viewManager.switchTab('live');
         this.uiManager.resetToDefault();
     }
@@ -205,14 +209,20 @@ class NowWavePlayer {
             // It's already in the list, do nothing
             return;
         }
-        
+
+        const artworkUrls = this.trackManager.getArtworkUrl(track);
+
         // Create new track item HTML
         const trackItemHTML = `
             <div class="track-item" style="opacity: 0; transition: opacity 0.3s ease;">
                 <img class="track-artwork" 
-                    src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
+                    src="${artworkUrls.primaryUrl}" 
+                    data-fallback="${artworkUrls.fallbackUrl}"
+                         data-default="${artworkUrls.defaultUrl}"
+                         data-retry="0"
                     alt="${track.title} artwork"
-                    onerror="this.onerror=null; this.src='/player/NWR_text_logo_angle.png';">
+                    onerror="if(this.src !== this.dataset.fallback) { this.src = this.dataset.fallback; } 
+                            else if(this.src !== '${this.config.defaultArtwork}') { this.src = '${this.config.defaultArtwork}'; }">
                 <div class="track-info">
                     <p class="track-title">${track.title}</p>
                     <p class="track-artist">${track.artist}</p>

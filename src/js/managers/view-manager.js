@@ -89,27 +89,35 @@ class ViewManager {
         
         const container = this.views.recent.querySelector('#recentTracksContainer');
         
-        const tracksHTML = tracks.map(track => `
-            <div class="track-item">
-                <img class="track-artwork" 
-                     src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
-                     alt="${track.title} artwork">
-                <div class="track-info">
-                    <p class="track-title">${track.title}</p>
-                    <p class="track-artist">${track.artist}</p>
+        const tracksHTML = tracks.map(track => {
+            // Get artwork URLs with fallback support
+            const artworkUrls = this.options.trackManager.getArtworkUrl(track);
+            
+            return `
+                <div class="track-item">
+                    <img class="track-artwork" 
+                         src="${artworkUrls.primaryUrl}" 
+                         data-fallback="${artworkUrls.fallbackUrl}"
+                         alt="${track.title} artwork"
+                         onerror="if(this.src !== this.dataset.fallback) { this.src = this.dataset.fallback; } 
+                                  else if(this.src !== '${this.options.defaultArtwork}') { this.src = '${this.options.defaultArtwork}'; }">
+                    <div class="track-info">
+                        <p class="track-title">${track.title}</p>
+                        <p class="track-artist">${track.artist}</p>
+                    </div>
+                    <div class="track-actions">
+                        <button class="heart-button" 
+                                data-track-id="${track.id}"
+                                data-loved="${this.isTrackLoved(track.id)}">
+                            <svg class="heart-icon" viewBox="0 0 24 24">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                        </button>
+                        <span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>
+                    </div>
                 </div>
-                <div class="track-actions">
-                    <button class="heart-button" 
-                            data-track-id="${track.id}"
-                            data-loved="${this.isTrackLoved(track.id)}">
-                        <svg class="heart-icon" viewBox="0 0 24 24">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                    </button>
-                    <span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     
         container.innerHTML = tracksHTML;
         
@@ -151,37 +159,44 @@ class ViewManager {
         if (!favoritesView.querySelector('#favoritesTracksContainer')) {
             favoritesView.innerHTML = '<div id="favoritesTracksContainer"></div>';
         }
-        
+            
         const container = favoritesView.querySelector('#favoritesTracksContainer');
         
         // Generate HTML for favorites similar to recent tracks
-        const tracksHTML = tracks.map(track => `
-            <div class="track-item">
-                <img class="track-artwork" 
-                     src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
-                     alt="${track.title} artwork"
-                     onerror="this.onerror=null; this.src='/player/NWR_text_logo_angle.png';">
-                <div class="track-info">
-                    <p class="track-title">${track.title}</p>
-                    <p class="track-artist">${track.artist}</p>
-                </div>
-                <div class="track-actions">
-                    <button class="heart-button" 
-                            data-track-id="${track.id}"
-                            data-loved="true">
-                        <svg class="heart-icon" viewBox="0 0 24 24">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                    </button>
-                    ${track.played_at ? 
-                        `<span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>` : 
-                        '<span class="time-ago">Favorited</span>'}
-                </div>
-            </div>
-        `).join('');
+        const tracksHTML = tracks.map(track => {
+            // Get artwork URLs with fallback support
+            const artworkUrls = this.options.trackManager.getArtworkUrl(track);
             
+            return `
+                <div class="track-item">
+                    <img class="track-artwork" 
+                         src="${artworkUrls.primaryUrl}" 
+                         data-fallback="${artworkUrls.fallbackUrl}"
+                         alt="${track.title} artwork"
+                         onerror="if(this.src !== this.dataset.fallback) { this.src = this.dataset.fallback; } 
+                                  else if(this.src !== '${this.options.defaultArtwork}') { this.src = '${this.options.defaultArtwork}'; }">
+                    <div class="track-info">
+                        <p class="track-title">${track.title}</p>
+                        <p class="track-artist">${track.artist}</p>
+                    </div>
+                    <div class="track-actions">
+                        <button class="heart-button" 
+                                data-track-id="${track.id}"
+                                data-loved="true">
+                            <svg class="heart-icon" viewBox="0 0 24 24">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                        </button>
+                        ${track.played_at ? 
+                            `<span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>` : 
+                            '<span class="time-ago">Favorited</span>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
         container.innerHTML = tracksHTML;
-        
+            
         // Add click handlers for the heart buttons
         if (lovedCallback) {
             container.querySelectorAll('.heart-button').forEach(button => {

@@ -4,7 +4,9 @@
 class TrackManager {
     constructor(options = {}) {
         this.options = {
-            maxRecentTracks: 25,
+            maxRecentTracks: 30,
+            cachedArtworkPath: '/player/ca/',
+            defaultArtwork: '/player/NWR_text_logo_angle.png',    
             ...options
         };
         
@@ -34,9 +36,10 @@ class TrackManager {
             title: track.title,
             artist: track.artist,
             artwork_url: track.image,
+            artwork_hash: track.image_hash || window.generateHash(track.artist, track.title),
             played_at: new Date().toISOString()
         };
-
+    
         // Only add if it's different from the most recent track
         if (this.recentTracks.length === 0 || 
             this.recentTracks[0].id !== trackWithTimestamp.id) {
@@ -50,6 +53,29 @@ class TrackManager {
         }
         
         return false;
+    }
+        
+    getArtworkUrl(track) {
+        // Try the original URL first
+        let url = track.artwork_url;
+        
+        // If there's a hash, create a fallback URL
+        if (track.artwork_hash) {
+            const fallbackUrl = `${this.options.cachedArtworkPath}${track.artwork_hash}.jpg`;
+            
+            return {
+                primaryUrl: url || this.options.defaultArtwork,
+                fallbackUrl: fallbackUrl,
+                defaultUrl: this.options.defaultArtwork
+            };
+        }
+        
+        // If no hash, just return the url or default
+        return {
+            primaryUrl: url || this.options.defaultArtwork,
+            fallbackUrl: this.options.defaultArtwork,
+            defaultUrl: this.options.defaultArtwork
+        };
     }
     
     getRecentTracks() {
@@ -146,10 +172,9 @@ class TrackManager {
         const lovedTrackDetails = this.storageService.getItem('lovedTrackDetails', {});
     
         if (this.lovedTracks.has(trackId)) {
-            // Remove from loved tracks
+            // Remove from loved tracks - code remains the same
             this.lovedTracks.delete(trackId);
             
-            // Also remove from details if it exists
             if (lovedTrackDetails[trackId]) {
                 delete lovedTrackDetails[trackId];
                 this.storageService.setItem('lovedTrackDetails', lovedTrackDetails);
@@ -162,12 +187,13 @@ class TrackManager {
             const recentTrack = this.recentTracks.find(track => track.id === trackId);
             
             if (recentTrack) {
-                // Store detailed information
+                // Store detailed information including the hash
                 lovedTrackDetails[trackId] = {
                     id: trackId,
                     artist: recentTrack.artist,
                     title: recentTrack.title,
-                    artwork_url: recentTrack.artwork_url || '/player/NWR_text_logo_angle.png',
+                    artwork_url: recentTrack.artwork_url || this.options.defaultArtwork,
+                    artwork_hash: recentTrack.artwork_hash || window.generateHash(recentTrack.artist, recentTrack.title),
                     last_played: recentTrack.played_at
                 };
                 this.storageService.setItem('lovedTrackDetails', lovedTrackDetails);
@@ -178,11 +204,15 @@ class TrackManager {
                     const artist = parts.shift();
                     const title = parts.join('-');
                     
+                    // Generate hash for this track
+                    const hash = window.generateHash(artist, title);
+                    
                     lovedTrackDetails[trackId] = {
                         id: trackId,
                         artist: artist,
                         title: title,
-                        artwork_url: '/player/NWR_text_logo_angle.png',
+                        artwork_url: this.options.defaultArtwork,
+                        artwork_hash: hash,
                         last_played: new Date().toISOString() // Use current time
                     };
                     this.storageService.setItem('lovedTrackDetails', lovedTrackDetails);
@@ -195,7 +225,7 @@ class TrackManager {
         
         return this.lovedTracks.has(trackId);
     }
-        
+            
     isLoved(trackId) {
         return this.lovedTracks.has(trackId);
     }
@@ -222,6 +252,15 @@ class TrackManager {
         return 'just now';
     }
 
+    static generateHash(artist, title) {
+        const str = `${artist}-${title}`.toLowerCase();
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0; // Convert to 32bit integer
+        }
+        return Math.abs(hash).toString(16);
+    }
 
 }
 
@@ -232,3 +271,4 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TrackManager = TrackManager;
 }
 
+window.generateHash = TrackManager.generateHash;

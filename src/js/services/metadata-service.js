@@ -58,6 +58,11 @@ class MetadataService {
     
             const data = await response.json();
             
+            // Add image hash if not provided by server
+            if (!data.image_hash && data.title && data.artist) {
+                data.image_hash = window.generateHash(data.artist, data.title);
+            }
+            
             if (this.callbacks.onMetadataUpdate) {
                 this.callbacks.onMetadataUpdate(data);
             }
