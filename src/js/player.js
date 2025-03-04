@@ -146,19 +146,26 @@ class NowWavePlayer {
         }
         else if (this.viewManager.getCurrentTab() === 'favorites') {
             if (isLoved && isFromMainPlayer) {
-                // Add the newly favorited track from main player to the favorites list
+                // Get artwork URL with fallback logic
+                let artworkUrl = this.uiManager.elements.albumArt.src;
+                
+                // If the artwork is not loaded or displays an error, use the default
+                if (!artworkUrl || artworkUrl.includes('error') || this.uiManager.elements.albumArt.naturalWidth === 0) {
+                    artworkUrl = this.config.defaultArtwork;
+                }
+                
                 const currentTrack = {
                     id: trackId,
                     title: this.uiManager.elements.trackTitle.textContent,
                     artist: this.uiManager.elements.trackArtist.textContent,
-                    artwork_url: this.uiManager.elements.albumArt.src,
+                    artwork_url: artworkUrl,
                     played_at: new Date().toISOString(),
                     isLoved: true
                 };
                 
                 this.addNewFavoriteToView(currentTrack);
-            } 
-            else if (!isLoved) {
+            }
+                    else if (!isLoved) {
                 // Remove this track from the favorites view
                 this.removeTrackFromFavoritesView(trackId);
             }
@@ -204,7 +211,8 @@ class NowWavePlayer {
             <div class="track-item" style="opacity: 0; transition: opacity 0.3s ease;">
                 <img class="track-artwork" 
                     src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
-                    alt="${track.title} artwork">
+                    alt="${track.title} artwork"
+                    onerror="this.onerror=null; this.src='/player/NWR_text_logo_angle.png';">
                 <div class="track-info">
                     <p class="track-title">${track.title}</p>
                     <p class="track-artist">${track.artist}</p>

@@ -159,7 +159,8 @@ class ViewManager {
             <div class="track-item">
                 <img class="track-artwork" 
                      src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
-                     alt="${track.title} artwork">
+                     alt="${track.title} artwork"
+                     onerror="this.onerror=null; this.src='/player/NWR_text_logo_angle.png';">
                 <div class="track-info">
                     <p class="track-title">${track.title}</p>
                     <p class="track-artist">${track.artist}</p>
@@ -178,7 +179,7 @@ class ViewManager {
                 </div>
             </div>
         `).join('');
-        
+            
         container.innerHTML = tracksHTML;
         
         // Add click handlers for the heart buttons
