@@ -186,7 +186,39 @@ class ViewManager {
             container.querySelectorAll('.heart-button').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const trackId = e.currentTarget.dataset.trackId;
-                    lovedCallback(trackId);
+                    
+                    // Call the callback
+                    const isLoved = lovedCallback(trackId);
+                    
+                    // Update the visual state of the button
+                    e.currentTarget.dataset.loved = isLoved;
+                    
+                    // If unloved, consider removing it from the list or updating the UI
+                    if (!isLoved) {
+                        // Option 1: Remove the item from the DOM immediately
+                        const trackItem = e.currentTarget.closest('.track-item');
+                        if (trackItem) {
+                            // Add a fade-out effect
+                            trackItem.style.opacity = '0';
+                            trackItem.style.transition = 'opacity 0.3s ease';
+                            
+                            // Remove after animation
+                            setTimeout(() => {
+                                trackItem.remove();
+                                
+                                // Check if we need to show the empty state
+                                if (container.children.length === 0) {
+                                    favoritesView.innerHTML = `
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">❤️</div>
+                                            <h3>No Favorites Yet</h3>
+                                            <p>Click the heart icon next to a track while it's playing to add it to your favorites.</p>
+                                        </div>
+                                    `;
+                                }
+                            }, 300);
+                        }
+                    }
                 });
             });
         }

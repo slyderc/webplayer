@@ -132,8 +132,17 @@ class NowWavePlayer {
         if (this.viewManager.getCurrentTab() === 'recent') {
             this.updateRecentView();
         }
+        // If we're on the favorites tab and unloved a track, we may need to refresh
+        else if (this.viewManager.getCurrentTab() === 'favorites' && !isLoved) {
+            // We handle visual removal in the view manager now, 
+            // but could do a full refresh if needed:
+            // this.updateFavoritesView();
+        }
+        
+        // Return the updated state so event handlers know the current state
+        return isLoved;
     }
-    
+        
     handlePlayStateChange(isPlaying) {
         this.isPlaying = isPlaying;
         this.uiManager.updatePlayButton(isPlaying);
