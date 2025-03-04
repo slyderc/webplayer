@@ -1132,3 +1132,66 @@ body[data-active-tab="live"] .contact-button-container {
         height: calc(100vh - 200px);
     }
 }
+
+/* ==========================================================================
+   11. Favorites tab
+   ========================================================================== */
+
+/* Empty state styling for Favorites view */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    margin: 0 0 0.5rem 0;
+    color: white;
+}
+
+.empty-state p {
+    max-width: 300px;
+    line-height: 1.4;
+}
+
+/* Style for favorites view - ensure it matches recent view */
+#favoritesView {
+    overflow: hidden;
+    max-height: calc(100vh - 200px);
+}
+
+#favoritesTracksContainer {
+    overflow-y: auto;
+    height: 100%;
+    padding: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    padding-bottom: 100px; /* Add extra padding at the bottom */
+}
+
+#favoritesTracksContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+#favoritesTracksContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#favoritesTracksContainer::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+#favoritesTracksContainer .track-item:last-child {
+    margin-bottom: 80px;
+}

@@ -132,10 +132,66 @@ class ViewManager {
         this.views.catchup.innerHTML = data ? data : '<p>Past shows available on Mixcloud</p>';
     }
 
-    updateFavoritesView(data) {
-        this.views.favorites.innerHTML = data ? data : '<p>Your loved tracks will appear here</p>';
+    updateFavoritesView(tracks, lovedCallback) {
+        // Get the favorites view element
+        const favoritesView = this.views.favorites;
+        
+        if (!tracks || !tracks.length) {
+            favoritesView.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">❤️</div>
+                    <h3>No Favorites Yet</h3>
+                    <p>Click the heart icon next to a track while it's playing to add it to your favorites.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Create container if it doesn't exist
+        if (!favoritesView.querySelector('#favoritesTracksContainer')) {
+            favoritesView.innerHTML = '<div id="favoritesTracksContainer"></div>';
+        }
+        
+        const container = favoritesView.querySelector('#favoritesTracksContainer');
+        
+        // Generate HTML for favorites similar to recent tracks
+        const tracksHTML = tracks.map(track => `
+            <div class="track-item">
+                <img class="track-artwork" 
+                     src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
+                     alt="${track.title} artwork">
+                <div class="track-info">
+                    <p class="track-title">${track.title}</p>
+                    <p class="track-artist">${track.artist}</p>
+                </div>
+                <div class="track-actions">
+                    <button class="heart-button" 
+                            data-track-id="${track.id}"
+                            data-loved="true">
+                        <svg class="heart-icon" viewBox="0 0 24 24">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                    </button>
+                    ${track.played_at ? 
+                        `<span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>` : 
+                        '<span class="time-ago">Favorited</span>'}
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = tracksHTML;
+        
+        // Add click handlers for the heart buttons
+        if (lovedCallback) {
+            container.querySelectorAll('.heart-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const trackId = e.currentTarget.dataset.trackId;
+                    lovedCallback(trackId);
+                });
+            });
+        }
     }
-    
+        
     // Helper methods
     isTrackLoved(trackId) {
         if (this.options.trackManager) {

@@ -84,6 +84,10 @@ class NowWavePlayer {
                 } else {
                     console.error('Schedule manager not available');
                 }
+            })
+            .registerTabCallback('favorites', () => {
+                console.log('Favorites tab activated');
+                this.updateFavoritesView();
             });
     
         this.scheduleManager.initialize();
@@ -211,6 +215,14 @@ class NowWavePlayer {
                 true
             );
         }
+    }
+
+    updateFavoritesView() {
+        const tracks = this.trackManager.getLovedTracksWithDetails();
+        this.viewManager.updateFavoritesView(
+            tracks, 
+            (trackId) => this.toggleLove(trackId)
+        );
     }
     
     handleError() {
