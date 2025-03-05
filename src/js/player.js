@@ -163,6 +163,7 @@ class NowWavePlayer {
                     title: this.uiManager.elements.trackTitle.textContent,
                     artist: this.uiManager.elements.trackArtist.textContent,
                     artwork_url: artworkUrl,
+                    artwork_hash: window.generateHash(this.uiManager.elements.trackArtist.textContent, this.uiManager.elements.trackTitle.textContent),
                     played_at: new Date().toISOString(),
                     isLoved: true
                 };

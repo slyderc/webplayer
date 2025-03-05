@@ -102,6 +102,7 @@ class TrackManager {
                     artist: recentTrack.artist,
                     title: recentTrack.title,
                     artwork_url: recentTrack.artwork_url || '/player/NWR_text_logo_angle.png',
+                    artwork_hash: recentTrack.artwork_hash || window.generateHash(recentTrack.artist, recentTrack.title),
                     last_played: recentTrack.played_at
                 };
                 
@@ -117,6 +118,9 @@ class TrackManager {
             } 
             // If not in recent, check if we have stored details
             else if (lovedTrackDetails[trackId]) {
+                if (!lovedTrackDetails[trackId].artwork_hash) {
+                    lovedTrackDetails[trackId].artwork_hash = window.generateHash(lovedTrackDetails[trackId].artist, lovedTrackDetails[trackId].title);
+                }            
                 lovedTracksWithDetails.push({
                     ...lovedTrackDetails[trackId],
                     played_at: lovedTrackDetails[trackId].last_played,
@@ -134,6 +138,7 @@ class TrackManager {
                     artist: artist,
                     title: title,
                     artwork_url: '/player/NWR_text_logo_angle.png',
+                    artwork_hash: window.generateHash(artist, title),
                     last_played: null
                 };
                 
