@@ -607,10 +607,7 @@ class ScheduleManager {
         console.log('Schedule view update complete');
     }
  
-
-    /**
-     * Check if a show is currently on air
-     */
+    /* Check if a show is currently on air */
     isShowOnAir(show, currentTime, allShows) {
         try {
             // For debugging
