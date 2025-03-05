@@ -5,7 +5,7 @@ class MetadataService {
     constructor(options = {}) {
         this.options = {
             metadataUrl: 'https://nowwave.radio/player/publish/playlist.json',
-            pollInterval: 30000,
+            pollInterval: 5000,
             ...options
         };
         

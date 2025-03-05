@@ -5,7 +5,7 @@ class TrackManager {
     constructor(options = {}) {
         this.options = {
             maxRecentTracks: 30,
-            cachedArtworkPath: '/player/ca/',
+            cachedArtworkPath: '/player/publish/ca/',
             defaultArtwork: '/player/NWR_text_logo_angle.png',    
             ...options
         };
