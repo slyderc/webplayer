@@ -233,14 +233,14 @@ class NowWavePlayer {
         const trackItemHTML = `
             <div class="track-item" style="opacity: 0; transition: opacity 0.3s ease;">
                 <img class="track-artwork" 
-                    src="${artworkUrls.primaryUrl}" 
-                    data-fallback="${artworkUrls.fallbackUrl}"
-                    data-default="${artworkUrls.defaultUrl}"
+                    src="${track.artwork_url || '/player/NWR_text_logo_angle.png'}" 
+                    data-fallback="/player/publish/ca/${track.artwork_hash || 'default'}.jpg"
+                    data-default="/player/NWR_text_logo_angle.png"
                     data-retry="0"
                     alt="${track.title} artwork"
-                    onerror="if(this.dataset.retry < 1) { parseInt(this.dataset.retry) + 1; this.src = this.dataset.fallback; } 
-                            else if(this.src !== '${this.config.defaultArtwork}') { this.src = '${this.config.defaultArtwork}'; }">
-            <div class="track-info">
+                    onerror="if(parseInt(this.dataset.retry) < 1) { this.dataset.retry = '1'; this.src = this.dataset.fallback; } 
+                            else { this.src = '/player/NWR_text_logo_angle.png'; }">
+                <div class="track-info">
                 <p class="track-title">${track.title}</p>
                 <p class="track-artist">${track.artist}</p>
             </div>

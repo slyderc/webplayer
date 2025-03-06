@@ -54,7 +54,8 @@ class TrackManager {
         
         return false;
     }
-        
+
+    /*** original version including the global paths -- update existing with the global config path!
     getArtworkUrl(track) {
         // Try the original URL first
         let url = track.artwork_url;
@@ -78,7 +79,36 @@ class TrackManager {
             defaultUrl: this.options.defaultArtwork
         };
     }
-    
+***/
+
+    getArtworkUrl(track) {
+        // Try the original URL first
+        let url = track.artwork_url;
+        
+        // Default paths with absolute paths (starting with /)
+        const defaultArtwork = '/player/NWR_text_logo_angle.png';
+        const cachedArtworkPath = '/player/publish/ca/';
+        
+        // If there's a hash, create a fallback URL
+        if (track.artwork_hash) {
+            // Always use the absolute path and ensure no "undefined" can appear
+            const fallbackUrl = cachedArtworkPath + track.artwork_hash + '.jpg';
+            
+            return {
+                primaryUrl: url || defaultArtwork,
+                fallbackUrl: fallbackUrl,
+                defaultUrl: defaultArtwork
+            };
+        }
+        
+        // If no hash, just return the url or default
+        return {
+            primaryUrl: url || defaultArtwork,
+            fallbackUrl: defaultArtwork,
+            defaultUrl: defaultArtwork
+        };
+    }
+
     getRecentTracks() {
         return this.recentTracks;
     }
