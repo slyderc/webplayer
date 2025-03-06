@@ -61,6 +61,7 @@ class TrackManager {
         
         // If there's a hash, create a fallback URL
         if (track.artwork_hash) {
+            const cachePath = this.options.cachedArtworkPath;
             const fallbackUrl = `${this.options.cachedArtworkPath}${track.artwork_hash}.jpg`;
             
             return {

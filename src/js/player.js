@@ -238,7 +238,7 @@ class NowWavePlayer {
                     data-default="${artworkUrls.defaultUrl}"
                     data-retry="0"
                     alt="${track.title} artwork"
-                    onerror="if(this.dataset.retry < 1) { this.dataset.retry = 1; this.src = this.dataset.fallback; } 
+                    onerror="if(this.dataset.retry < 1) { parseInt(this.dataset.retry) + 1; this.src = this.dataset.fallback; } 
                             else if(this.src !== '${this.config.defaultArtwork}') { this.src = '${this.config.defaultArtwork}'; }">
             <div class="track-info">
                 <p class="track-title">${track.title}</p>
