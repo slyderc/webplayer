@@ -136,47 +136,36 @@ class NowWavePlayer {
         // Get the ID of the currently playing track
         const currentPlayingTrackId = `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
         
-        // IMPORTANT: Create metadata for the current track before calling toggleLove
-        // This ensures the hash is created and stored properly
-        if (isFromMainPlayer) {
-            const trackMetadata = {
-                id: trackId,
-                artist: this.uiManager.elements.trackArtist.textContent,
-                title: this.uiManager.elements.trackTitle.textContent,
-                // Generate hash before toggling love status
-                artwork_hash: window.generateHash(
-                    this.uiManager.elements.trackArtist.textContent,
-                    this.uiManager.elements.trackTitle.textContent
-                )
-            };
-            
-            // Pass this metadata to toggleLove
-            const isLoved = this.trackManager.toggleLove(trackId, trackMetadata);
-        } else {
-            // Standard toggle without extra metadata
-            const isLoved = this.trackManager.toggleLove(trackId);
-        }
+        // Toggle the love status in the track manager
+        const isLoved = this.trackManager.toggleLove(trackId);
         
-        // Get the updated love status
-        const isLoved = this.trackManager.isLoved(trackId);
-        
-        // Rest of the method remains the same...
+        // Only update the main player heart button if the toggled track is the currently playing track
         if (trackId === currentPlayingTrackId) {
             this.uiManager.updateLoveButton(isLoved);
         }
         
-        // Handle tab-specific updates...
+        // Handle tab-specific updates
         if (this.viewManager.getCurrentTab() === 'recent') {
             this.updateRecentView();
         }
         else if (this.viewManager.getCurrentTab() === 'favorites') {
             if (isLoved && isFromMainPlayer) {
-                // Get artwork URL with fallback logic
-                let artworkUrl = this.uiManager.elements.albumArt.src;
+                // Find the currently playing track in recent tracks to get original metadata
+                const recentTrack = this.trackManager.recentTracks.find(t => t.id === trackId);
                 
-                // If the artwork is not loaded or displays an error, use the default
-                if (!artworkUrl || artworkUrl.includes('error') || this.uiManager.elements.albumArt.naturalWidth === 0) {
-                    artworkUrl = this.config.defaultArtwork;
+                // Get artwork URL with proper fallback logic
+                let artworkUrl = recentTrack ? recentTrack.artwork_url : null;
+                
+                // If no recent track or no artwork_url, use the current display image
+                if (!artworkUrl) {
+                    artworkUrl = this.uiManager.elements.albumArt.src;
+                    
+                    // If the image is displaying an error or is the default, use the default
+                    if (artworkUrl.includes('error') || 
+                        artworkUrl.includes('NWR_text_logo_angle.png') || 
+                        this.uiManager.elements.albumArt.naturalWidth === 0) {
+                        artworkUrl = this.config.defaultArtwork;
+                    }
                 }
                 
                 const currentTrack = {
@@ -184,11 +173,11 @@ class NowWavePlayer {
                     title: this.uiManager.elements.trackTitle.textContent,
                     artist: this.uiManager.elements.trackArtist.textContent,
                     artwork_url: artworkUrl,
-                    // Add hash here too for consistency
-                    artwork_hash: window.generateHash(
-                        this.uiManager.elements.trackArtist.textContent,
-                        this.uiManager.elements.trackTitle.textContent
-                    ),
+                    artwork_hash: recentTrack ? recentTrack.artwork_hash : 
+                        window.generateHash(
+                            this.uiManager.elements.trackArtist.textContent,
+                            this.uiManager.elements.trackTitle.textContent
+                        ),
                     played_at: new Date().toISOString(),
                     isLoved: true
                 };
