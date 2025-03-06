@@ -150,12 +150,22 @@ class NowWavePlayer {
         }
         else if (this.viewManager.getCurrentTab() === 'favorites') {
             if (isLoved && isFromMainPlayer) {
-                // Get artwork URL with fallback logic
-                let artworkUrl = this.uiManager.elements.albumArt.src;
+                // Find the currently playing track in recent tracks to get original metadata
+                const recentTrack = this.trackManager.recentTracks.find(t => t.id === trackId);
                 
-                // If the artwork is not loaded or displays an error, use the default
-                if (!artworkUrl || artworkUrl.includes('error') || this.uiManager.elements.albumArt.naturalWidth === 0) {
-                    artworkUrl = this.config.defaultArtwork;
+                // Get artwork URL with proper fallback logic
+                let artworkUrl = recentTrack ? recentTrack.artwork_url : null;
+                
+                // If no recent track or no artwork_url, use the current display image
+                if (!artworkUrl) {
+                    artworkUrl = this.uiManager.elements.albumArt.src;
+                    
+                    // If the image is displaying an error or is the default, use the default
+                    if (artworkUrl.includes('error') || 
+                        artworkUrl.includes('NWR_text_logo_angle.png') || 
+                        this.uiManager.elements.albumArt.naturalWidth === 0) {
+                        artworkUrl = this.config.defaultArtwork;
+                    }
                 }
                 
                 const currentTrack = {
@@ -163,13 +173,18 @@ class NowWavePlayer {
                     title: this.uiManager.elements.trackTitle.textContent,
                     artist: this.uiManager.elements.trackArtist.textContent,
                     artwork_url: artworkUrl,
+                    artwork_hash: recentTrack ? recentTrack.artwork_hash : 
+                        window.generateHash(
+                            this.uiManager.elements.trackArtist.textContent,
+                            this.uiManager.elements.trackTitle.textContent
+                        ),
                     played_at: new Date().toISOString(),
                     isLoved: true
                 };
                 
                 this.addNewFavoriteToView(currentTrack);
             }
-                    else if (!isLoved) {
+            else if (!isLoved) {
                 // Remove this track from the favorites view
                 this.removeTrackFromFavoritesView(trackId);
             }
@@ -218,26 +233,26 @@ class NowWavePlayer {
                 <img class="track-artwork" 
                     src="${artworkUrls.primaryUrl}" 
                     data-fallback="${artworkUrls.fallbackUrl}"
-                         data-default="${artworkUrls.defaultUrl}"
-                         data-retry="0"
+                    data-default="${artworkUrls.defaultUrl}"
+                    data-retry="0"
                     alt="${track.title} artwork"
-                    onerror="if(this.src !== this.dataset.fallback) { this.src = this.dataset.fallback; } 
+                    onerror="if(this.dataset.retry < 1) { this.dataset.retry = 1; this.src = this.dataset.fallback; } 
                             else if(this.src !== '${this.config.defaultArtwork}') { this.src = '${this.config.defaultArtwork}'; }">
-                <div class="track-info">
-                    <p class="track-title">${track.title}</p>
-                    <p class="track-artist">${track.artist}</p>
-                </div>
-                <div class="track-actions">
-                    <button class="heart-button" 
-                            data-track-id="${track.id}"
-                            data-loved="true">
-                        <svg class="heart-icon" viewBox="0 0 24 24">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                    </button>
-                    <span class="time-ago">just now</span>
-                </div>
+            <div class="track-info">
+                <p class="track-title">${track.title}</p>
+                <p class="track-artist">${track.artist}</p>
             </div>
+            <div class="track-actions">
+                <button class="heart-button" 
+                        data-track-id="${track.id}"
+                        data-loved="true">
+                    <svg class="heart-icon" viewBox="0 0 24 24">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                </button>
+                <span class="time-ago">just now</span>
+            </div>
+        </div>
         `;
         
         // Create a container for the new item
