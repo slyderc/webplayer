@@ -136,15 +136,36 @@ class NowWavePlayer {
         // Get the ID of the currently playing track
         const currentPlayingTrackId = `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
         
-        // Toggle the love status in the track manager
-        const isLoved = this.trackManager.toggleLove(trackId);
+        // IMPORTANT: Create metadata for the current track before calling toggleLove
+        // This ensures the hash is created and stored properly
+        if (isFromMainPlayer) {
+            const trackMetadata = {
+                id: trackId,
+                artist: this.uiManager.elements.trackArtist.textContent,
+                title: this.uiManager.elements.trackTitle.textContent,
+                // Generate hash before toggling love status
+                artwork_hash: window.generateHash(
+                    this.uiManager.elements.trackArtist.textContent,
+                    this.uiManager.elements.trackTitle.textContent
+                )
+            };
+            
+            // Pass this metadata to toggleLove
+            const isLoved = this.trackManager.toggleLove(trackId, trackMetadata);
+        } else {
+            // Standard toggle without extra metadata
+            const isLoved = this.trackManager.toggleLove(trackId);
+        }
         
-        // Only update the main player heart button if the toggled track is the currently playing track
+        // Get the updated love status
+        const isLoved = this.trackManager.isLoved(trackId);
+        
+        // Rest of the method remains the same...
         if (trackId === currentPlayingTrackId) {
             this.uiManager.updateLoveButton(isLoved);
         }
         
-        // Handle tab-specific updates
+        // Handle tab-specific updates...
         if (this.viewManager.getCurrentTab() === 'recent') {
             this.updateRecentView();
         }
@@ -163,14 +184,18 @@ class NowWavePlayer {
                     title: this.uiManager.elements.trackTitle.textContent,
                     artist: this.uiManager.elements.trackArtist.textContent,
                     artwork_url: artworkUrl,
-                    artwork_hash: window.generateHash(this.uiManager.elements.trackArtist.textContent, this.uiManager.elements.trackTitle.textContent),
+                    // Add hash here too for consistency
+                    artwork_hash: window.generateHash(
+                        this.uiManager.elements.trackArtist.textContent,
+                        this.uiManager.elements.trackTitle.textContent
+                    ),
                     played_at: new Date().toISOString(),
                     isLoved: true
                 };
                 
                 this.addNewFavoriteToView(currentTrack);
             }
-                    else if (!isLoved) {
+            else if (!isLoved) {
                 // Remove this track from the favorites view
                 this.removeTrackFromFavoritesView(trackId);
             }
@@ -219,26 +244,26 @@ class NowWavePlayer {
                 <img class="track-artwork" 
                     src="${artworkUrls.primaryUrl}" 
                     data-fallback="${artworkUrls.fallbackUrl}"
-                         data-default="${artworkUrls.defaultUrl}"
-                         data-retry="0"
+                    data-default="${artworkUrls.defaultUrl}"
+                    data-retry="0"
                     alt="${track.title} artwork"
-                    onerror="if(this.src !== this.dataset.fallback) { this.src = this.dataset.fallback; } 
+                    onerror="if(this.dataset.retry < 1) { this.dataset.retry = 1; this.src = this.dataset.fallback; } 
                             else if(this.src !== '${this.config.defaultArtwork}') { this.src = '${this.config.defaultArtwork}'; }">
-                <div class="track-info">
-                    <p class="track-title">${track.title}</p>
-                    <p class="track-artist">${track.artist}</p>
-                </div>
-                <div class="track-actions">
-                    <button class="heart-button" 
-                            data-track-id="${track.id}"
-                            data-loved="true">
-                        <svg class="heart-icon" viewBox="0 0 24 24">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                    </button>
-                    <span class="time-ago">just now</span>
-                </div>
+            <div class="track-info">
+                <p class="track-title">${track.title}</p>
+                <p class="track-artist">${track.artist}</p>
             </div>
+            <div class="track-actions">
+                <button class="heart-button" 
+                        data-track-id="${track.id}"
+                        data-loved="true">
+                    <svg class="heart-icon" viewBox="0 0 24 24">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                </button>
+                <span class="time-ago">just now</span>
+            </div>
+        </div>
         `;
         
         // Create a container for the new item

@@ -172,12 +172,12 @@ class TrackManager {
         return lovedTracksWithDetails;
     }
     
-    toggleLove(trackId) {
+    toggleLove(trackId, trackMetadata = null) {
         // Get the current loved track details
         const lovedTrackDetails = this.storageService.getItem('lovedTrackDetails', {});
     
         if (this.lovedTracks.has(trackId)) {
-            // Remove from loved tracks - code remains the same
+            // Remove from loved tracks
             this.lovedTracks.delete(trackId);
             
             if (lovedTrackDetails[trackId]) {
@@ -188,39 +188,63 @@ class TrackManager {
             // Add to loved tracks
             this.lovedTracks.add(trackId);
             
-            // Try to find detailed information about this track
-            const recentTrack = this.recentTracks.find(track => track.id === trackId);
-            
-            if (recentTrack) {
-                // Store detailed information including the hash
+            // If trackMetadata is provided, use it directly
+            if (trackMetadata) {
+                // Ensure we have a hash
+                if (!trackMetadata.artwork_hash) {
+                    trackMetadata.artwork_hash = window.generateHash(
+                        trackMetadata.artist,
+                        trackMetadata.title
+                    );
+                }
+                
                 lovedTrackDetails[trackId] = {
                     id: trackId,
-                    artist: recentTrack.artist,
-                    title: recentTrack.title,
-                    artwork_url: recentTrack.artwork_url || this.options.defaultArtwork,
-                    artwork_hash: recentTrack.artwork_hash || window.generateHash(recentTrack.artist, recentTrack.title),
-                    last_played: recentTrack.played_at
+                    artist: trackMetadata.artist,
+                    title: trackMetadata.title,
+                    artwork_url: trackMetadata.artwork_url || this.options.defaultArtwork,
+                    artwork_hash: trackMetadata.artwork_hash,
+                    last_played: trackMetadata.played_at || new Date().toISOString()
                 };
+                
                 this.storageService.setItem('lovedTrackDetails', lovedTrackDetails);
-            } else {
-                // If not found in recent, try to parse from ID
-                const parts = trackId.split('-');
-                if (parts.length >= 2) {
-                    const artist = parts.shift();
-                    const title = parts.join('-');
-                    
-                    // Generate hash for this track
-                    const hash = window.generateHash(artist, title);
-                    
+            }
+            // Otherwise look for track info in recent tracks
+            else {
+                // Try to find detailed information about this track
+                const recentTrack = this.recentTracks.find(track => track.id === trackId);
+                
+                if (recentTrack) {
+                    // Store detailed information including the hash
                     lovedTrackDetails[trackId] = {
                         id: trackId,
-                        artist: artist,
-                        title: title,
-                        artwork_url: this.options.defaultArtwork,
-                        artwork_hash: hash,
-                        last_played: new Date().toISOString() // Use current time
+                        artist: recentTrack.artist,
+                        title: recentTrack.title,
+                        artwork_url: recentTrack.artwork_url || this.options.defaultArtwork,
+                        artwork_hash: recentTrack.artwork_hash || window.generateHash(recentTrack.artist, recentTrack.title),
+                        last_played: recentTrack.played_at
                     };
                     this.storageService.setItem('lovedTrackDetails', lovedTrackDetails);
+                } else {
+                    // If not found in recent, try to parse from ID
+                    const parts = trackId.split('-');
+                    if (parts.length >= 2) {
+                        const artist = parts.shift();
+                        const title = parts.join('-');
+                        
+                        // Generate hash for this track
+                        const hash = window.generateHash(artist, title);
+                        
+                        lovedTrackDetails[trackId] = {
+                            id: trackId,
+                            artist: artist,
+                            title: title,
+                            artwork_url: this.options.defaultArtwork,
+                            artwork_hash: hash,
+                            last_played: new Date().toISOString() // Use current time
+                        };
+                        this.storageService.setItem('lovedTrackDetails', lovedTrackDetails);
+                    }
                 }
             }
         }
@@ -230,7 +254,7 @@ class TrackManager {
         
         return this.lovedTracks.has(trackId);
     }
-            
+                
     isLoved(trackId) {
         return this.lovedTracks.has(trackId);
     }
