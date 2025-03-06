@@ -100,8 +100,15 @@ class ViewManager {
                          src="${artworkUrls.primaryUrl}" 
                          data-fallback="${artworkUrls.fallbackUrl}"
                          alt="${track.title} artwork"
-                         onerror="if(this.src !== this.dataset.fallback) { this.src = this.dataset.fallback; } 
-                                  else if(this.src !== '${this.options.defaultArtwork}') { this.src = '${this.options.defaultArtwork}'; }">
+                            onerror="if(this.dataset.retry === '0') { 
+                                    this.dataset.retry = '1'; 
+                                    this.src = this.dataset.fallback; 
+                                    } 
+                                    else { 
+                                    this.dataset.retry = '2'; 
+                                    this.src = '/player/NWR_text_logo_angle.png';
+                                    this.onerror = null; 
+                                    }">
                     <div class="track-info">
                         <p class="track-title">${track.title}</p>
                         <p class="track-artist">${track.artist}</p>
@@ -174,8 +181,15 @@ class ViewManager {
                          src="${artworkUrls.primaryUrl}" 
                          data-fallback="${artworkUrls.fallbackUrl}"
                          alt="${track.title} artwork"
-                         onerror="if(this.src !== this.dataset.fallback) { this.src = this.dataset.fallback; } 
-                                  else if(this.src !== '${this.options.defaultArtwork}') { this.src = '${this.options.defaultArtwork}'; }">
+                            onerror="if(this.dataset.retry === '0') { 
+                                    this.dataset.retry = '1'; 
+                                    this.src = this.dataset.fallback; 
+                                    } 
+                                    else { 
+                                    this.dataset.retry = '2'; 
+                                    this.src = '/player/NWR_text_logo_angle.png';
+                                    this.onerror = null; /* Prevent further errors */
+                                    }">
                     <div class="track-info">
                         <p class="track-title">${track.title}</p>
                         <p class="track-artist">${track.artist}</p>
