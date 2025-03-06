@@ -101,7 +101,7 @@ class TrackManager {
                     id: trackId,
                     artist: recentTrack.artist,
                     title: recentTrack.title,
-                    artwork_url: recentTrack.artwork_url || '/player/NWR_text_logo_angle.png',
+                    artwork_url: recentTrack.artwork_url || this.options.defaultArtwork,
                     artwork_hash: recentTrack.artwork_hash || window.generateHash(recentTrack.artist, recentTrack.title),
                     last_played: recentTrack.played_at
                 };
@@ -137,7 +137,7 @@ class TrackManager {
                     id: trackId,
                     artist: artist,
                     title: title,
-                    artwork_url: '/player/NWR_text_logo_angle.png',
+                    artwork_url: this.options.defaultArtwork,
                     artwork_hash: window.generateHash(artist, title),
                     last_played: null
                 };

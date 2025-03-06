@@ -2,7 +2,12 @@
  * BackgroundManager - Handles background image transitions
  */
 class BackgroundManager {
-    constructor() {
+    constructor(options = {}) {
+        this.options = {
+            defaultArtwork: '/player/NWR_text_logo_angle.png',
+            ...options
+        };
+        
         this.currentArtworkUrl = '';
         this.activeBackground = 1;
         this.setupBackgroundElements();
@@ -48,7 +53,7 @@ class BackgroundManager {
     updateBackground(imageUrl, currentTab, forceUpdate = false) {
         // Skip if it's the same URL or a default image, unless force update is requested
         if (!forceUpdate && (imageUrl === this.currentArtworkUrl || 
-            imageUrl.includes('NWR_text_logo_angle.png'))) {
+            imageUrl.includes(this.options.defaultArtwork))) {
             return;
         }
         
@@ -56,7 +61,7 @@ class BackgroundManager {
         this.currentArtworkUrl = imageUrl;
         
         // Don't update background if it's the default image
-        if (imageUrl.includes('NWR_text_logo_angle.png')) {
+        if (imageUrl.includes(this.options.defaultArtwork)) {
             return;
         }
         
@@ -88,4 +93,3 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
     window.BackgroundManager = BackgroundManager;
 }
-

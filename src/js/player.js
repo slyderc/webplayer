@@ -42,7 +42,9 @@ class NowWavePlayer {
             defaultArtwork: this.config.defaultArtwork
         });
         
-        this.backgroundManager = new BackgroundManager();
+        this.backgroundManager = new BackgroundManager({
+            defaultArtwork: this.config.defaultArtwork
+        });
 
         this.uiManager = new UIManager(this.config);
 
@@ -162,7 +164,7 @@ class NowWavePlayer {
                     
                     // If the image is displaying an error or is the default, use the default
                     if (artworkUrl.includes('error') || 
-                        artworkUrl.includes('NWR_text_logo_angle.png') || 
+                        artworkUrl.includes(this.config.defaultArtwork) || 
                         this.uiManager.elements.albumArt.naturalWidth === 0) {
                         artworkUrl = this.config.defaultArtwork;
                     }
@@ -420,7 +422,7 @@ class NowWavePlayer {
     updateLiveView() {
         // If switching to live tab, ensure background is updated
         if (this.backgroundManager.currentArtworkUrl && 
-            !this.backgroundManager.currentArtworkUrl.includes('NWR_text_logo_angle.png')) {
+            !this.backgroundManager.currentArtworkUrl.includes(this.config.defaultArtwork)) {
             this.backgroundManager.updateBackground(
                 this.backgroundManager.currentArtworkUrl,
                 'live',

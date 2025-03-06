@@ -4,6 +4,7 @@
 class ViewManager {
     constructor(options = {}) {
         this.options = {
+            defaultArtwork: '/player/NWR_text_logo_angle.png',
             ...options
         };
         
@@ -267,4 +268,3 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
     window.ViewManager = ViewManager;
 }
-
