@@ -28,6 +28,9 @@ class ViewManager {
             live: null
         };
         
+        // Add artwork zoom manager
+        this.artworkZoomManager = null;
+        
         this.attachTabListeners();
     }
     
@@ -76,6 +79,13 @@ class ViewManager {
     
     getCurrentTab() {
         return this.currentTab;
+    }
+    
+    // Initialize artwork zoom manager if not already initialized
+    initArtworkZoomManager() {
+        if (!this.artworkZoomManager && window.ArtworkZoomManager) {
+            this.artworkZoomManager = new ArtworkZoomManager();
+        }
     }
     
     // Helper methods for updating different views
@@ -142,6 +152,12 @@ class ViewManager {
                     lovedCallback(trackId);
                 });
             });
+        }
+        
+        // Initialize artwork zoom manager and add click handlers to artwork
+        this.initArtworkZoomManager();
+        if (this.artworkZoomManager) {
+            this.artworkZoomManager.addArtworkClickHandlers(container);
         }
     }
         
@@ -260,6 +276,12 @@ class ViewManager {
                     }
                 });
             });
+        }
+        
+        // Initialize artwork zoom manager and add click handlers to artwork
+        this.initArtworkZoomManager();
+        if (this.artworkZoomManager) {
+            this.artworkZoomManager.addArtworkClickHandlers(container);
         }
     }
         

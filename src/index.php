@@ -24,6 +24,7 @@ $jsLikeManagerVersion = filemtime(__DIR__ . '/js/managers/like-manager.js');
 $jsViewManagerVersion = filemtime(__DIR__ . '/js/managers/view-manager.js');
 $jsUIManagerVersion = filemtime(__DIR__ . '/js/managers/ui-manager.js');
 $jsScheduleManagerVersion = filemtime(__DIR__ . '/js/managers/schedule-manager.js');
+$jsArtworkZoomManagerVersion = filemtime(__DIR__ . '/js/managers/artwork-zoom-manager.js');
 
 // Core player files
 $jsPlayerVersion = filemtime(__DIR__ . '/js/player.js');
@@ -53,6 +54,7 @@ $audioLibs = $audioLibraries;
     <script src="./js/managers/background-manager.js?v=<?php echo $jsBackgroundManagerVersion; ?>"></script>
     <script src="./js/managers/like-manager.js?v=<?php echo $jsLikeManagerVersion; ?>"></script>
     <script src="./js/managers/track-manager.js?v=<?php echo $jsTrackManagerVersion; ?>"></script>
+    <script src="./js/managers/artwork-zoom-manager.js?v=<?php echo $jsArtworkZoomManagerVersion; ?>"></script>
     <script src="./js/managers/view-manager.js?v=<?php echo $jsViewManagerVersion; ?>"></script>
     <script src="./js/managers/ui-manager.js?v=<?php echo $jsUIManagerVersion; ?>"></script>
     <script src="./js/managers/schedule-manager.js?v=<?php echo $jsScheduleManagerVersion; ?>"></script>
@@ -203,6 +205,20 @@ $audioLibs = $audioLibraries;
             </div>
         </div>
     </div>
+    
+    <!-- Artwork Zoom Overlay -->
+    <div id="artworkZoomOverlay" class="artwork-zoom-overlay">
+        <div class="artwork-zoom-container">
+            <button id="closeArtworkZoom" class="close-button" aria-label="Close artwork view">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="artwork-zoom-content">
+                <img id="zoomedArtwork" src="" alt="Album artwork" class="zoomed-artwork">
+            </div>
+        </div>
+    </div>
 </body>
 </html>
-
