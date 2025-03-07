@@ -5,9 +5,11 @@ class ViewManager {
     constructor(options = {}) {
         this.options = {
             defaultArtwork: '/player/NWR_text_logo_angle.png',
+            trackManager: null,
+            likeManager: null,
             ...options
         };
-        
+            
         this.currentTab = 'live';
         this.tabs = document.getElementById('tabs');
         this.views = {
@@ -89,16 +91,17 @@ class ViewManager {
         }
         
         const container = this.views.recent.querySelector('#recentTracksContainer');
-        
+        const getArtworkUrlFrom = this.options.likeManager || this.options.trackManager;
         const tracksHTML = tracks.map(track => {
             // Get artwork URLs with fallback support
-            const artworkUrls = this.options.trackManager.getArtworkUrl(track);
+            const artworkUrls = getArtworkUrlFrom.getArtworkUrl(track);
             
             return `
                 <div class="track-item">
                     <img class="track-artwork" 
                          src="${artworkUrls.primaryUrl}" 
                          data-fallback="${artworkUrls.fallbackUrl}"
+                         data-default="/player/NWR_text_logo_angle.png"
                          data-retry="0"
                          alt="${track.title} artwork"
                             onerror="if(this.dataset.retry === '0') { 
@@ -258,17 +261,23 @@ class ViewManager {
         
     // Helper methods
     isTrackLoved(trackId) {
-        if (this.options.trackManager) {
+        // Use likeManager if available, otherwise fall back to trackManager
+        if (this.options.likeManager) {
+            return this.options.likeManager.isLoved(trackId);
+        } else if (this.options.trackManager) {
             return this.options.trackManager.isLoved(trackId);
         }
         return false;
     }
-    
+        
     formatTimeElapsed(date) {
-        if (this.options.trackManager) {
+        // Use likeManager if available, otherwise fall back to trackManager
+        if (this.options.likeManager) {
+            return this.options.likeManager.formatTimeElapsed(date);
+        } else if (this.options.trackManager) {
             return this.options.trackManager.formatTimeElapsed(date);
         }
-        
+            
         // Fallback implementation
         const seconds = Math.floor((new Date() - new Date(date)) / 1000);
         if (seconds < 60) return 'just now';

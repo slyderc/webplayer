@@ -41,7 +41,16 @@ class NowWavePlayer {
             cachedArtworkPath: this.config.cachedArtworkPath,
             defaultArtwork: this.config.defaultArtwork
         });
+
+        // Add new LikeManager for like functionality
+        this.likeManager = new LikeManager({
+            storageService: this.storageService,
+            defaultArtwork: this.config.defaultArtwork,
+            cachedArtworkPath: this.config.cachedArtworkPath
+        });
         
+        this.likeManager.addObserver(this);
+
         this.backgroundManager = new BackgroundManager({
             defaultArtwork: this.config.defaultArtwork
         });
@@ -50,6 +59,7 @@ class NowWavePlayer {
 
         this.viewManager = new ViewManager({
             trackManager: this.trackManager,
+            likeManager: this.likeManager,
             cachedArtworkPath: this.config.cachedArtworkPath,
             defaultArtwork: this.config.defaultArtwork
         });
@@ -126,78 +136,90 @@ class NowWavePlayer {
     }
     
     toggleLove(specificTrackId = null) {
-        // If specificTrackId is provided, we're toggling from a list view (Recent or Favorites tab)
-        // If not provided, we're toggling from the main player interface
-        
-        const isFromMainPlayer = (specificTrackId === null);
-        
-        // Get the ID of the track to toggle
+        // Get the track ID to toggle
         const trackId = specificTrackId || 
             `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
         
-        // Get the ID of the currently playing track
+        // Create track data if toggling from main player
+        let trackData = null;
+        if (!specificTrackId) {
+            trackData = this.getCurrentTrackData();
+        }
+        
+        // Toggle the like status in the manager
+        const isLoved = this.likeManager.toggleLove(trackId, trackData);
+        
+        // Return the new status (observer will handle UI updates)
+        return isLoved;
+    }
+
+    /* gets called when a track's like status changes */
+    onLikeStatusChanged(trackId, isLoved) {
         const currentPlayingTrackId = `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
         
-        // Toggle the love status in the track manager
-        const isLoved = this.trackManager.toggleLove(trackId);
-        
-        // Only update the main player heart button if the toggled track is the currently playing track
+        // Update main player UI if this is the current track
         if (trackId === currentPlayingTrackId) {
             this.uiManager.updateLoveButton(isLoved);
         }
         
-        // Handle tab-specific updates
-        if (this.viewManager.getCurrentTab() === 'recent') {
+        // Update view based on current tab
+        const currentTab = this.viewManager.getCurrentTab();
+        if (currentTab === 'recent') {
             this.updateRecentView();
-        }
-        else if (this.viewManager.getCurrentTab() === 'favorites') {
-            if (isLoved && isFromMainPlayer) {
-                // Find the currently playing track in recent tracks to get original metadata
-                const recentTrack = this.trackManager.recentTracks.find(t => t.id === trackId);
-                
-                // Get artwork URL with proper fallback logic
-                let artworkUrl = recentTrack ? recentTrack.artwork_url : null;
-                
-                // If no recent track or no artwork_url, use the current display image
-                if (!artworkUrl) {
-                    artworkUrl = this.uiManager.elements.albumArt.src;
-                    
-                    // If the image is displaying an error or is the default, use the default
-                    if (artworkUrl.includes('error') || 
-                        artworkUrl.includes(this.config.defaultArtwork) || 
-                        this.uiManager.elements.albumArt.naturalWidth === 0) {
-                        artworkUrl = this.config.defaultArtwork;
-                    }
+        } 
+        else if (currentTab === 'favorites') {
+            if (isLoved) {
+                // If liked from main player and it's not already in favorites view, add it
+                if (trackId === currentPlayingTrackId && 
+                    !this.viewManager.views.favorites.querySelector(`[data-track-id="${trackId}"]`)) {
+                    this.addNewFavoriteToView(this.getCurrentTrackData());
+                } else {
+                    // Otherwise refresh the entire view
+                    this.updateFavoritesView();
                 }
-                
-                const currentTrack = {
-                    id: trackId,
-                    title: this.uiManager.elements.trackTitle.textContent,
-                    artist: this.uiManager.elements.trackArtist.textContent,
-                    artwork_url: artworkUrl,
-                    artwork_hash: recentTrack ? recentTrack.artwork_hash : 
-                        window.generateHash(
-                            this.uiManager.elements.trackArtist.textContent,
-                            this.uiManager.elements.trackTitle.textContent
-                        ),
-                    played_at: new Date().toISOString(),
-                    isLoved: true
-                };
-                
-                this.addNewFavoriteToView(currentTrack);
-            }
-            else if (!isLoved) {
-                // Remove this track from the favorites view
+            } else {
+                // If unliked, remove from view
                 this.removeTrackFromFavoritesView(trackId);
             }
-        } else {
-            console.log('Liked from tab:', this.viewManager.getCurrentTab());
+        }
+    }
+
+     /* get current track data - used by onLikeStatusChanged method */
+    getCurrentTrackData() {
+        const trackId = `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
+        
+        // Try to find in recent tracks first
+        const recentTrack = this.trackManager.recentTracks.find(t => t.id === trackId);
+        
+        // Get artwork URL with proper fallback logic
+        let artworkUrl = recentTrack ? recentTrack.artwork_url : null;
+        
+        // If no recent track or no artwork_url, use the current display image
+        if (!artworkUrl) {
+            artworkUrl = this.uiManager.elements.albumArt.src;
+            
+            // If the image is displaying an error or is the default, use the default
+            if (artworkUrl.includes('error') || 
+                artworkUrl.includes(this.config.defaultArtwork) || 
+                this.uiManager.elements.albumArt.naturalWidth === 0) {
+                artworkUrl = this.config.defaultArtwork;
+            }
         }
         
-        // Return the updated state
-        return isLoved;
+        return {
+            id: trackId,
+            title: this.uiManager.elements.trackTitle.textContent,
+            artist: this.uiManager.elements.trackArtist.textContent,
+            artwork_url: artworkUrl,
+            artwork_hash: recentTrack ? recentTrack.artwork_hash : 
+                window.generateHash(
+                    this.uiManager.elements.trackArtist.textContent,
+                    this.uiManager.elements.trackTitle.textContent
+                ),
+            played_at: new Date().toISOString()
+        };
     }
-        
+
     /**
      * New method to add a single favorite to the view without refreshing the entire list
      */
@@ -452,7 +474,7 @@ class NowWavePlayer {
     }
 
     updateFavoritesView() {
-        const tracks = this.trackManager.getLovedTracksWithDetails();
+        const tracks = this.likeManager.getLovedTracksWithDetails(this.trackManager.recentTracks);
         this.viewManager.updateFavoritesView(
             tracks, 
             (trackId) => this.toggleLove(trackId)

@@ -20,6 +20,7 @@ $jsStorageServiceVersion = filemtime(__DIR__ . '/js/services/storage-service.js'
 // Managers
 $jsBackgroundManagerVersion = filemtime(__DIR__ . '/js/managers/background-manager.js');
 $jsTrackManagerVersion = filemtime(__DIR__ . '/js/managers/track-manager.js');
+$jsLikeManagerVersion = filemtime(__DIR__ . '/js/managers/like-manager.js');
 $jsViewManagerVersion = filemtime(__DIR__ . '/js/managers/view-manager.js');
 $jsUIManagerVersion = filemtime(__DIR__ . '/js/managers/ui-manager.js');
 $jsScheduleManagerVersion = filemtime(__DIR__ . '/js/managers/schedule-manager.js');
@@ -50,6 +51,7 @@ $audioLibs = $audioLibraries;
     
     <!-- Managers -->
     <script src="./js/managers/background-manager.js?v=<?php echo $jsBackgroundManagerVersion; ?>"></script>
+    <script src="./js/managers/like-manager.js?v=<?php echo $jsLikeManagerVersion; ?>"></script>
     <script src="./js/managers/track-manager.js?v=<?php echo $jsTrackManagerVersion; ?>"></script>
     <script src="./js/managers/view-manager.js?v=<?php echo $jsViewManagerVersion; ?>"></script>
     <script src="./js/managers/ui-manager.js?v=<?php echo $jsUIManagerVersion; ?>"></script>

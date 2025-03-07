@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make sure required dependencies are loaded
     const requiredDependencies = [
         'AudioService', 'MetadataService', 'StorageService', 
-        'BackgroundManager', 'TrackManager', 'ViewManager', 'UIManager'
+        'BackgroundManager', 'TrackManager', 'LikeManager', 'ViewManager', 'UIManager'
     ];
-    
+        
     const missingDependencies = requiredDependencies.filter(
         dep => typeof window[dep] === 'undefined'
     );
