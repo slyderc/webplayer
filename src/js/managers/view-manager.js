@@ -99,6 +99,7 @@ class ViewManager {
                     <img class="track-artwork" 
                          src="${artworkUrls.primaryUrl}" 
                          data-fallback="${artworkUrls.fallbackUrl}"
+                         data-retry="0"
                          alt="${track.title} artwork"
                             onerror="if(this.dataset.retry === '0') { 
                                     this.dataset.retry = '1'; 

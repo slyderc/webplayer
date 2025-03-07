@@ -228,7 +228,18 @@ class NowWavePlayer {
         }
 
         const artworkUrls = this.trackManager.getArtworkUrl(track);
-
+        console.log('Track image URLs:', {
+            primaryUrl: artworkUrls.primaryUrl,
+            fallbackUrl: artworkUrls.fallbackUrl,
+            defaultUrl: artworkUrls.defaultUrl,
+            trackInfo: {
+                id: track.id,
+                title: track.title,
+                artist: track.artist,
+                artwork_hash: track.artwork_hash
+            }
+        });
+        
         // Create new track item HTML
         const trackItemHTML = `
             <div class="track-item" style="opacity: 0; transition: opacity 0.3s ease;">
