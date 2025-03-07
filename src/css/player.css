@@ -539,7 +539,12 @@ body[data-active-tab="live"] .artwork-background {
 
 /* Apply common scrollable styles */
 #recentTracksContainer, #favoritesTracksContainer {
-    composes: scrollable-container;
+    overflow-y: auto;
+    height: 100%;
+    padding: var(--small-spacing);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
 }
 
 .track-item {
