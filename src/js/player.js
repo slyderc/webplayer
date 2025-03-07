@@ -35,22 +35,24 @@ class NowWavePlayer {
         // Initialize managers
         this.scheduleManager = new ScheduleManager();      
 
+        // Track manager now only handles recent tracks history
         this.trackManager = new TrackManager({
             maxRecentTracks: 30,
             storageService: this.storageService,
             cachedArtworkPath: this.config.cachedArtworkPath,
             defaultArtwork: this.config.defaultArtwork
         });
-
-        // Add new LikeManager for like functionality
+        
+        // New LikeManager handles all like functionality
         this.likeManager = new LikeManager({
             storageService: this.storageService,
             defaultArtwork: this.config.defaultArtwork,
             cachedArtworkPath: this.config.cachedArtworkPath
         });
         
+        // Register player as observer for like changes
         this.likeManager.addObserver(this);
-
+        
         this.backgroundManager = new BackgroundManager({
             defaultArtwork: this.config.defaultArtwork
         });
@@ -135,25 +137,9 @@ class NowWavePlayer {
         this.metadataService.startPolling(this.isPlaying);
     }
     
-    toggleLove(specificTrackId = null) {
-        // Get the track ID to toggle
-        const trackId = specificTrackId || 
-            `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
-        
-        // Create track data if toggling from main player
-        let trackData = null;
-        if (!specificTrackId) {
-            trackData = this.getCurrentTrackData();
-        }
-        
-        // Toggle the like status in the manager
-        const isLoved = this.likeManager.toggleLove(trackId, trackData);
-        
-        // Return the new status (observer will handle UI updates)
-        return isLoved;
-    }
-
-    /* gets called when a track's like status changes */
+    /**
+     * Observer method that gets called when a track's like status changes
+     */
     onLikeStatusChanged(trackId, isLoved) {
         const currentPlayingTrackId = `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
         
@@ -183,8 +169,34 @@ class NowWavePlayer {
             }
         }
     }
-
-     /* get current track data - used by onLikeStatusChanged method */
+    
+    /**
+     * Simplified toggleLove method that uses LikeManager
+     */
+    toggleLove(specificTrackId = null) {
+        // Get the track ID to toggle
+        const trackId = specificTrackId || 
+            `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
+        
+        // Create track data if toggling from main player
+        let trackData = null;
+        if (!specificTrackId) {
+            trackData = this.getCurrentTrackData();
+        }
+        
+        // Toggle the like status in the manager
+        const isLoved = this.likeManager.toggleLove(trackId, trackData);
+        
+        // Log which tab the like came from (for debugging)
+        console.log('Liked from tab:', this.viewManager.getCurrentTab());
+        
+        // Return the new status (observer will handle UI updates)
+        return isLoved;
+    }
+    
+    /**
+     * Helper method to get current track data
+     */
     getCurrentTrackData() {
         const trackId = `${this.uiManager.elements.trackArtist.textContent}-${this.uiManager.elements.trackTitle.textContent}`;
         
@@ -212,16 +224,16 @@ class NowWavePlayer {
             artist: this.uiManager.elements.trackArtist.textContent,
             artwork_url: artworkUrl,
             artwork_hash: recentTrack ? recentTrack.artwork_hash : 
-                window.generateHash(
+                this.likeManager.generateHash(
                     this.uiManager.elements.trackArtist.textContent,
                     this.uiManager.elements.trackTitle.textContent
                 ),
             played_at: new Date().toISOString()
         };
     }
-
+        
     /**
-     * New method to add a single favorite to the view without refreshing the entire list
+     * Method to add a single favorite to the view without refreshing the entire list
      */
     addNewFavoriteToView(track) {
         // Check if we're on the favorites tab
@@ -251,7 +263,8 @@ class NowWavePlayer {
             return;
         }
 
-        const artworkUrls = this.trackManager.getArtworkUrl(track);
+        // Use likeManager for artwork URLs
+        const artworkUrls = this.likeManager.getArtworkUrl(track);
         console.log('Track image URLs:', {
             primaryUrl: artworkUrls.primaryUrl,
             fallbackUrl: artworkUrls.fallbackUrl,
@@ -411,22 +424,22 @@ class NowWavePlayer {
         // Update UI with new track data
         this.uiManager.updateTrackInfo(data);
         
-        // Update love button state
+        // Update love button state - now using likeManager
         const trackId = `${data.artist}-${data.title}`;
-        this.uiManager.updateLoveButton(this.trackManager.isLoved(trackId));
+        this.uiManager.updateLoveButton(this.likeManager.isLoved(trackId));
         
         // Update recent view if active
         if (this.viewManager.getCurrentTab() === 'recent') {
             this.updateRecentView();
         }
         
-        // NEW: Update schedule view if active to refresh "On Air" status
+        // Update schedule view if active to refresh "On Air" status
         if (this.viewManager.getCurrentTab() === 'schedule') {
             this.updateScheduleOnAirStatus();
         }
     }
     
-    // NEW: Method to update only the "On Air" status in the schedule without full reload
+    // Method to update only the "On Air" status in the schedule without full reload
     updateScheduleOnAirStatus() {
         if (this.scheduleManager && this.scheduleManager.generatedSchedule) {
             const now = new Date();
@@ -473,6 +486,7 @@ class NowWavePlayer {
         }
     }
 
+    // Updated to use likeManager for getting loved tracks
     updateFavoritesView() {
         const tracks = this.likeManager.getLovedTracksWithDetails(this.trackManager.recentTracks);
         this.viewManager.updateFavoritesView(

@@ -6,10 +6,10 @@ class ViewManager {
         this.options = {
             defaultArtwork: '/player/NWR_text_logo_angle.png',
             trackManager: null,
-            likeManager: null,
+            likeManager: null,  // New: Added likeManager option
             ...options
         };
-            
+        
         this.currentTab = 'live';
         this.tabs = document.getElementById('tabs');
         this.views = {
@@ -91,28 +91,29 @@ class ViewManager {
         }
         
         const container = this.views.recent.querySelector('#recentTracksContainer');
-        const getArtworkUrlFrom = this.options.likeManager || this.options.trackManager;
+        
         const tracksHTML = tracks.map(track => {
-            // Get artwork URLs with fallback support
-            const artworkUrls = getArtworkUrlFrom.getArtworkUrl(track);
+            // Choose appropriate manager for artwork URLs
+            const artworkManager = this.options.likeManager || this.options.trackManager;
+            const artworkUrls = artworkManager.getArtworkUrl(track);
             
             return `
                 <div class="track-item">
                     <img class="track-artwork" 
                          src="${artworkUrls.primaryUrl}" 
                          data-fallback="${artworkUrls.fallbackUrl}"
-                         data-default="/player/NWR_text_logo_angle.png"
+                         data-default="${artworkUrls.defaultUrl}"
                          data-retry="0"
                          alt="${track.title} artwork"
-                            onerror="if(this.dataset.retry === '0') { 
-                                    this.dataset.retry = '1'; 
-                                    this.src = this.dataset.fallback; 
-                                    } 
-                                    else { 
-                                    this.dataset.retry = '2'; 
-                                    this.src = '/player/NWR_text_logo_angle.png';
-                                    this.onerror = null; 
-                                    }">
+                         onerror="if(this.dataset.retry === '0') { 
+                                this.dataset.retry = '1'; 
+                                this.src = this.dataset.fallback; 
+                                } 
+                                else { 
+                                this.dataset.retry = '2'; 
+                                this.src = '/player/NWR_text_logo_angle.png';
+                                this.onerror = null; 
+                                }">
                     <div class="track-info">
                         <p class="track-title">${track.title}</p>
                         <p class="track-artist">${track.artist}</p>
@@ -176,24 +177,27 @@ class ViewManager {
         
         // Generate HTML for favorites similar to recent tracks
         const tracksHTML = tracks.map(track => {
-            // Get artwork URLs with fallback support
-            const artworkUrls = this.options.trackManager.getArtworkUrl(track);
+            // Choose appropriate manager for artwork URLs
+            const artworkManager = this.options.likeManager || this.options.trackManager;
+            const artworkUrls = artworkManager.getArtworkUrl(track);
             
             return `
                 <div class="track-item">
                     <img class="track-artwork" 
                          src="${artworkUrls.primaryUrl}" 
                          data-fallback="${artworkUrls.fallbackUrl}"
+                         data-default="${artworkUrls.defaultUrl}"
+                         data-retry="0"
                          alt="${track.title} artwork"
-                            onerror="if(this.dataset.retry === '0') { 
-                                    this.dataset.retry = '1'; 
-                                    this.src = this.dataset.fallback; 
-                                    } 
-                                    else { 
-                                    this.dataset.retry = '2'; 
-                                    this.src = '/player/NWR_text_logo_angle.png';
-                                    this.onerror = null; /* Prevent further errors */
-                                    }">
+                         onerror="if(this.dataset.retry === '0') { 
+                                this.dataset.retry = '1'; 
+                                this.src = this.dataset.fallback; 
+                                } 
+                                else { 
+                                this.dataset.retry = '2'; 
+                                this.src = '/player/NWR_text_logo_angle.png';
+                                this.onerror = null; /* Prevent further errors */
+                                }">
                     <div class="track-info">
                         <p class="track-title">${track.title}</p>
                         <p class="track-artist">${track.artist}</p>
@@ -259,9 +263,8 @@ class ViewManager {
         }
     }
         
-    // Helper methods
+    // Helper methods - Updated to use likeManager when available
     isTrackLoved(trackId) {
-        // Use likeManager if available, otherwise fall back to trackManager
         if (this.options.likeManager) {
             return this.options.likeManager.isLoved(trackId);
         } else if (this.options.trackManager) {
@@ -269,15 +272,14 @@ class ViewManager {
         }
         return false;
     }
-        
+    
     formatTimeElapsed(date) {
-        // Use likeManager if available, otherwise fall back to trackManager
         if (this.options.likeManager) {
             return this.options.likeManager.formatTimeElapsed(date);
         } else if (this.options.trackManager) {
             return this.options.trackManager.formatTimeElapsed(date);
         }
-            
+        
         // Fallback implementation
         const seconds = Math.floor((new Date() - new Date(date)) / 1000);
         if (seconds < 60) return 'just now';
