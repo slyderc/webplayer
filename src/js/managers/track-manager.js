@@ -1,5 +1,5 @@
 /**
- * TrackManager - Manages track history and loved tracks
+ * TrackManager - Manages track history (recent tracks)
  */
 class TrackManager {
     constructor(options = {}) {
@@ -12,9 +12,6 @@ class TrackManager {
         
         this.recentTracks = [];
         this.storageService = options.storageService || new StorageService();
-        
-        // Load loved tracks from storage
-        this.loadLovedTracks();
     }
     
     addTrackToHistory(track) {
@@ -43,16 +40,10 @@ class TrackManager {
         
         return false;
     }
-
+        
     getArtworkUrl(track) {
         // Try the original URL first
         let url = track.artwork_url;
-
-        console.log('getArtworkUrl called with:', {
-            track_id: track.id,
-            artwork_url: track.artwork_url,
-            artwork_hash: track.artwork_hash
-        });
     
         // Default paths with absolute paths (starting with /)
         const defaultArtwork = '/player/NWR_text_logo_angle.png';
@@ -60,7 +51,7 @@ class TrackManager {
         
         // If there's a hash, create a fallback URL
         if (track.artwork_hash) {
-            // Always use the absolute path and ensure no "undefined" can appear
+            // Always use the absolute path
             const fallbackUrl = cachedArtworkPath + track.artwork_hash + '.jpg';
             
             return {
@@ -81,10 +72,10 @@ class TrackManager {
     getRecentTracks() {
         return this.recentTracks;
     }
-
+    
     formatTimeElapsed(date) {
         const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-
+        
         const intervals = {
             year: 31536000,
             month: 2592000,
@@ -100,7 +91,7 @@ class TrackManager {
                 return `${interval} ${unit}${interval !== 1 ? 's' : ''} ago`;
             }
         }
-
+        
         return 'just now';
     }
 
@@ -122,4 +113,5 @@ if (typeof module !== 'undefined' && module.exports) {
     window.TrackManager = TrackManager;
 }
 
+// Keep this for backward compatibility
 window.generateHash = TrackManager.generateHash;
