@@ -9,6 +9,7 @@ class ArtworkZoomManager {
         this.zoomContent = this.overlay ? this.overlay.querySelector('.artwork-zoom-content') : null;
         
         this.currentArtwork = null;
+        this.isAnimating = false;
         
         this.setupEventListeners();
     }
@@ -34,10 +35,25 @@ class ArtworkZoomManager {
                 this.hideOverlay();
             }
         });
+        
+        // Handle animation end events
+        if (this.zoomContent) {
+            this.zoomContent.addEventListener('animationend', (e) => {
+                // Reset animation classes when animations complete
+                if (e.animationName === 'zoom-out') {
+                    this.completeHideOverlay();
+                } else if (e.animationName === 'zoom-in') {
+                    this.zoomContent.classList.remove('zooming-in');
+                }
+                this.isAnimating = false;
+            });
+        }
     }
     
     showOverlay(imageElement) {
-        if (!this.overlay || !this.zoomedImage || !imageElement) return;
+        if (!this.overlay || !this.zoomedImage || !imageElement || this.isAnimating) return;
+        
+        this.isAnimating = true;
         
         // Save reference to the clicked artwork
         this.currentArtwork = imageElement;
@@ -51,36 +67,61 @@ class ArtworkZoomManager {
             srcUrl = imageElement.src;
         }
         
-        this.zoomedImage.src = srcUrl;
-        this.zoomedImage.alt = imageElement.alt || 'Album artwork';
-        
-        // Show overlay
-        this.overlay.classList.add('active');
-        if (this.zoomContent) {
-            this.zoomContent.classList.add('zooming-in');
+        // Preload the image before showing
+        const img = new Image();
+        img.onload = () => {
+            // Set image src only after it's loaded
+            this.zoomedImage.src = srcUrl;
+            this.zoomedImage.alt = imageElement.alt || 'Album artwork';
             
-            // Remove animation class after animation completes
-            setTimeout(() => {
-                this.zoomContent.classList.remove('zooming-in');
-            }, 300);
-        }
+            // Show overlay
+            this.overlay.classList.add('active');
+            if (this.zoomContent) {
+                this.zoomContent.classList.add('zooming-in');
+            }
+        };
+        img.onerror = () => {
+            // In case of error, try the original src
+            this.zoomedImage.src = imageElement.src;
+            this.zoomedImage.alt = imageElement.alt || 'Album artwork';
+            
+            // Show overlay
+            this.overlay.classList.add('active');
+            if (this.zoomContent) {
+                this.zoomContent.classList.add('zooming-in');
+            }
+        };
+        img.src = srcUrl;
     }
     
     hideOverlay() {
-        if (!this.overlay) return;
+        if (!this.overlay || this.isAnimating) return;
+        
+        this.isAnimating = true;
         
         // Add zoom out animation
         if (this.zoomContent) {
             this.zoomContent.classList.add('zooming-out');
+        } else {
+            // If no zoom content element, just complete the hide
+            this.completeHideOverlay();
+        }
+    }
+    
+    completeHideOverlay() {
+        // Hide overlay completely
+        this.overlay.classList.remove('active');
+        
+        // Clean up animation classes
+        if (this.zoomContent) {
+            this.zoomContent.classList.remove('zooming-out');
         }
         
-        // Hide overlay after animation completes
+        // Clear the image source after the transition
         setTimeout(() => {
-            this.overlay.classList.remove('active');
-            if (this.zoomContent) {
-                this.zoomContent.classList.remove('zooming-out');
-            }
-        }, 300);
+            // This helps prevent any visible "flash" of the image
+            this.zoomedImage.src = '';
+        }, 50);
     }
     
     // Method to add click handlers to artwork in a container

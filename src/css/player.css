@@ -1296,14 +1296,17 @@ body[data-active-tab="live"] .contact-button-container {
     justify-content: center;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s; /* Delay visibility change */
     -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
+    pointer-events: none; /* Prevent interaction when hidden */
 }
 
 .artwork-zoom-overlay.active {
     opacity: 1;
     visibility: visible;
+    transition: opacity 0.3s ease, visibility 0s linear; /* No delay for visibility when showing */
+    pointer-events: auto;
 }
 
 .artwork-zoom-container {
@@ -1347,6 +1350,7 @@ body[data-active-tab="live"] .contact-button-container {
 .artwork-zoom-content {
     transform-origin: center;
     transition: all 0.3s ease;
+    will-change: transform, opacity; /* Hardware acceleration */
 }
 
 .artwork-zoom-content.zooming-in {
@@ -1365,6 +1369,11 @@ body[data-active-tab="live"] .contact-button-container {
 @keyframes zoom-out {
     from { transform: scale(1); opacity: 1; }
     to { transform: scale(0.5); opacity: 0; }
+}
+
+/* Hide the zoomed artwork immediately when overlay is not active */
+.artwork-zoom-overlay:not(.active) .zoomed-artwork {
+    opacity: 0;
 }
 
 /* Make track artwork clickable */
