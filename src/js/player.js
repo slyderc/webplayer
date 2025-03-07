@@ -190,6 +190,8 @@ class NowWavePlayer {
                 // Remove this track from the favorites view
                 this.removeTrackFromFavoritesView(trackId);
             }
+        } else {
+            console.log('Liked from tab:', this.viewManager.getCurrentTab());
         }
         
         // Return the updated state

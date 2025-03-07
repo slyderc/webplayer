@@ -84,7 +84,13 @@ class TrackManager {
     getArtworkUrl(track) {
         // Try the original URL first
         let url = track.artwork_url;
-        
+
+        console.log('getArtworkUrl called with:', {
+            track_id: track.id,
+            artwork_url: track.artwork_url,
+            artwork_hash: track.artwork_hash
+        });
+    
         // Default paths with absolute paths (starting with /)
         const defaultArtwork = '/player/NWR_text_logo_angle.png';
         const cachedArtworkPath = '/player/publish/ca/';
