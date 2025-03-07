@@ -3,20 +3,98 @@
    ========================================================================== */
 
    :root {
+    /* Core Colors */
     --primary-color: #1e73be;
     --secondary-color: #475569;
-    --min-window-width: 400px;  /* Minimum window width */
-    --min-window-height: 670px; /* Minimum window height */
+    --dark-bg-color: #000000;
+    --light-text-color: #ffffff;
+    --medium-text-color: rgba(255, 255, 255, 0.7);
+    --light-text-color-transparent: rgba(255, 255, 255, 0.5);
+    --light-border-color: rgba(255, 255, 255, 0.1);
+    
+    /* UI Element Colors */
+    --tab-active-bg: rgba(255, 255, 255, 0.2);
+    --card-bg-color: rgba(30, 30, 30, 0.4);
+    --card-hover-color: rgba(40, 40, 40, 0.6);
+    --on-air-color: #1e40af;
+    --on-air-bg: rgba(30, 64, 175, 0.3);
+    --on-air-hover-bg: rgba(30, 64, 175, 0.4);
+    --love-button-color: #ef4444;
+    --success-color: #10b981;
+    --contact-button-bg: rgba(23, 55, 94, 0.6);
+    --contact-button-hover-bg: rgba(37, 99, 235, 1);
+    --player-bar-bg: rgba(15, 15, 15, 0.85);
+    
+    /* Spacing */
+    --standard-spacing: 1rem;
+    --small-spacing: 0.5rem;
+    --tiny-spacing: 0.25rem;
+    
+    /* Dimensions */
+    --min-window-width: 400px;
+    --min-window-height: 670px;
+    
+    /* Border Radius */
+    --standard-radius: 4px;
+    --large-radius: 8px;
+    --round-radius: 20px;
+    
+    /* Shadows */
+    --standard-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --hover-shadow: 0 6px 8px rgba(0, 0, 0, 0.25);
+    --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Base Styles and Resets */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     margin: 0;
-    background: #000000;
+    background: #000000; /* Fallback */
+    background: var(--dark-bg-color);
     height: 100vh;
     overflow: hidden;
     min-width: var(--min-window-width);
     min-height: var(--min-window-height);
+    color: var(--light-text-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Accessibility - Focus Styles */
+button:focus, 
+a:focus, 
+input:focus, 
+textarea:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01s !important;
+        transition-duration: 0.01s !important;
+    }
 }
 
 /* ==========================================================================
@@ -27,7 +105,7 @@ body {
 .player-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;  /* Adjust for body padding */
+    height: 100vh;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -66,9 +144,6 @@ body {
 
 /* Player Bar */
 .player-bar {
-/*
-    background: rgba(255, 255, 255, 0.9);
-*/
     background: transparent;
     padding: 5px 5px 0;
 }
@@ -78,11 +153,8 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 10px 0;
-/*
-    background: rgba(15, 15, 15, 0.85);
-*/
     background: transparent;
-    }
+}
 
 /* ==========================================================================
    3. Tab Navigation
@@ -93,6 +165,9 @@ body {
     justify-content: space-around;
     padding: 4px 0;
     margin-top: auto;
+    margin-top: 10px;
+    border-top: 1px solid var(--light-border-color);
+    background: var(--dark-bg-color);
 }
 
 .tab-button {
@@ -102,6 +177,13 @@ body {
     justify-content: center;
     padding: 8px 12px;
     min-width: 60px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: var(--standard-radius);
+    font-size: 0.875rem;
+    color: var(--light-text-color);
+    transition: all 0.2s ease;
 }
 
 .tab-icon {
@@ -115,26 +197,22 @@ body {
 .tab-icon svg {
     width: 24px;
     height: 24px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--medium-text-color);
     transition: color 0.2s ease;
 }
 
 .tab-button[data-active="true"] .tab-icon svg {
-    color: white;
+    color: var(--light-text-color);
 }
 
 /* Hover effect */
 .tab-button:hover .tab-icon svg {
-    color: white;
-}
-
-.tab-button {
-    transition: all 0.2s ease;
+    color: var(--light-text-color);
 }
 
 .tab-button[data-active="true"] {
     font-weight: 500;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--tab-active-bg);
 }
 
 .tab-button * {
@@ -148,16 +226,16 @@ body {
 
 /* Tab styling specific to Live mode */
 body[data-active-tab="live"] .tabs {
-    background: rgb(0, 0, 0);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--dark-bg-color);
+    border-top: 1px solid var(--light-border-color);
 }
 
 body[data-active-tab="live"] .tab-button {
-    color: white;
+    color: var(--light-text-color);
 }
 
 body[data-active-tab="live"] .tab-button[data-active="true"] {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--tab-active-bg);
 }
 
 body[data-active-tab="live"] .logo-container {
@@ -166,10 +244,10 @@ body[data-active-tab="live"] .logo-container {
 }
 
 .tab-content {
-    margin-top: 20px;
-    padding: 16px;
-    background: white;
-    border-radius: 8px;
+    margin-top: var(--standard-spacing);
+    padding: var(--standard-spacing);
+    background: var(--player-bar-bg);
+    border-radius: var(--large-radius);
     min-height: 100px;
 }
 
@@ -186,39 +264,48 @@ body[data-active-tab="live"] .logo-container {
 
 /* Track Details */
 .track-title {
-    font-size: 1.0rem;
+    font-size: clamp(0.85rem, 2vw, 1rem);
     font-weight: bold;
     margin: 0 0 4px 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    text-shadow: var(--text-shadow);
+    color: var(--light-text-color);
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .track-artist {
-    color: var(--secondary-color);
+    color: var(--medium-text-color);
     margin: 0;
-    font-size: 0.875rem;
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Now Playing Badge */
 .now-playing {
-    background: #1e40af;
-    color: white;
+    background: var(--on-air-color);
+    color: var(--light-text-color);
     display: inline-block;
     padding: 4px 12px;
     font-size: 0.875rem;
     font-weight: 500;
-    border-radius: 4px;
+    border-radius: var(--standard-radius);
     margin-bottom: 8px;
     transition: all 0.3s ease;
 }
 
 /* When stopped */
 .now-playing.stopped {
-    background: #64748b;
+    background: var(--secondary-color);
 }
 
 /* When playing */
 .now-playing.playing {
-    background: #1e40af;
+    background: var(--on-air-color);
 }
 
 /* Show Info */
@@ -233,7 +320,7 @@ body[data-active-tab="live"] .logo-container {
     text-align: left;
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--light-border-color);
 }
 
 .program-title {
@@ -241,13 +328,13 @@ body[data-active-tab="live"] .logo-container {
     font-weight: 500;
     margin: 0 0 2px 0;
     color: var(--primary-color);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    text-shadow: var(--text-shadow);
 }
 
 .presenter-name {
     font-size: 0.875rem;
     margin: 0;
-    color: var(--secondary-color);
+    color: var(--medium-text-color);
 }
 
 /* Controls */
@@ -264,12 +351,12 @@ body[data-active-tab="live"] .logo-container {
 }
 
 .play-button {
-    border: 2px solid var(--primary-color); /* Blue outline */
-    background: transparent; /* Transparent background instead of filled */
-    color: var(--primary-color); /* Blue color for the icon */
+    border: 2px solid var(--primary-color);
+    background: transparent;
+    color: var(--primary-color);
     width: 56px;
     height: 56px;
-    border-radius: 100%;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -278,16 +365,16 @@ body[data-active-tab="live"] .logo-container {
 }
 
 .play-button:hover {
-    background: rgba(37, 99, 235, 0.6); /* Very slight blue background on hover */
+    background: rgba(37, 99, 235, 0.6);
 }
 
 .play-button svg {
-    stroke: currentColor; /* Explicitly ensure stroke inherits from parent */
-    fill: none; /* Explicitly ensure no fill */
+    stroke: currentColor;
+    fill: none;
 }
 
 .love-button {
-    color: #ef4444;
+    color: var(--love-button-color);
 }
 
 .love-button[data-loved="true"] svg {
@@ -300,15 +387,15 @@ body[data-active-tab="live"] .logo-container {
 
 /* Logo Container */
 .logo-container {
-    max-width: 480px; /* Reduced from 600px */
-    width: 75%; /* Reduced from 80% */
+    max-width: 480px;
+    width: 75%;
     margin: 10px auto 10px;
     text-align: center;
     transition: all 0.5s ease;
 }
 
 .header-logo {
-    max-width: 250px; /* Reduced from 300px */
+    max-width: 250px;
     width: 100%;
     height: auto;
     transition: all 0.3s ease;
@@ -322,15 +409,16 @@ body[data-active-tab="live"] .logo-container {
     margin: 0 auto 20px;
     transition: all 0.3s ease;
     position: relative;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    overflow: hidden;   
+    box-shadow: var(--standard-shadow);
+    border-radius: var(--standard-radius);
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
 }
 
 .artwork img {
     width: 100%;
-    height: auto;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
     transition: all 0.3s ease;
 }
 
@@ -370,6 +458,7 @@ body[data-active-tab="live"] .artwork-background {
     filter: blur(25px) brightness(0.8);
     transform: scale(1.00);
     transition: background-image 0.75s ease;
+    will-change: transform; /* Performance optimization */
 }
 
 /* Overlay gradient to ensure readability */
@@ -387,47 +476,10 @@ body[data-active-tab="live"] .artwork-background {
    ========================================================================== */
 
 /* ---- GLOBAL DARK STYLING FOR ALL TABS ---- */
-/* Global text and background colors */
-body {
-    color: white;
-}
-
 /* Player bar styling for all tabs */
 .player-bar {
-    background: rgba(15, 15, 15, 0.85);
-    color: white;
-}
-
-/* Common text colors */
-.track-title {
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.track-artist, .presenter-name {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-/* Tab navigation styling */
-.tabs {
-    margin-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgb(0, 0, 0);
-}
-
-.tab-button {
-    border: none;
-    background: none;
-    padding: 8px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    color: white;
-}
-
-.tab-button[data-active="true"] {
-    font-weight: 500;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--player-bar-bg);
+    color: var(--light-text-color);
 }
 
 /* ---- LIVE TAB SPECIFIC STYLING ---- */
@@ -455,30 +507,6 @@ body[data-active-tab="live"] .artwork-background {
     opacity: 1;
 }
 
-/* The actual blurred background image */
-.artwork-bg-image {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    width: calc(100% + 40px);
-    height: calc(100% + 40px);
-    background-size: cover;
-    background-position: center;
-    filter: blur(25px) brightness(0.8);
-    transform: scale(1.00);
-    transition: background-image 0.75s ease;
-}
-
-/* Overlay gradient to ensure readability */
-.artwork-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
-}
-
 /* ---- RECENT TAB STYLING ---- */
 /* Recent view specific styles */
 #recentView {
@@ -486,25 +514,32 @@ body[data-active-tab="live"] .artwork-background {
     max-height: calc(100vh - 200px); /* Adjust based on your player bar height */
 }
 
-#recentTracksContainer {
+/* Common styles for scrollable containers */
+.scrollable-container {
     overflow-y: auto;
     height: 100%;
-    padding: 0.5rem;
+    padding: var(--small-spacing);
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
 }
 
-#recentTracksContainer::-webkit-scrollbar {
+.scrollable-container::-webkit-scrollbar {
     width: 6px;
 }
 
-#recentTracksContainer::-webkit-scrollbar-track {
+.scrollable-container::-webkit-scrollbar-track {
     background: transparent;
 }
 
-#recentTracksContainer::-webkit-scrollbar-thumb {
+.scrollable-container::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
+}
+
+/* Apply common scrollable styles */
+#recentTracksContainer, #favoritesTracksContainer {
+    composes: scrollable-container;
 }
 
 .track-item {
@@ -513,7 +548,8 @@ body[data-active-tab="live"] .artwork-background {
     background: transparent;
     border-radius: 0;
     box-shadow: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--light-border-color);
+    padding: var(--small-spacing) 0;
 }
 
 .track-item:last-child {
@@ -523,7 +559,8 @@ body[data-active-tab="live"] .artwork-background {
 .track-item .track-artwork {
     width: 4rem;
     height: 4rem;
-    border-radius: 0.25rem;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--standard-radius);
     object-fit: cover;
     margin-right: 1rem;
 }
@@ -540,12 +577,12 @@ body[data-active-tab="live"] .artwork-background {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: white;
+    color: var(--light-text-color);
 }
 
 .track-item .track-artist {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--medium-text-color);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -575,19 +612,19 @@ body[data-active-tab="live"] .artwork-background {
 .track-item .heart-icon {
     width: 1.5rem;
     height: 1.5rem;
-    stroke: rgba(255, 255, 255, 0.7);
+    stroke: var(--medium-text-color);
     fill: none;
     stroke-width: 2;
 }
 
 .track-item .heart-button[data-loved="true"] .heart-icon {
-    fill: #ef4444;
-    stroke: #ef4444;
+    fill: var(--love-button-color);
+    stroke: var(--love-button-color);
 }
 
 .track-item .time-ago {
     font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--medium-text-color);
     min-width: 7rem;
     text-align: left;
     white-space: nowrap;
@@ -597,17 +634,17 @@ body[data-active-tab="live"] .artwork-background {
 /* Schedule, Catch Up, and Favorites tab styling */
 #catchUpView, #favoritesView {
     background-color: transparent;
-    color: white;
+    color: var(--light-text-color);
     padding: 1rem;
 }
 
 /* Style any lists or cards in other views consistently */
 .schedule-item, .catch-up-item, .favorite-item {
     background: transparent;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--light-border-color);
     padding: 0.75rem;
     margin-bottom: 0.75rem;
-    color: white;
+    color: var(--light-text-color);
 }
 
 .schedule-item:last-child, .catch-up-item:last-child, .favorite-item:last-child {
@@ -616,27 +653,55 @@ body[data-active-tab="live"] .artwork-background {
 
 /* Ensure consistent text styling across all views */
 .item-title {
-    color: white;
+    color: var(--light-text-color);
     font-weight: bold;
 }
 
 .item-subtitle, .item-description {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-/* Content styling */
-.tab-content {
-    margin-top: 20px;
-    padding: 16px;
-    background: rgba(15, 15, 15, 0.85);
-    border-radius: 8px;
-    min-height: 100px;
+    color: var(--medium-text-color);
 }
 
 /* ==========================================================================
    7. Responsive Adjustments
    ========================================================================== */
 
+/* Tablet styles */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    .logo-container {
+        max-width: 400px;
+        width: 70%;
+    }
+    
+    .artwork {
+        max-width: 250px;
+    }
+    
+    .header-logo {
+        max-width: 220px;
+    }
+    
+    body[data-active-tab="live"] .logo-container {
+        padding-top: 50px;
+    }
+}
+
+/* Small desktop/laptop styles */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .logo-container {
+        max-width: 450px;
+        width: 60%;
+    }
+    
+    .artwork {
+        max-width: 280px;
+    }
+    
+    .header-logo {
+        max-width: 230px;
+    }
+}
+
+/* Height-based adjustments */
 @media screen and (max-height: 300px) {
     .artwork {
         max-width: 300px;
@@ -682,6 +747,7 @@ body[data-active-tab="live"] .artwork-background {
     }
 }
 
+/* Small mobile styles */
 @media screen and (max-width: 480px) {
     .logo-container {
         max-width: 300px;
@@ -705,24 +771,13 @@ body[data-active-tab="live"] .artwork-background {
     body[data-active-tab="live"] .logo-container {
         padding-top: 50px; /* Smaller padding on mobile */
     }
-}
-
-/* Add these breakpoints for better device coverage */
-@media screen and (min-width: 481px) and (max-width: 768px) {
-    /* Tablet-specific adjustments */
-    .logo-container {
-        max-width: 400px;
+    
+    .track-title {
+        font-size: 0.9rem;
     }
     
-    .artwork {
-        max-width: 250px;
-    }
-}
-
-@media screen and (min-width: 769px) and (max-width: 1024px) {
-    /* Small laptop/desktop adjustments */
-    .logo-container {
-        max-width: 450px;
+    .track-artist {
+        font-size: 0.8rem;
     }
 }
 
@@ -730,7 +785,7 @@ body[data-active-tab="live"] .artwork-background {
    8. Contact Button Overlay
    ========================================================================== */
 
-   .contact-button-container {
+.contact-button-container {
     position: absolute;
     top: 15px; /* Positioned closer to top */
     right: 30px;
@@ -746,20 +801,21 @@ body[data-active-tab="live"] .contact-button-container {
 .contact-button {
     display: flex;
     align-items: center;
-    background: rgba(23, 55, 94, 0.6); /* Darker blue with higher transparency */
-    color: white;
+    background: var(--contact-button-bg);
+    color: var(--light-text-color);
     border: none;
-    border-radius: 20px;
+    border-radius: var(--round-radius);
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--standard-shadow);
     transition: all 0.2s ease;
     backdrop-filter: brightness(0.9); /* Slight darkening effect */
+    -webkit-backdrop-filter: brightness(0.9); /* For Safari */
 }
 
 .contact-button:hover {
-    background: rgba(37, 99, 235, 1);
+    background: var(--contact-button-hover-bg);
     transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--hover-shadow);
 }
 
 .contact-button svg {
@@ -778,16 +834,17 @@ body[data-active-tab="live"] .contact-button-container {
    9. Contact Form Overlay
    ========================================================================== */
 
-   .contact-form-overlay {
+.contact-form-overlay {
     position: fixed;
     top: 100%; /* Start offscreen */
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #000;
+    background-color: var(--dark-bg-color);
     z-index: 1000;
     transition: top 0.4s ease-in-out;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
 }
 
 .contact-form-overlay.active {
@@ -795,10 +852,10 @@ body[data-active-tab="live"] .contact-button-container {
 }
 
 .contact-form-container {
-    padding: 20px;
+    padding: var(--standard-spacing);
     max-width: 800px;
     margin: 0 auto;
-    color: white;
+    color: var(--light-text-color);
 }
 
 .contact-form-header {
@@ -807,7 +864,7 @@ body[data-active-tab="live"] .contact-button-container {
     align-items: center;
     margin-bottom: 30px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--light-border-color);
 }
 
 .contact-form-header h2 {
@@ -819,14 +876,14 @@ body[data-active-tab="live"] .contact-button-container {
 .close-button {
     background: rgba(0, 0, 0, 0.6);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--standard-radius);
     width: 40px;
     height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: white;
+    color: var(--light-text-color);
     transition: background 0.2s;
 }
 
@@ -836,9 +893,9 @@ body[data-active-tab="live"] .contact-button-container {
 
 .send-button {
     background: rgba(37, 99, 235, 0.9);
-    color: white;
+    color: var(--light-text-color);
     border: none;
-    border-radius: 20px;
+    border-radius: var(--round-radius);
     padding: 8px 20px;
     font-size: 0.875rem;
     cursor: pointer;
@@ -846,7 +903,7 @@ body[data-active-tab="live"] .contact-button-container {
 }
 
 .send-button:hover {
-    background: rgba(37, 99, 235, 1);
+    background: var(--contact-button-hover-bg);
     transform: translateY(-2px);
 }
 
@@ -859,8 +916,8 @@ body[data-active-tab="live"] .contact-button-container {
     width: 100%;
     background: transparent;
     border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
+    border-bottom: 1px solid var(--light-border-color);
+    color: var(--light-text-color);
     padding: 10px 0;
     font-size: 1rem;
     transition: border-color 0.2s;
@@ -879,7 +936,7 @@ body[data-active-tab="live"] .contact-button-container {
 
 /* Placeholder styling */
 ::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--light-text-color-transparent);
 }
 
 @media screen and (max-width: 480px) {
@@ -915,32 +972,32 @@ body[data-active-tab="live"] .contact-button-container {
     text-align: center;
     padding: 40px;
     background-color: rgba(30, 30, 30, 0.8);
-    border-radius: 8px;
+    border-radius: var(--large-radius);
     max-width: 400px;
     width: 80%;
 }
 
 .success-icon {
-    color: #10b981; /* Success green color */
+    color: var(--success-color);
     margin-bottom: 20px;
 }
 
 .success-content h3 {
     font-size: 1.5rem;
     margin: 0 0 10px 0;
-    color: white;
+    color: var(--light-text-color);
 }
 
 .success-content p {
     margin: 0 0 30px 0;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--medium-text-color);
 }
 
 .ok-button {
     background: var(--primary-color);
-    color: white;
+    color: var(--light-text-color);
     border: none;
-    border-radius: 20px;
+    border-radius: var(--round-radius);
     padding: 10px 30px;
     font-size: 1rem;
     cursor: pointer;
@@ -949,12 +1006,11 @@ body[data-active-tab="live"] .contact-button-container {
 
 .ok-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--standard-shadow);
 }
 
-
 /* ==========================================================================
-   10. Schedule video tab
+   10. Schedule View
    ========================================================================== */
 /* Schedule View Styles */
 #scheduleView {
@@ -964,7 +1020,7 @@ body[data-active-tab="live"] .contact-button-container {
 }
 
 .schedule-container {
-    height: calc(100vh - 250px); /* Adjust based on your player bar height */
+    height: calc(100vh - 250px);
     overflow-y: auto;
     padding-bottom: 100px; /* Add extra padding at the bottom */
     scroll-behavior: smooth;
@@ -988,10 +1044,10 @@ body[data-active-tab="live"] .contact-button-container {
 
 /* Date Header */
 .date-header {
-    background: rgba(15, 15, 15, 0.9);
+    background: var(--player-bar-bg);
     padding: 0.75rem 1rem;
     margin: 0.5rem 0;
-    border-radius: 4px;
+    border-radius: var(--standard-radius);
     position: sticky;
     top: 0;
     z-index: 5;
@@ -1001,7 +1057,7 @@ body[data-active-tab="live"] .contact-button-container {
     margin: 0;
     font-size: 1.1rem;
     font-weight: 500;
-    color: white;
+    color: var(--light-text-color);
 }
 
 /* Schedule Item */
@@ -1009,23 +1065,24 @@ body[data-active-tab="live"] .contact-button-container {
     display: flex;
     margin-bottom: 1rem;
     padding: 0.75rem;
-    background: rgba(30, 30, 30, 0.4);
-    border-radius: 6px;
+    background: var(--card-bg-color);
+    border-radius: var(--standard-radius);
     transition: all 0.2s ease;
+    border-bottom: none; /* Override the border from generic styles */
 }
 
 .schedule-item:hover {
-    background: rgba(40, 40, 40, 0.6);
+    background: var(--card-hover-color);
 }
 
 /* Schedule item - currently on air */
 .schedule-item.on-air {
-    background: rgba(30, 64, 175, 0.3);
-    border-left: 3px solid #2563eb;
+    background: var(--on-air-bg);
+    border-left: 3px solid var(--on-air-color);
 }
 
 .schedule-item.on-air:hover {
-    background: rgba(30, 64, 175, 0.4);
+    background: var(--on-air-hover-bg);
 }
 
 .schedule-item:last-child {
@@ -1038,8 +1095,9 @@ body[data-active-tab="live"] .contact-button-container {
     height: 70px;
     min-width: 70px;
     margin-right: 1rem;
-    border-radius: 4px;
+    border-radius: var(--standard-radius);
     overflow: hidden;
+    aspect-ratio: 1 / 1;
 }
 
 .schedule-item-image img {
@@ -1058,14 +1116,14 @@ body[data-active-tab="live"] .contact-button-container {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--tiny-spacing);
 }
 
 .schedule-item-title {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: white;
+    color: var(--light-text-color);
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
@@ -1080,7 +1138,7 @@ body[data-active-tab="live"] .contact-button-container {
 
 .schedule-item-time span {
     font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--medium-text-color);
 }
 
 /* On Air Badge */
@@ -1089,12 +1147,12 @@ body[data-active-tab="live"] .contact-button-container {
     position: absolute;
     top: 100%;
     right: 0;
-    background: #1e40af;
-    color: white;
+    background: var(--on-air-color);
+    color: var(--light-text-color);
     font-size: 0.7rem;
     font-weight: 500;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--standard-radius);
     margin-top: 4px;
 }
 
@@ -1104,15 +1162,15 @@ body[data-active-tab="live"] .contact-button-container {
 
 /* Presenter & Description */
 .schedule-item-presenter {
-    margin: 0 0 0.25rem 0;
+    margin: 0 0 var(--tiny-spacing) 0;
     font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--medium-text-color);
 }
 
 .schedule-item-description {
     margin: 0;
     font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--medium-text-color);
     line-height: 1.4;
 }
 
@@ -1165,7 +1223,7 @@ body[data-active-tab="live"] .contact-button-container {
     height: 100%;
     text-align: center;
     padding: 2rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--medium-text-color);
 }
 
 .empty-state-icon {
@@ -1175,7 +1233,7 @@ body[data-active-tab="live"] .contact-button-container {
 
 .empty-state h3 {
     margin: 0 0 0.5rem 0;
-    color: white;
+    color: var(--light-text-color);
 }
 
 .empty-state p {
@@ -1196,6 +1254,7 @@ body[data-active-tab="live"] .contact-button-container {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
     padding-bottom: 100px; /* Add extra padding at the bottom */
+    -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
 }
 
 #favoritesTracksContainer::-webkit-scrollbar {
