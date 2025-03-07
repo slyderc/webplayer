@@ -10,6 +10,23 @@ class LikeManager {
             ...options
         };
         
+        // Ensure we have valid paths
+        if (!this.options.cachedArtworkPath || typeof this.options.cachedArtworkPath !== 'string') {
+            console.warn('Invalid cachedArtworkPath, using default');
+            this.options.cachedArtworkPath = '/player/publish/ca/';
+        }
+        
+        if (!this.options.defaultArtwork || typeof this.options.defaultArtwork !== 'string') {
+            console.warn('Invalid defaultArtwork, using default');
+            this.options.defaultArtwork = '/player/NWR_text_logo_angle.png';
+        }
+        
+        // Log options for debugging
+        console.log('LikeManager initialized with options:', {
+            cachedArtworkPath: this.options.cachedArtworkPath,
+            defaultArtwork: this.options.defaultArtwork
+        });
+        
         this.storageService = this.options.storageService;
         this.lovedTracks = new Set();
         this.observers = new Set(); // For notifying components about like changes
@@ -35,7 +52,11 @@ class LikeManager {
     // Notify all observers of a change
     notifyObservers(trackId, isLoved) {
         this.observers.forEach(observer => {
-            observer.onLikeStatusChanged(trackId, isLoved);
+            try {
+                observer.onLikeStatusChanged(trackId, isLoved);
+            } catch (e) {
+                console.error('Error notifying observer:', e);
+            }
         });
     }
     
@@ -197,28 +218,53 @@ class LikeManager {
     
     // Get artwork URLs for a track
     getArtworkUrl(track) {
-        // Try the original URL first
-        let url = track.artwork_url;
+        // Fixed version with extensive debugging
+        console.log('getArtworkUrl called with track:', track ? {
+            id: track.id,
+            artwork_url: track.artwork_url,
+            artwork_hash: track.artwork_hash
+        } : 'null or undefined');
         
-        // Default paths with absolute paths (starting with /)
-        const defaultArtwork = this.options.defaultArtwork;
-        const cachedArtworkPath = this.options.cachedArtworkPath;
+        // Fixed absolute paths - NEVER rely on object properties that might be undefined
+        const defaultArtwork = '/player/NWR_text_logo_angle.png';
+        const cachedArtworkPath = '/player/publish/ca/';
+        
+        // Handle null/undefined track gracefully
+        if (!track) {
+            console.warn('getArtworkUrl called with null/undefined track');
+            return {
+                primaryUrl: defaultArtwork,
+                fallbackUrl: defaultArtwork,
+                defaultUrl: defaultArtwork
+            };
+        }
+        
+        // Try the original URL first (with fallback)
+        let url = track.artwork_url || defaultArtwork;
         
         // If there's a hash, create a fallback URL
         if (track.artwork_hash) {
-            // Always use the absolute path and ensure no "undefined" can appear
+            // Always use absolute path with direct string concatenation
             const fallbackUrl = cachedArtworkPath + track.artwork_hash + '.jpg';
             
+            console.log('Generated artwork URLs:', {
+                primaryUrl: url,
+                fallbackUrl: fallbackUrl,
+                defaultUrl: defaultArtwork
+            });
+            
             return {
-                primaryUrl: url || defaultArtwork,
+                primaryUrl: url,
                 fallbackUrl: fallbackUrl,
                 defaultUrl: defaultArtwork
             };
         }
         
+        console.log('No artwork_hash found, using default fallback');
+        
         // If no hash, just return the url or default
         return {
-            primaryUrl: url || defaultArtwork,
+            primaryUrl: url,
             fallbackUrl: defaultArtwork,
             defaultUrl: defaultArtwork
         };
