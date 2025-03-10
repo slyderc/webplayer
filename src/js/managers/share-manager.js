@@ -217,136 +217,84 @@ class ShareManager {
     }
     
     /**
-     * Create and show the share popup with sharing options
+     * Create and show the share overlay with sharing options
      * @param {Object} track - The track to share
      * @param {HTMLElement} buttonElement - The button that was clicked
      */
     showSharePopup(track, buttonElement) {
-        // Check if a popup is already open and remove it
-        const existingPopup = document.querySelector('.share-popup');
-        if (existingPopup && document.body.contains(existingPopup)) {
-            document.body.removeChild(existingPopup);
+        // Check if a share overlay already exists and remove it
+        const existingOverlay = document.querySelector('.share-overlay');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
         }
         
-        // Create popup container
-        const popup = document.createElement('div');
-        popup.className = 'share-popup';
+        // Create overlay container
+        const overlay = document.createElement('div');
+        overlay.className = 'share-overlay';
         
-        // Create popup content
-        popup.innerHTML = `
-            <div class="share-popup-header">
-                <h3>Share Track</h3>
-                <button class="close-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="share-popup-content">
-                <div class="share-track-info">
-                    <p class="share-track-title">${track.title}</p>
-                    <p class="share-track-artist">${track.artist}</p>
+        // Create overlay content
+        overlay.innerHTML = `
+            <div class="share-container">
+                <div class="share-header">
+                    <button class="close-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <h2>Share Track</h2>
                 </div>
-                <div class="share-options">
-                    <button class="share-option" data-share-method="copy">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                        <span>Copy Link</span>
-                    </button>
-                    <button class="share-option" data-share-method="twitter">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                        </svg>
-                        <span>Twitter/X</span>
-                    </button>
-                    <button class="share-option" data-share-method="facebook">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396v8.01Z"></path>
-                        </svg>
-                        <span>Facebook</span>
-                    </button>
-                    <button class="share-option" data-share-method="whatsapp">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M17.507 14.307l.009.075c-1.836 1.597-3.842 2.655-6.479 2.655c-4.697 0-8.63-3.79-8.63-8.38c0-2.288 1.17-4.397 3.094-5.605c1.603-1.034 2.942-1.269 4.937-1.354c1.654.07 2.492.282 3.034.476l.296.02c1.903.382 3.29 1.487 4.28 2.736c.793 1.356.976 2.62.576 4.377m-3.866-7.256c.34.047.676.102.965.159c.508.096 1.16.345 1.542.765c.742.82.982 1.875.753 3.254c-.192 1.15-1.02 2.048-2.139 2.63c-.898.47-1.923.715-3.137.782c-.796.044-1.143.099-1.4.302c-.268.212-.531.514-.647.855c-.196.576-.275 1.034-.53 1.388c-.117.162-.22.297-.363.407c-.146.115-.344.16-.5.187c-.16.029-.588.1-1.954-.585c-1.759-.88-2.985-2.058-3.743-3.193c-.982-1.462-1.352-2.952-1.087-4.38c.217-1.171.83-2.203 1.737-2.914c.915-.72 2.162-1.086 3.472-1.006c1.34.083 2.505.444 3.478 1.05c.705.439 1.15 1.095 1.552 1.774"></path>
-                        </svg>
-                        <span>WhatsApp</span>
-                    </button>
-                    <button class="share-option" data-share-method="telegram">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="m12 20.664l-1.69-1.556l.497-7.323l-4.003 3.35l-1.424-1.082l5.367-14.337l1.812 1.375l-.564 8.32l3.863-3.235l1.424 1.082z"></path>
-                        </svg>
-                        <span>Telegram</span>
-                    </button>
-                    <button class="share-option" data-share-method="email">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                        <span>Email</span>
-                    </button>
+                <div class="share-content">
+                    <div class="share-track-info">
+                        <p class="share-track-title">${track.title}</p>
+                        <p class="share-track-artist">${track.artist}</p>
+                    </div>
+                    <div class="share-options">
+                        <button class="share-option" data-share-method="copy">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span>Copy Link</span>
+                        </button>
+                        <button class="share-option" data-share-method="twitter">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                            </svg>
+                            <span>Twitter/X</span>
+                        </button>
+                        <button class="share-option" data-share-method="facebook">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396v8.01Z"></path>
+                            </svg>
+                            <span>Facebook</span>
+                        </button>
+                        <button class="share-option" data-share-method="whatsapp">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M17.507 14.307l.009.075c-1.836 1.597-3.842 2.655-6.479 2.655c-4.697 0-8.63-3.79-8.63-8.38c0-2.288 1.17-4.397 3.094-5.605c1.603-1.034 2.942-1.269 4.937-1.354c1.654.07 2.492.282 3.034.476l.296.02c1.903.382 3.29 1.487 4.28 2.736c.793 1.356.976 2.62.576 4.377m-3.866-7.256c.34.047.676.102.965.159c.508.096 1.16.345 1.542.765c.742.82.982 1.875.753 3.254c-.192 1.15-1.02 2.048-2.139 2.63c-.898.47-1.923.715-3.137.782c-.796.044-1.143.099-1.4.302c-.268.212-.531.514-.647.855c-.196.576-.275 1.034-.53 1.388c-.117.162-.22.297-.363.407c-.146.115-.344.16-.5.187c-.16.029-.588.1-1.954-.585c-1.759-.88-2.985-2.058-3.743-3.193c-.982-1.462-1.352-2.952-1.087-4.38c.217-1.171.83-2.203 1.737-2.914c.915-.72 2.162-1.086 3.472-1.006c1.34.083 2.505.444 3.478 1.05c.705.439 1.15 1.095 1.552 1.774"></path>
+                            </svg>
+                            <span>WhatsApp</span>
+                        </button>
+                        <button class="share-option" data-share-method="telegram">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="m12 20.664l-1.69-1.556l.497-7.323l-4.003 3.35l-1.424-1.082l5.367-14.337l1.812 1.375l-.564 8.32l3.863-3.235l1.424 1.082z"></path>
+                            </svg>
+                            <span>Telegram</span>
+                        </button>
+                        <button class="share-option" data-share-method="email">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            <span>Email</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
         
-        // Position popup near button if available
-        if (buttonElement && buttonElement.getBoundingClientRect) {
-            const rect = buttonElement.getBoundingClientRect();
-            popup.style.position = 'fixed';
-            popup.style.top = `${rect.bottom + 10}px`;
-            popup.style.left = `${rect.left - 160 + rect.width / 2}px`;
-        } else {
-            popup.style.position = 'fixed';
-            popup.style.top = '50%';
-            popup.style.left = '50%';
-            popup.style.transform = 'translate(-50%, -50%)';
-        }
-        
         // Add to document
-        document.body.appendChild(popup);
-        
-        // Add click handlers for share options
-        popup.querySelectorAll('.share-option').forEach(button => {
-            button.addEventListener('click', async (e) => {
-                const method = e.currentTarget.dataset.shareMethod;
-                
-                // Native share on mobile devices
-                if (method === 'native') {
-                    await this.shareTrack(track, 'native', button);
-                } else {
-                    await this.shareTrack(track, method, button);
-                }
-                
-                // Close popup
-                if (document.body.contains(popup)) {
-                    document.body.removeChild(popup);
-                }
-            });
-        });
-        
-        // Add close button handler
-        popup.querySelector('.close-button').addEventListener('click', () => {
-            if (document.body.contains(popup)) {
-                document.body.removeChild(popup);
-            }
-        });
-        
-        // Close when clicking outside
-        const closePopupHandler = function(e) {
-            if (!popup.contains(e.target) && e.target !== buttonElement) {
-                if (document.body.contains(popup)) {
-                    document.body.removeChild(popup);
-                }
-                document.removeEventListener('click', closePopupHandler);
-            }
-        };
-        
-        // Add the event listener but delay it slightly to avoid immediate triggering
-        setTimeout(() => {
-            document.addEventListener('click', closePopupHandler);
-        }, 100);
+        document.body.appendChild(overlay);
         
         // Add mobile native share if available
         if (this.hasNativeShare) {
@@ -354,7 +302,7 @@ class ShareManager {
             nativeShareButton.className = 'share-option';
             nativeShareButton.dataset.shareMethod = 'native';
             nativeShareButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
                     <polyline points="16 6 12 2 8 6"></polyline>
                     <line x1="12" y1="2" x2="12" y2="15"></line>
@@ -363,16 +311,55 @@ class ShareManager {
             `;
             
             // Insert as first option
-            const shareOptions = popup.querySelector('.share-options');
+            const shareOptions = overlay.querySelector('.share-options');
             shareOptions.insertBefore(nativeShareButton, shareOptions.firstChild);
             
             nativeShareButton.addEventListener('click', async () => {
                 await this.shareTrack(track, 'native', nativeShareButton);
-                if (document.body.contains(popup)) {
-                    document.body.removeChild(popup);
-                }
+                this.closeShareOverlay(overlay);
             });
         }
+        
+        // Slide up animation - must happen after adding to DOM
+        setTimeout(() => {
+            overlay.classList.add('active');
+        }, 10);
+        
+        // Add click handlers for share options
+        overlay.querySelectorAll('.share-option').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const method = e.currentTarget.dataset.shareMethod;
+                
+                if (method !== 'native') {
+                    await this.shareTrack(track, method, button);
+                }
+                
+                // Close overlay
+                this.closeShareOverlay(overlay);
+            });
+        });
+        
+        // Add close button handler
+        overlay.querySelector('.close-button').addEventListener('click', () => {
+            this.closeShareOverlay(overlay);
+        });
+    }
+    
+    /**
+     * Close the share overlay with animation
+     * @param {HTMLElement} overlay - The overlay element to close
+     */
+    closeShareOverlay(overlay) {
+        if (!overlay || !document.body.contains(overlay)) return;
+        
+        overlay.classList.remove('active');
+        
+        // Remove after animation completes
+        setTimeout(() => {
+            if (document.body.contains(overlay)) {
+                document.body.removeChild(overlay);
+            }
+        }, 400); // Match the CSS transition duration
     }
 }
 
