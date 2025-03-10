@@ -115,7 +115,7 @@ class ShareManager {
     async copyToClipboard(text, buttonElement) {
         try {
             await navigator.clipboard.writeText(text);
-            this.showFeedback('Copied to clipboard!', buttonElement);
+            this.showCopyFeedback('Copied to clipboard!');
             return true;
         } catch (error) {
             console.error('Failed to copy to clipboard:', error);
@@ -130,15 +130,15 @@ class ShareManager {
             try {
                 const success = document.execCommand('copy');
                 if (success) {
-                    this.showFeedback('Copied to clipboard!', buttonElement);
+                    this.showCopyFeedback('Copied to clipboard!');
                     return true;
                 } else {
-                    this.showFeedback('Copy failed, try again', buttonElement);
+                    this.showCopyFeedback('Copy failed, try again');
                     return false;
                 }
             } catch (err) {
                 console.error('Fallback clipboard copy failed:', err);
-                this.showFeedback('Copy failed, try again', buttonElement);
+                this.showCopyFeedback('Copy failed, try again');
                 return false;
             } finally {
                 document.body.removeChild(textarea);
@@ -259,6 +259,52 @@ class ShareManager {
             feedback.classList.remove('visible');
             setTimeout(() => {
                 document.body.removeChild(feedback);
+            }, 300);
+        }, 2000);
+    }
+    
+    /**
+     * Show a centered copy feedback notification
+     * @param {string} message - The message to display
+     */
+    showCopyFeedback(message) {
+        // Close any existing feedback
+        const existingFeedback = document.querySelector('.share-feedback');
+        if (existingFeedback) {
+            document.body.removeChild(existingFeedback);
+        }
+        
+        // Create feedback element
+        const feedback = document.createElement('div');
+        feedback.className = 'share-feedback';
+        
+        // Add checkmark icon
+        feedback.innerHTML = `
+            <svg class="share-feedback-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            ${message}
+        `;
+        
+        // Add to document
+        document.body.appendChild(feedback);
+        
+        // Make sure the overlay doesn't interfere with this popup
+        feedback.style.zIndex = '2000';
+        
+        // Animate in
+        setTimeout(() => {
+            feedback.classList.add('visible');
+        }, 10);
+        
+        // Remove after delay
+        setTimeout(() => {
+            feedback.classList.remove('visible');
+            setTimeout(() => {
+                if (document.body.contains(feedback)) {
+                    document.body.removeChild(feedback);
+                }
             }, 300);
         }, 2000);
     }
