@@ -16,6 +16,7 @@ $cssVersion = filemtime(__DIR__ . '/css/player.css');
 $jsServiceVersion = filemtime(__DIR__ . '/js/services/audio-service.js');
 $jsMetadataServiceVersion = filemtime(__DIR__ . '/js/services/metadata-service.js');
 $jsStorageServiceVersion = filemtime(__DIR__ . '/js/services/storage-service.js');
+$jsAnalyticsServiceVersion = filemtime(__DIR__ . '/js/services/analytics-service.js');
 
 // Managers
 $jsBackgroundManagerVersion = filemtime(__DIR__ . '/js/managers/background-manager.js');
@@ -50,6 +51,7 @@ $audioLibs = $audioLibraries;
     <script src="./js/services/audio-service.js?v=<?php echo $jsServiceVersion; ?>"></script>
     <script src="./js/services/metadata-service.js?v=<?php echo $jsMetadataServiceVersion; ?>"></script>
     <script src="./js/services/storage-service.js?v=<?php echo $jsStorageServiceVersion; ?>"></script>
+    <script src="./js/services/analytics-service.js?v=<?php echo $jsAnalyticsServiceVersion; ?>"></script>
     
     <!-- Managers -->
     <script src="./js/managers/background-manager.js?v=<?php echo $jsBackgroundManagerVersion; ?>"></script>
