@@ -492,9 +492,21 @@ class NowWavePlayer {
      * Share the currently playing track
      */
     shareCurrentTrack(buttonElement) {
-        const trackData = this.getCurrentTrackData();
-        if (trackData) {
-            this.shareManager.showSharePopup(trackData, buttonElement);
+        try {
+            // Make sure there's a track title and artist
+            if (!this.uiManager.elements.trackTitle.textContent || 
+                this.uiManager.elements.trackTitle.textContent === 'Loading...' ||
+                !this.uiManager.elements.trackArtist.textContent) {
+                console.log('No track data available to share');
+                return;
+            }
+            
+            const trackData = this.getCurrentTrackData();
+            if (trackData) {
+                this.shareManager.showSharePopup(trackData, buttonElement);
+            }
+        } catch (error) {
+            console.error('Error sharing current track:', error);
         }
     }
     

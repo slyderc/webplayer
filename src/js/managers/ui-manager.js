@@ -15,6 +15,7 @@ class UIManager {
         this.elements = {
             playButton: document.getElementById('playButton'),
             loveButton: document.getElementById('loveButton'),
+            shareButton: document.getElementById('shareButton'),
             albumArt: document.getElementById('albumArt'),
             trackTitle: document.getElementById('trackTitle'),
             trackArtist: document.getElementById('trackArtist'),
