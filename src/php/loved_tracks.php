@@ -5,6 +5,15 @@ class TrackManager {
     private $db;
     
     public function __construct() {
+        // Check if SQLite3 is available
+        if (!class_exists('SQLite3')) {
+            error_log("SQLite3 extension is not installed. Analytics will be disabled.");
+            
+            // Set a flag indicating we're in fallback mode
+            $this->db = null;
+            return;
+        }
+        
         $dbPath = __DIR__ . '/../../data/tracks.db';
         $dbDir = dirname($dbPath);
         
@@ -28,6 +37,8 @@ class TrackManager {
     }
     
     private function initDatabase() {
+        if ($this->db === null) return;
+        
         // Tracks table - store unique track information
         $this->db->exec('
             CREATE TABLE IF NOT EXISTS tracks (
@@ -55,6 +66,8 @@ class TrackManager {
      * Add a track to the tracks table if it doesn't exist
      */
     public function addTrack($hash, $artist, $title, $album = null) {
+        if ($this->db === null) return true;
+        
         $stmt = $this->db->prepare('
             INSERT OR IGNORE INTO tracks (hash, artist, title, album)
             VALUES (:hash, :artist, :title, :album)
@@ -72,6 +85,8 @@ class TrackManager {
      * Record a track-related action (like, unlike, play, stop)
      */
     public function recordAction($hash, $actionType) {
+        if ($this->db === null) return true;
+        
         $validActions = ['like', 'unlike', 'play', 'stop'];
         
         if (!in_array($actionType, $validActions)) {
@@ -93,6 +108,8 @@ class TrackManager {
      * Record a like action
      */
     public function recordLike($hash, $artist, $title, $album = null) {
+        if ($this->db === null) return true;
+        
         // First make sure track exists
         $this->addTrack($hash, $artist, $title, $album);
         
@@ -104,6 +121,8 @@ class TrackManager {
      * Record an unlike action
      */
     public function recordUnlike($hash) {
+        if ($this->db === null) return true;
+        
         return $this->recordAction($hash, 'unlike');
     }
     
@@ -111,6 +130,8 @@ class TrackManager {
      * Get total likes for a track
      */
     public function getTrackLikes($hash) {
+        if ($this->db === null) return 0;
+        
         $stmt = $this->db->prepare('
             SELECT 
                 (SELECT COUNT(*) FROM actions WHERE hash = :hash AND action_type = "like") -
@@ -128,6 +149,8 @@ class TrackManager {
      * Get most popular tracks by net likes
      */
     public function getPopularTracks($limit = 10) {
+        if ($this->db === null) return [];
+        
         $stmt = $this->db->prepare('
             SELECT 
                 t.hash, 

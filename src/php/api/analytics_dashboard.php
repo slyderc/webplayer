@@ -19,56 +19,75 @@ if (isset($_GET['key']) && $_GET['key'] === 'admin123') {
     $authorized = true;
 }
 
-// Database path for display
+// Check if SQLite3 is available
+$sqliteAvailable = class_exists('SQLite3');
 $dbPath = realpath(__DIR__ . '/../../../data/tracks.db');
-$trackManager = new TrackManager();
 
-// Get popular tracks
-$popularTracks = $trackManager->getPopularTracks(20);
+// Initialize with empty data in case SQLite is not available
+$popularTracks = [];
+$actionCounts = ['like' => 0, 'unlike' => 0, 'play' => 0, 'stop' => 0];
+$dailyActions = [];
 
-// Get action counts by type
-$db = new SQLite3(__DIR__ . '/../../../data/tracks.db');
-$actionCounts = [];
-$actionTypes = ['like', 'unlike', 'play', 'stop'];
+if ($sqliteAvailable) {
+    try {
+        $trackManager = new TrackManager();
 
-foreach ($actionTypes as $type) {
-    $stmt = $db->prepare('SELECT COUNT(*) as count FROM actions WHERE action_type = :type');
-    $stmt->bindValue(':type', $type, SQLITE3_TEXT);
-    $result = $stmt->execute();
-    $row = $result->fetchArray(SQLITE3_ASSOC);
-    $actionCounts[$type] = $row['count'];
+        // Get popular tracks
+        $popularTracks = $trackManager->getPopularTracks(20);
+
+        // Get action counts by type
+        $db = new SQLite3(__DIR__ . '/../../../data/tracks.db');
+        $actionTypes = ['like', 'unlike', 'play', 'stop'];
+
+        foreach ($actionTypes as $type) {
+            $stmt = $db->prepare('SELECT COUNT(*) as count FROM actions WHERE action_type = :type');
+            $stmt->bindValue(':type', $type, SQLITE3_TEXT);
+            $result = $stmt->execute();
+            $row = $result->fetchArray(SQLITE3_ASSOC);
+            $actionCounts[$type] = $row['count'];
+        }
+    } catch (Exception $e) {
+        error_log("Error in analytics dashboard: " . $e->getMessage());
+        // Continue with empty data if there's an error
+    }
 }
 
 // Get daily action counts
-$stmt = $db->prepare('
-    SELECT 
-        date(timestamp) as day,
-        action_type,
-        COUNT(*) as count
-    FROM 
-        actions
-    WHERE 
-        timestamp >= date("now", "-7 days")
-    GROUP BY 
-        day, action_type
-    ORDER BY 
-        day DESC, action_type
-');
+if ($sqliteAvailable && isset($db)) {
+    try {
+        $stmt = $db->prepare('
+            SELECT 
+                date(timestamp) as day,
+                action_type,
+                COUNT(*) as count
+            FROM 
+                actions
+            WHERE 
+                timestamp >= date("now", "-7 days")
+            GROUP BY 
+                day, action_type
+            ORDER BY 
+                day DESC, action_type
+        ');
 
-$result = $stmt->execute();
-$dailyActions = [];
+        $result = $stmt->execute();
+        $dailyActions = [];
 
-while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-    if (!isset($dailyActions[$row['day']])) {
-        $dailyActions[$row['day']] = [
-            'like' => 0,
-            'unlike' => 0,
-            'play' => 0,
-            'stop' => 0
-        ];
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            if (!isset($dailyActions[$row['day']])) {
+                $dailyActions[$row['day']] = [
+                    'like' => 0,
+                    'unlike' => 0,
+                    'play' => 0,
+                    'stop' => 0
+                ];
+            }
+            
+            $dailyActions[$row['day']][$row['action_type']] = $row['count'];
+        }
+    } catch (Exception $e) {
+        error_log("Error getting daily action counts: " . $e->getMessage());
     }
-    
-    $dailyActions[$row['day']][$row['action_type']] = $row['count'];
 }
 ?>
 
@@ -182,6 +201,26 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
             height: 300px;
             margin-top: 20px;
         }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .alert-warning {
+            background-color: #fcf8e3;
+            border-color: #faebcc;
+            color: #8a6d3b;
+        }
+        
+        .alert pre {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
@@ -193,6 +232,15 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                     <span>Data updated: <?= date('Y-m-d H:i:s') ?></span>
                 </div>
             </div>
+            
+            <?php if (!$sqliteAvailable): ?>
+                <div class="alert alert-warning">
+                    <strong>Warning:</strong> SQLite3 extension is not installed. Analytics features are disabled.
+                    <p>To enable analytics, please install SQLite3 extension for PHP:</p>
+                    <pre>sudo apt-get install php-sqlite3</pre>
+                    <p>Then restart your web server.</p>
+                </div>
+            <?php endif; ?>
             
             <div class="stats-container">
                 <div class="stat-card">

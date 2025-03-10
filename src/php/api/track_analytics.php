@@ -29,6 +29,17 @@ header('Content-Type: application/json');
 // Handle different HTTP methods
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Check if SQLite3 is available
+if (!class_exists('SQLite3')) {
+    // Send a 200 response but with a "soft error" to avoid console errors
+    echo json_encode([
+        'success' => true,
+        'notice' => 'SQLite3 extension not available - analytics disabled',
+        'status' => 'disabled'
+    ]);
+    exit;
+}
+
 try {
     $trackManager = new TrackManager();
 } catch (Exception $e) {
