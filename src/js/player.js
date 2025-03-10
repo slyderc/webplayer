@@ -22,6 +22,10 @@ class NowWavePlayer {
         
         // Initialize services
         this.storageService = new StorageService();
+        this.analyticsService = new AnalyticsService({
+            apiEndpoint: '/player/php/api/track_analytics.php',
+            enabled: true
+        });
         this.audioService = new AudioService({
             streamUrl: this.config.streamUrl,
             format: [this.config.format],
@@ -46,6 +50,7 @@ class NowWavePlayer {
         // New LikeManager handles all like functionality
         this.likeManager = new LikeManager({
             storageService: this.storageService,
+            analyticsService: this.analyticsService,
             defaultArtwork: this.config.defaultArtwork,
             cachedArtworkPath: this.config.cachedArtworkPath
         });
@@ -419,6 +424,16 @@ class NowWavePlayer {
     handlePlayStateChange(isPlaying) {
         this.isPlaying = isPlaying;
         this.uiManager.updatePlayButton(isPlaying);
+        
+        // Track play/stop events if we have current track data
+        const currentTrack = this.getCurrentTrackData();
+        if (currentTrack && currentTrack.title !== 'Loading...' && this.analyticsService) {
+            if (isPlaying) {
+                this.analyticsService.trackPlay(currentTrack);
+            } else {
+                this.analyticsService.trackStop(currentTrack);
+            }
+        }
         
         if (!isPlaying) {
             this.uiManager.resetToDefault();
