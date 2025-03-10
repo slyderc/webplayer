@@ -89,7 +89,7 @@ class ViewManager {
     }
     
     // Helper methods for updating different views
-    updateRecentTracksView(tracks, lovedCallback) {
+    updateRecentTracksView(tracks, lovedCallback, shareCallback) {
         if (!tracks || !tracks.length) {
             this.views.recent.innerHTML = '<div id="recentTracksContainer"><p>No recent tracks to display</p></div>';
             return;
@@ -136,6 +136,14 @@ class ViewManager {
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                             </svg>
                         </button>
+                        <button class="share-button" 
+                                data-track-id="${track.id}">
+                            <svg class="share-icon" viewBox="0 0 24 24">
+                                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                                <polyline points="16 6 12 2 8 6"></polyline>
+                                <line x1="12" y1="2" x2="12" y2="15"></line>
+                            </svg>
+                        </button>
                         <span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>
                     </div>
                 </div>
@@ -154,6 +162,11 @@ class ViewManager {
             });
         }
         
+        // Add share button handlers if callback provided
+        if (shareCallback) {
+            shareCallback(container);
+        }
+        
         // Initialize artwork zoom manager and add click handlers to artwork
         this.initArtworkZoomManager();
         if (this.artworkZoomManager) {
@@ -169,7 +182,7 @@ class ViewManager {
         this.views.catchup.innerHTML = data ? data : '<p>Past shows available on Mixcloud</p>';
     }
 
-    updateFavoritesView(tracks, lovedCallback) {
+    updateFavoritesView(tracks, lovedCallback, shareCallback) {
         // Get the favorites view element
         const favoritesView = this.views.favorites;
         
@@ -226,6 +239,14 @@ class ViewManager {
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                             </svg>
                         </button>
+                        <button class="share-button" 
+                                data-track-id="${track.id}">
+                            <svg class="share-icon" viewBox="0 0 24 24">
+                                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                                <polyline points="16 6 12 2 8 6"></polyline>
+                                <line x1="12" y1="2" x2="12" y2="15"></line>
+                            </svg>
+                        </button>
                         ${track.played_at ? 
                             `<span class="time-ago">${this.formatTimeElapsed(track.played_at)}</span>` : 
                             '<span class="time-ago">Favorited</span>'}
@@ -276,6 +297,11 @@ class ViewManager {
                     }
                 });
             });
+        }
+        
+        // Add share button handlers if callback provided
+        if (shareCallback) {
+            shareCallback(container);
         }
         
         // Initialize artwork zoom manager and add click handlers to artwork
