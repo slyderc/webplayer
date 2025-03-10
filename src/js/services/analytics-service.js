@@ -4,7 +4,7 @@
 class AnalyticsService {
     constructor(options = {}) {
         this.options = {
-            apiEndpoint: '/player/php/api/track_analytics.php',
+            apiEndpoint: '/webplayer/php/api/track_analytics.php',
             enabled: true,
             ...options
         };
@@ -95,15 +95,43 @@ class AnalyticsService {
         try {
             const response = await fetch(this.options.apiEndpoint, options);
             
+            let errorData;
+            
+            try {
+                // Try to parse the response as JSON
+                const responseText = await response.text();
+                if (responseText.trim()) {
+                    errorData = JSON.parse(responseText);
+                }
+            } catch (parseError) {
+                console.error('Error parsing API response:', parseError);
+                return false;
+            }
+            
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Analytics API error:', errorData);
+                if (errorData) {
+                    console.error('Analytics API error:', errorData);
+                } else {
+                    console.error('Analytics API error - Status:', response.status);
+                }
                 return false;
             }
             
             return true;
         } catch (error) {
             console.error('Error sending analytics data:', error);
+            // If API is unavailable, disable temporarily to avoid spam
+            if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                console.warn('Analytics API is unavailable, disabling temporarily');
+                
+                // Disable for 5 minutes then try again
+                this.options.enabled = false;
+                setTimeout(() => {
+                    this.options.enabled = true;
+                    console.log('Re-enabling analytics after temporary pause');
+                }, 5 * 60 * 1000);
+            }
+            
             return false;
         }
     }

@@ -1,16 +1,39 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 require_once '../loved_tracks.php';
 require_once '../nocache.php';
 
 // Disable caching for API endpoints
 nocache();
 
+// Check if data directory exists and is writable
+$dataDir = __DIR__ . '/../../../data';
+if (!file_exists($dataDir)) {
+    mkdir($dataDir, 0755, true);
+}
+
+if (!is_writable($dataDir)) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Data directory is not writable: ' . $dataDir]);
+    exit;
+}
+
 // Set content type to JSON
 header('Content-Type: application/json');
 
 // Handle different HTTP methods
 $method = $_SERVER['REQUEST_METHOD'];
-$trackManager = new TrackManager();
+
+try {
+    $trackManager = new TrackManager();
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+    exit;
+}
 
 switch ($method) {
     case 'POST':

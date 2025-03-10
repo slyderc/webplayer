@@ -23,7 +23,7 @@ class NowWavePlayer {
         // Initialize services
         this.storageService = new StorageService();
         this.analyticsService = new AnalyticsService({
-            apiEndpoint: '/player/php/api/track_analytics.php',
+            apiEndpoint: '/webplayer/php/api/track_analytics.php',
             enabled: true
         });
         this.audioService = new AudioService({

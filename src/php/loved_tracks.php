@@ -5,8 +5,26 @@ class TrackManager {
     private $db;
     
     public function __construct() {
-        $this->db = new SQLite3(__DIR__ . '/../../data/tracks.db');
-        $this->initDatabase();
+        $dbPath = __DIR__ . '/../../data/tracks.db';
+        $dbDir = dirname($dbPath);
+        
+        // Ensure the directory exists
+        if (!file_exists($dbDir)) {
+            mkdir($dbDir, 0755, true);
+        }
+        
+        // Check if directory is writable
+        if (!is_writable($dbDir)) {
+            throw new Exception("Database directory is not writable: {$dbDir}");
+        }
+        
+        try {
+            $this->db = new SQLite3($dbPath);
+            $this->db->enableExceptions(true);
+            $this->initDatabase();
+        } catch (Exception $e) {
+            throw new Exception("Failed to initialize database: " . $e->getMessage());
+        }
     }
     
     private function initDatabase() {
