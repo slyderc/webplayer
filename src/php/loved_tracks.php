@@ -17,9 +17,13 @@ class TrackManager {
         $dbPath = __DIR__ . '/../../data/tracks.db';
         $dbDir = dirname($dbPath);
         
-        // Ensure the directory exists
+        // Ensure the directory exists with proper permissions
         if (!file_exists($dbDir)) {
-            mkdir($dbDir, 0755, true);
+            if (!@mkdir($dbDir, 0777, true)) {
+                throw new Exception("Failed to create database directory: {$dbDir}");
+            }
+            // Set very permissive permissions for shared hosting environments
+            @chmod($dbDir, 0777);
         }
         
         // Check if directory is writable
@@ -27,9 +31,31 @@ class TrackManager {
             throw new Exception("Database directory is not writable: {$dbDir}");
         }
         
+        // If the database file exists, make sure it's writable
+        if (file_exists($dbPath) && !is_writable($dbPath)) {
+            // Try to make it writable
+            @chmod($dbPath, 0666);
+            
+            if (!is_writable($dbPath)) {
+                throw new Exception("Database file exists but is not writable: {$dbPath}");
+            }
+        }
+        
         try {
+            // Open with correct permissions and timeout settings for concurrent access
             $this->db = new SQLite3($dbPath);
             $this->db->enableExceptions(true);
+            
+            // Set busy timeout to 5 seconds to wait for locks to clear
+            $this->db->busyTimeout(5000);
+            
+            // Set journal mode to WAL for better concurrency
+            $this->db->exec('PRAGMA journal_mode = WAL;');
+            
+            // Set synchronous mode to NORMAL for better performance with acceptable safety
+            $this->db->exec('PRAGMA synchronous = NORMAL;');
+            
+            // Create tables if not exists
             $this->initDatabase();
         } catch (Exception $e) {
             throw new Exception("Failed to initialize database: " . $e->getMessage());

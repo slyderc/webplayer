@@ -54,22 +54,63 @@ class AnalyticsService {
         }
         
         this.isProcessing = true;
+        let actions;
         
         try {
             // Take actions from the queue
-            const actions = [...this.queuedActions];
+            actions = [...this.queuedActions];
             this.queuedActions = [];
             
-            // Process each action
-            const promises = actions.map(action => this.sendAction(action, sync));
+            // Process actions sequentially (avoid concurrent writes)
+            // This helps prevent database lock issues
+            const results = [];
             
-            // Wait for all actions to be processed
-            await Promise.all(promises);
+            for (const action of actions) {
+                try {
+                    // Try with exponential backoff for locked database
+                    let result = false;
+                    let retries = 0;
+                    const maxRetries = 3;
+                    
+                    while (!result && retries < maxRetries) {
+                        if (retries > 0) {
+                            // Wait with increasing delay before retrying (300ms, 900ms, 2700ms)
+                            const delay = 300 * Math.pow(3, retries - 1);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            console.log(`Retrying analytics action (attempt ${retries + 1}/${maxRetries})`);
+                        }
+                        
+                        result = await this.sendAction(action, sync);
+                        retries++;
+                        
+                        // If successful, break the retry loop
+                        if (result) break;
+                    }
+                    
+                    results.push(result);
+                    
+                    // Add small delay between requests to avoid overwhelming the server
+                    if (!sync && actions.length > 1) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                } catch (e) {
+                    console.error('Error processing action:', e);
+                    results.push(false);
+                }
+            }
+            
+            // Check if any actions failed
+            const failedCount = results.filter(r => !r).length;
+            if (failedCount > 0) {
+                console.warn(`${failedCount}/${actions.length} analytics actions failed`);
+            }
         } catch (error) {
             console.error('Error processing analytics queue:', error);
             
             // Put failed actions back in the queue
-            this.queuedActions = [...this.queuedActions, ...actions];
+            if (actions && actions.length > 0) {
+                this.queuedActions = [...this.queuedActions, ...actions];
+            }
         } finally {
             this.isProcessing = false;
         }
@@ -109,7 +150,15 @@ class AnalyticsService {
             }
             
             if (!response.ok) {
-                if (errorData) {
+                // Check if it's a database lock error (can be retried)
+                if (errorData && 
+                    typeof errorData.error === 'string' && 
+                    errorData.error.includes('database is locked')) {
+                    console.warn('Analytics API: Database is locked (will retry)');
+                    return false;
+                }
+                // Other errors
+                else if (errorData) {
                     console.error('Analytics API error:', errorData);
                 } else {
                     console.error('Analytics API error - Status:', response.status);

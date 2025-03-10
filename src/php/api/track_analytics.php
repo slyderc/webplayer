@@ -43,8 +43,18 @@ if (!class_exists('SQLite3')) {
 try {
     $trackManager = new TrackManager();
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+    $errorMessage = $e->getMessage();
+    
+    // For database lock errors, use a 503 status code (service unavailable)
+    // This indicates to the client it should retry after a delay
+    if (strpos($errorMessage, 'database is locked') !== false) {
+        http_response_code(503);
+        header('Retry-After: 2');  // Suggest retry after 2 seconds
+    } else {
+        http_response_code(500);
+    }
+    
+    echo json_encode(['error' => 'Database error: ' . $errorMessage]);
     exit;
 }
 
