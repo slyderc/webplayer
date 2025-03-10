@@ -63,6 +63,14 @@ class ShareManager {
                     this.openSocialShare('facebook', shareText, shareUrl);
                     return true;
                     
+                case 'instagram':
+                    this.openSocialShare('instagram', shareText, shareUrl);
+                    return true;
+                    
+                case 'bluesky':
+                    this.openSocialShare('bluesky', shareText, shareUrl);
+                    return true;
+                    
                 case 'whatsapp':
                     this.openSocialShare('whatsapp', shareText, shareUrl);
                     return true;
@@ -73,6 +81,10 @@ class ShareManager {
                     
                 case 'email':
                     this.openEmailShare(shareTitle, shareText);
+                    return true;
+                    
+                case 'sms':
+                    this.openSocialShare('sms', shareText, shareUrl);
                     return true;
                     
                 default:
