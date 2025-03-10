@@ -222,6 +222,12 @@ class ShareManager {
      * @param {HTMLElement} buttonElement - The button that was clicked
      */
     showSharePopup(track, buttonElement) {
+        // Check if a popup is already open and remove it
+        const existingPopup = document.querySelector('.share-popup');
+        if (existingPopup && document.body.contains(existingPopup)) {
+            document.body.removeChild(existingPopup);
+        }
+        
         // Create popup container
         const popup = document.createElement('div');
         popup.className = 'share-popup';
@@ -314,22 +320,33 @@ class ShareManager {
                 }
                 
                 // Close popup
-                document.body.removeChild(popup);
+                if (document.body.contains(popup)) {
+                    document.body.removeChild(popup);
+                }
             });
         });
         
         // Add close button handler
         popup.querySelector('.close-button').addEventListener('click', () => {
-            document.body.removeChild(popup);
+            if (document.body.contains(popup)) {
+                document.body.removeChild(popup);
+            }
         });
         
         // Close when clicking outside
-        document.addEventListener('click', function closePopup(e) {
+        const closePopupHandler = function(e) {
             if (!popup.contains(e.target) && e.target !== buttonElement) {
-                document.body.removeChild(popup);
-                document.removeEventListener('click', closePopup);
+                if (document.body.contains(popup)) {
+                    document.body.removeChild(popup);
+                }
+                document.removeEventListener('click', closePopupHandler);
             }
-        });
+        };
+        
+        // Add the event listener but delay it slightly to avoid immediate triggering
+        setTimeout(() => {
+            document.addEventListener('click', closePopupHandler);
+        }, 100);
         
         // Add mobile native share if available
         if (this.hasNativeShare) {
@@ -351,7 +368,9 @@ class ShareManager {
             
             nativeShareButton.addEventListener('click', async () => {
                 await this.shareTrack(track, 'native', nativeShareButton);
-                document.body.removeChild(popup);
+                if (document.body.contains(popup)) {
+                    document.body.removeChild(popup);
+                }
             });
         }
     }
