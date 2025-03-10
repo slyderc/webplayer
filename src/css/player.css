@@ -602,7 +602,10 @@ body[data-active-tab="live"] .artwork-background {
     min-width: fit-content;
 }
 
-.track-item .heart-button {
+.track-item .heart-button,
+.track-item .share-button,
+.controls .heart-button,
+.controls .share-button {
     background: none;
     border: none;
     cursor: pointer;
@@ -610,11 +613,17 @@ body[data-active-tab="live"] .artwork-background {
     transition: transform 0.2s;
 }
 
-.track-item .heart-button:hover {
+.track-item .heart-button:hover,
+.track-item .share-button:hover,
+.controls .heart-button:hover,
+.controls .share-button:hover {
     transform: scale(1.1);
 }
 
-.track-item .heart-icon {
+.track-item .heart-icon,
+.track-item .share-icon,
+.controls .heart-icon,
+.controls .share-icon {
     width: 1.5rem;
     height: 1.5rem;
     stroke: var(--medium-text-color);
@@ -622,9 +631,19 @@ body[data-active-tab="live"] .artwork-background {
     stroke-width: 2;
 }
 
-.track-item .heart-button[data-loved="true"] .heart-icon {
+.track-item .heart-button[data-loved="true"] .heart-icon,
+.controls .heart-button[data-loved="true"] .heart-icon {
     fill: var(--love-button-color);
     stroke: var(--love-button-color);
+}
+
+/* Share button styling */
+.share-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    stroke: var(--medium-text-color);
+    fill: none;
+    stroke-width: 2;
 }
 
 .track-item .time-ago {
@@ -641,6 +660,110 @@ body[data-active-tab="live"] .artwork-background {
     background-color: transparent;
     color: var(--light-text-color);
     padding: 1rem;
+}
+
+/* Share popup and feedback styling */
+.share-popup {
+    background-color: var(--player-bar-bg);
+    border-radius: var(--large-radius);
+    box-shadow: var(--standard-shadow);
+    width: 320px;
+    max-width: 90vw;
+    overflow: hidden;
+    z-index: 1000;
+    opacity: 1;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.share-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--light-border-color);
+}
+
+.share-popup-header h3 {
+    margin: 0;
+    color: var(--light-text-color);
+    font-size: 1.125rem;
+}
+
+.share-popup-content {
+    padding: 1rem;
+}
+
+.share-track-info {
+    margin-bottom: 1rem;
+}
+
+.share-track-title {
+    font-weight: bold;
+    color: var(--light-text-color);
+    margin: 0 0 0.25rem 0;
+}
+
+.share-track-artist {
+    color: var(--medium-text-color);
+    margin: 0;
+}
+
+.share-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.share-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    background-color: var(--card-bg-color);
+    border: none;
+    border-radius: var(--standard-radius);
+    color: var(--light-text-color);
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.share-option:hover {
+    background-color: var(--card-hover-color);
+    transform: translateY(-2px);
+}
+
+.share-option svg {
+    margin-bottom: 0.5rem;
+}
+
+.share-option span {
+    font-size: 0.875rem;
+}
+
+.share-feedback {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    background-color: var(--card-bg-color);
+    color: var(--light-text-color);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--standard-radius);
+    box-shadow: var(--standard-shadow);
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+    z-index: 1100;
+}
+
+.share-feedback.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Style any lists or cards in other views consistently */

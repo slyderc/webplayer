@@ -50,6 +50,14 @@ class NowWavePlayer {
             cachedArtworkPath: this.config.cachedArtworkPath
         });
         
+        // ShareManager for track sharing functionality
+        this.shareManager = new ShareManager({
+            stationUrl: 'https://nowwave.radio',
+            stationName: 'Now Wave Radio',
+            storageService: this.storageService,
+            defaultArtwork: this.config.defaultArtwork
+        });
+        
         // Register player as observer for like changes
         this.likeManager.addObserver(this);
         
@@ -62,6 +70,7 @@ class NowWavePlayer {
         this.viewManager = new ViewManager({
             trackManager: this.trackManager,
             likeManager: this.likeManager,
+            shareManager: this.shareManager,
             cachedArtworkPath: this.config.cachedArtworkPath,
             defaultArtwork: this.config.defaultArtwork
         });
@@ -80,6 +89,10 @@ class NowWavePlayer {
         // Love track
         document.getElementById('loveButton').addEventListener('click', 
             () => this.toggleLove());
+            
+        // Share track
+        document.getElementById('shareButton').addEventListener('click', 
+            (e) => this.shareCurrentTrack(e.currentTarget));
         
         // Album art load handler
         document.getElementById('albumArt').addEventListener('load', 
@@ -470,8 +483,65 @@ class NowWavePlayer {
         const tracks = this.trackManager.getRecentTracks();
         this.viewManager.updateRecentTracksView(
             tracks, 
-            (trackId) => this.toggleLove(trackId)
+            (trackId) => this.toggleLove(trackId),
+            this.setupShareButtonHandlers.bind(this)
         );
+    }
+    
+    /**
+     * Share the currently playing track
+     */
+    shareCurrentTrack(buttonElement) {
+        const trackData = this.getCurrentTrackData();
+        if (trackData) {
+            this.shareManager.showSharePopup(trackData, buttonElement);
+        }
+    }
+    
+    /**
+     * Setup share button handlers for track lists
+     */
+    setupShareButtonHandlers(container) {
+        if (!container) return;
+        
+        const shareButtons = container.querySelectorAll('.share-button');
+        shareButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const trackId = e.currentTarget.dataset.trackId;
+                
+                // Find track data
+                let trackData = null;
+                const recentTracks = this.trackManager.getRecentTracks();
+                const lovedTracks = this.likeManager.getLovedTracksWithDetails(recentTracks);
+                
+                // Try to find in recent tracks first
+                trackData = recentTracks.find(track => track.id === trackId);
+                
+                // If not found, try loved tracks
+                if (!trackData) {
+                    trackData = lovedTracks.find(track => track.id === trackId);
+                }
+                
+                // If still not found but we have an ID, create minimal track data
+                if (!trackData && trackId) {
+                    const parts = trackId.split('-');
+                    const artist = parts.shift();
+                    const title = parts.join('-');
+                    
+                    trackData = {
+                        id: trackId,
+                        artist: artist,
+                        title: title,
+                        artwork_url: this.config.defaultArtwork
+                    };
+                }
+                
+                if (trackData) {
+                    this.shareManager.showSharePopup(trackData, button);
+                }
+            });
+        });
     }
 
     updateLiveView() {
@@ -491,7 +561,8 @@ class NowWavePlayer {
         const tracks = this.likeManager.getLovedTracksWithDetails(this.trackManager.recentTracks);
         this.viewManager.updateFavoritesView(
             tracks, 
-            (trackId) => this.toggleLove(trackId)
+            (trackId) => this.toggleLove(trackId),
+            this.setupShareButtonHandlers.bind(this)
         );
     }
     
