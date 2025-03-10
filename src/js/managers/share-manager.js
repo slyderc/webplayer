@@ -35,6 +35,11 @@ class ShareManager {
         const shareTitle = `${track.title} by ${track.artist}`;
         const shareUrl = this.options.stationUrl;
         
+        // Prepare artwork URL if available
+        const artworkUrl = track.artwork_url && 
+                          !track.artwork_url.includes('/NWR_text_logo_angle.png') ? 
+                          track.artwork_url : null;
+        
         try {
             switch (method) {
                 case 'copy':
@@ -43,6 +48,31 @@ class ShareManager {
                     
                 case 'native':
                     if (this.hasNativeShare) {
+                        // Try to share with image if available and supported
+                        if (artworkUrl && this.canShareFiles()) {
+                            try {
+                                // Try to fetch the image as a blob
+                                const imageBlob = await this.fetchImageAsBlob(artworkUrl);
+                                if (imageBlob) {
+                                    // Create a File object from the blob
+                                    const imageFile = new File([imageBlob], 'artwork.jpg', { type: 'image/jpeg' });
+                                    
+                                    // Share with image
+                                    await navigator.share({
+                                        title: shareTitle,
+                                        text: shareText,
+                                        url: shareUrl,
+                                        files: [imageFile]
+                                    });
+                                    return true;
+                                }
+                            } catch (err) {
+                                console.warn('Error sharing with image, falling back to text-only share', err);
+                                // Fall back to text-only share
+                            }
+                        }
+                        
+                        // Text-only share (fallback)
                         await navigator.share({
                             title: shareTitle,
                             text: shareText,
@@ -56,35 +86,35 @@ class ShareManager {
                     }
                     
                 case 'twitter':
-                    this.openSocialShare('twitter', shareText, shareUrl);
+                    this.openSocialShare('twitter', shareText, shareUrl, artworkUrl);
                     return true;
                     
                 case 'facebook':
-                    this.openSocialShare('facebook', shareText, shareUrl);
+                    this.openSocialShare('facebook', shareText, shareUrl, artworkUrl);
                     return true;
                     
                 case 'instagram':
-                    this.openSocialShare('instagram', shareText, shareUrl);
+                    this.openSocialShare('instagram', shareText, shareUrl, artworkUrl);
                     return true;
                     
                 case 'bluesky':
-                    this.openSocialShare('bluesky', shareText, shareUrl);
+                    this.openSocialShare('bluesky', shareText, shareUrl, artworkUrl);
                     return true;
                     
                 case 'whatsapp':
-                    this.openSocialShare('whatsapp', shareText, shareUrl);
+                    this.openSocialShare('whatsapp', shareText, shareUrl, artworkUrl);
                     return true;
                     
                 case 'telegram':
-                    this.openSocialShare('telegram', shareText, shareUrl);
+                    this.openSocialShare('telegram', shareText, shareUrl, artworkUrl);
                     return true;
                     
                 case 'email':
-                    this.openEmailShare(shareTitle, shareText);
+                    this.openEmailShare(shareTitle, shareText, artworkUrl);
                     return true;
                     
                 case 'sms':
-                    this.openSocialShare('sms', shareText, shareUrl);
+                    this.openSocialShare('sms', shareText, shareUrl, artworkUrl);
                     return true;
                     
                 default:
@@ -94,6 +124,40 @@ class ShareManager {
         } catch (error) {
             console.error('Error sharing track:', error);
             return false;
+        }
+    }
+    
+    /**
+     * Check if the browser supports sharing files via the Web Share API
+     * @returns {boolean} - Whether file sharing is supported
+     */
+    canShareFiles() {
+        return typeof navigator !== 'undefined' && 
+               navigator.share !== undefined && 
+               navigator.canShare && 
+               navigator.canShare({ files: [new File([''], 'test.txt', { type: 'text/plain' })] });
+    }
+    
+    /**
+     * Fetch an image as a blob
+     * @param {string} url - URL of the image to fetch
+     * @returns {Promise<Blob|null>} - The image as a blob, or null if fetch failed
+     */
+    async fetchImageAsBlob(url) {
+        try {
+            const response = await fetch(url, { 
+                mode: 'cors',
+                cache: 'no-cache'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+            }
+            
+            return await response.blob();
+        } catch (error) {
+            console.error('Error fetching image:', error);
+            return null;
         }
     }
     
@@ -151,32 +215,54 @@ class ShareManager {
      * @param {string} platform - The platform to share on
      * @param {string} text - The text to share
      * @param {string} url - The URL to share
+     * @param {string|null} artworkUrl - Optional URL to the track artwork
      */
-    openSocialShare(platform, text, url) {
+    openSocialShare(platform, text, url, artworkUrl = null) {
         let shareUrl;
         const encodedText = encodeURIComponent(text);
         const encodedUrl = encodeURIComponent(url);
         
+        // For platforms that support artwork, store it temporarily if available
+        if (artworkUrl && typeof sessionStorage !== 'undefined') {
+            try {
+                sessionStorage.setItem('nwrLastSharedArtwork', artworkUrl);
+            } catch (e) {
+                console.warn('Could not store artwork in session storage:', e);
+            }
+        }
+        
         switch (platform) {
             case 'twitter':
+                // Twitter doesn't support direct image sharing via URL parameters
                 shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}`;
                 break;
                 
             case 'facebook':
+                // For Facebook, if we had a server-side Open Graph implementation,
+                // we could include artwork that way, but for now we can only share the URL
                 shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
                 break;
                 
             case 'instagram':
-                // Instagram doesn't have a direct web share API
-                // We'll share to Instagram stories if on mobile
+                // Instagram story sharing works best with native share on mobile
                 if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                    alert("Instagram sharing works best using the native share feature on your device.");
                     if (this.hasNativeShare) {
-                        navigator.share({
-                            title: text.split('\n')[0],
-                            text: text,
-                            url: url
-                        }).catch(err => console.error('Error sharing to Instagram:', err));
+                        // If we have an artwork URL and the device supports file sharing
+                        if (artworkUrl && this.canShareFiles()) {
+                            // We'll handle this with the native share API and fetch the image
+                            this.shareWithImageNatively(text.split('\n')[0], text, url, artworkUrl);
+                            return;
+                        } else {
+                            // Fall back to regular native share
+                            navigator.share({
+                                title: text.split('\n')[0],
+                                text: text,
+                                url: url
+                            }).catch(err => console.error('Error sharing to Instagram:', err));
+                            return;
+                        }
+                    } else {
+                        alert("Instagram sharing works best with your device's native share feature, which isn't available in this browser.");
                         return;
                     }
                 } else {
@@ -186,20 +272,23 @@ class ShareManager {
                 break;
                 
             case 'bluesky':
-                // Bluesky sharing via intent URL
+                // Bluesky currently only supports text sharing
                 shareUrl = `https://bsky.app/intent/compose?text=${encodedText}`;
                 break;
                 
             case 'whatsapp':
+                // WhatsApp doesn't support direct image sharing via URL
                 shareUrl = `https://wa.me/?text=${encodedText}`;
                 break;
                 
             case 'telegram':
+                // Telegram allows attaching images, but requires a Telegram bot API
+                // For now, we'll just share the text and URL
                 shareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
                 break;
                 
             case 'sms':
-                // For SMS/text message
+                // SMS doesn't support images via URL schemes
                 if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
                     // iOS uses different format
                     shareUrl = `sms:&body=${encodedText}`;
@@ -218,12 +307,77 @@ class ShareManager {
     }
     
     /**
+     * Share content with image using the Native Share API
+     * @param {string} title - The title of the content
+     * @param {string} text - The text to share
+     * @param {string} url - The URL to share
+     * @param {string} imageUrl - The URL of the image to share
+     */
+    async shareWithImageNatively(title, text, url, imageUrl) {
+        try {
+            // Fetch the image as a blob
+            const imageBlob = await this.fetchImageAsBlob(imageUrl);
+            if (!imageBlob) {
+                // Fall back to text-only sharing
+                navigator.share({
+                    title,
+                    text,
+                    url
+                });
+                return;
+            }
+            
+            // Create a File object
+            const imageFile = new File([imageBlob], 'artwork.jpg', { type: 'image/jpeg' });
+            
+            // Check if we can share files
+            if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+                await navigator.share({
+                    title,
+                    text,
+                    url,
+                    files: [imageFile]
+                });
+            } else {
+                // Fall back to text-only sharing
+                navigator.share({
+                    title,
+                    text,
+                    url
+                });
+            }
+        } catch (error) {
+            console.error('Error sharing with image:', error);
+            // Fall back to text-only sharing
+            try {
+                navigator.share({
+                    title,
+                    text,
+                    url
+                });
+            } catch (e) {
+                console.error('Error with fallback share:', e);
+            }
+        }
+    }
+    
+    /**
      * Open email sharing
      * @param {string} subject - The email subject
      * @param {string} body - The email body
+     * @param {string|null} artworkUrl - Optional URL to the track artwork
      */
-    openEmailShare(subject, body) {
-        const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    openEmailShare(subject, body, artworkUrl = null) {
+        // For email, we can't directly attach images via mailto links
+        // But we can include an image URL in the body if available
+        let emailBody = body;
+        
+        if (artworkUrl) {
+            // Include a note about the artwork
+            emailBody += `\n\nYou can view the album artwork here: ${artworkUrl}`;
+        }
+        
+        const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
         window.location.href = mailtoUrl;
     }
     
