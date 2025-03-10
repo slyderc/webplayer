@@ -509,7 +509,7 @@ body[data-active-tab="live"] .artwork-background {
 
 /* ---- RECENT TAB STYLING ---- */
 /* Recent view specific styles */
-#recentView {
+#recentView, #favoritesView {
     overflow: hidden;
     max-height: calc(100vh - 200px); /* Adjust based on your player bar height */
 }
@@ -555,6 +555,11 @@ body[data-active-tab="live"] .artwork-background {
     box-shadow: none;
     border-bottom: 1px solid var(--light-border-color);
     padding: var(--small-spacing) 0;
+    transition: background-color 0.2s ease;
+}
+
+.track-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .track-item:last-child {
@@ -655,8 +660,8 @@ body[data-active-tab="live"] .artwork-background {
 }
 
 /* ---- OTHER TABS STYLING ---- */
-/* Schedule, Catch Up, and Favorites tab styling */
-#catchUpView, #favoritesView {
+/* Schedule and Catch Up tab styling */
+#catchUpView {
     background-color: transparent;
     color: var(--light-text-color);
     padding: 1rem;
@@ -1387,7 +1392,7 @@ body[data-active-tab="live"] .contact-button-container {
    11. Favorites tab
    ========================================================================== */
 
-/* Empty state styling for Favorites view */
+/* Empty state styling for views */
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -1423,10 +1428,9 @@ body[data-active-tab="live"] .contact-button-container {
 #favoritesTracksContainer {
     overflow-y: auto;
     height: 100%;
-    padding: 0.5rem;
+    padding: var(--small-spacing);
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-    padding-bottom: 100px; /* Add extra padding at the bottom */
     -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
 }
 
@@ -1443,8 +1447,9 @@ body[data-active-tab="live"] .contact-button-container {
     border-radius: 3px;
 }
 
+#recentTracksContainer .track-item:last-child,
 #favoritesTracksContainer .track-item:last-child {
-    margin-bottom: 80px;
+    margin-bottom: 20px;
 }
 
 /* ==========================================================================
