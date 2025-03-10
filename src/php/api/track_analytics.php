@@ -7,7 +7,9 @@ require_once '../loved_tracks.php';
 require_once '../nocache.php';
 
 // Disable caching for API endpoints
-nocache();
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
 
 // Check if data directory exists and is writable
 $dataDir = __DIR__ . '/../../../data';

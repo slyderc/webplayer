@@ -1,6 +1,15 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 require_once '../loved_tracks.php';
 require_once '../config.php';
+
+// Disable caching for dashboard
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
 
 // Simple authentication check - replace with your own auth method
 $authorized = false;
