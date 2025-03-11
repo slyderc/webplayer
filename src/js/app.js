@@ -4,7 +4,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Make sure required dependencies are loaded
     const requiredDependencies = [
-        'AudioService', 'MetadataService', 'StorageService', 
+        'AudioService', 'MetadataService', 'StorageService', 'GDPRManager',
         'BackgroundManager', 'TrackManager', 'LikeManager', 'ShareManager', 'ViewManager', 'UIManager'
     ];
         
@@ -17,8 +17,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Initialize the player
-    window.player = new NowWavePlayer();
+    // Initialize storage service first
+    const storageService = new StorageService();
+    
+    // Initialize GDPR manager to handle consent
+    window.gdprManager = new GDPRManager({
+        storageService: storageService
+    });
+    
+    // Initialize the player (GDPR consent will be checked on first metadata request)
+    window.player = new NowWavePlayer({
+        gdprManager: window.gdprManager
+    });
+    
+    // Check for GDPR consent
+    window.gdprManager.checkConsent();
+    
     console.log('Now Wave Radio player initialized');
 });
 

@@ -2,7 +2,7 @@
  * NowWavePlayer - Main player class that coordinates all components
  */
 class NowWavePlayer {
-    constructor() {
+    constructor(options = {}) {
         // Get configuration from global object
         this.config = window.NWR_CONFIG || {
             streamUrl: 'https://streaming.live365.com/a78360_2',
@@ -19,6 +19,9 @@ class NowWavePlayer {
         };
         
         this.isPlaying = false;
+        
+        // Set GDPR manager if provided
+        this.gdprManager = options.gdprManager || null;
         
         // Initialize services
         this.storageService = new StorageService();
@@ -102,6 +105,15 @@ class NowWavePlayer {
         // Album art load handler
         document.getElementById('albumArt').addEventListener('load', 
             (e) => this.handleArtworkLoad(e.target.src));
+            
+        // Make logo in live view clickable to show GDPR consent (it's also handled by GDPRManager)
+        const headerLogo = document.querySelector('#liveView .logo-container img');
+        if (headerLogo && this.gdprManager) {
+            headerLogo.style.cursor = 'pointer';
+            headerLogo.addEventListener('click', () => {
+                this.gdprManager.showConsentOverlay();
+            });
+        }
         
         // Register tab callbacks
         this.viewManager

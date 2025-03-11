@@ -27,6 +27,7 @@ $jsViewManagerVersion = filemtime(__DIR__ . '/js/managers/view-manager.js');
 $jsUIManagerVersion = filemtime(__DIR__ . '/js/managers/ui-manager.js');
 $jsScheduleManagerVersion = filemtime(__DIR__ . '/js/managers/schedule-manager.js');
 $jsArtworkZoomManagerVersion = filemtime(__DIR__ . '/js/managers/artwork-zoom-manager.js');
+$jsGDPRManagerVersion = filemtime(__DIR__ . '/js/managers/gdpr-manager.js');
 
 // Core player files
 $jsPlayerVersion = filemtime(__DIR__ . '/js/player.js');
@@ -62,6 +63,7 @@ $audioLibs = $audioLibraries;
     <script src="./js/managers/view-manager.js?v=<?php echo $jsViewManagerVersion; ?>"></script>
     <script src="./js/managers/ui-manager.js?v=<?php echo $jsUIManagerVersion; ?>"></script>
     <script src="./js/managers/schedule-manager.js?v=<?php echo $jsScheduleManagerVersion; ?>"></script>
+    <script src="./js/managers/gdpr-manager.js?v=<?php echo $jsGDPRManagerVersion; ?>"></script>
 
     <!-- Core player -->
     <script src="./js/player.js?v=<?php echo $jsPlayerVersion; ?>"></script>
@@ -228,6 +230,25 @@ $audioLibs = $audioLibraries;
             </button>
             <div class="artwork-zoom-content">
                 <img id="zoomedArtwork" src="" alt="Album artwork" class="zoomed-artwork">
+            </div>
+        </div>
+    </div>
+    
+    <!-- GDPR Consent Overlay -->
+    <div id="gdprConsentOverlay" class="gdpr-consent-overlay">
+        <div class="gdpr-consent-container">
+            <div class="gdpr-logo-container">
+                <img src="/player/logo_head.png" alt="Now Wave Radio" class="gdpr-logo">
+                <p class="gdpr-slogan">The Next Wave Today!</p>
+                <p class="gdpr-copyright">Copyright ©2021-<?php echo date('Y'); ?> Now Wave Radio™️</p>
+            </div>
+            <hr class="gdpr-divider">
+            <div class="gdpr-content">
+                <h2>We Value Your Privacy</h2>
+                <p>Hey there! We use cookies and similar technologies to enhance your listening experience, remember your preferences, and analyze our traffic. These help us provide a better service and personalize content for you.</p>
+                <p>By clicking "OK", you're giving us permission to collect and use this information. You can always change your mind later by clicking on our logo in the Live tab.</p>
+                <p>For more information on how we handle your data, please visit our website.</p>
+                <button id="gdprConsentButton" class="gdpr-consent-button">OK</button>
             </div>
         </div>
     </div>
