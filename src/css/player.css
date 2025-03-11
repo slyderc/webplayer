@@ -85,6 +85,19 @@ button:focus,
 a:focus, 
 input:focus, 
 textarea:focus {
+    outline: none;
+}
+
+/* Remove browser default focus styles */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom focus styles for keyboard navigation only */
+button:focus-visible, 
+a:focus-visible, 
+input:focus-visible, 
+textarea:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }
