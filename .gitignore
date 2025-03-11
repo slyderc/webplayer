@@ -9,6 +9,7 @@ schedule.json
 # PHP files
 vendor/
 messages/
+data/
 composer.lock
 .htaccess
 
