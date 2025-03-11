@@ -1,0 +1,16 @@
+<?php
+/**
+ * Authentication configuration (example)
+ * 
+ * INSTRUCTIONS:
+ * 1. Copy this file to auth_config.php
+ * 2. Replace the username and password hash below with your actual values
+ * 3. Keep auth_config.php out of version control
+ *
+ * To generate a secure password hash, use the following PHP code:
+ * <?php echo password_hash('your_password_here', PASSWORD_BCRYPT); ?>
+ */
+
+// Set your actual username and password hash here
+define('AUTH_USERNAME', 'admin');
+define('AUTH_PASSWORD_HASH', '$2y$10$secure_hash_here_replace_me');

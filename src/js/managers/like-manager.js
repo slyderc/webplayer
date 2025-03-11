@@ -5,6 +5,7 @@ class LikeManager {
     constructor(options = {}) {
         this.options = {
             storageService: null,
+            analyticsService: null,
             defaultArtwork: '/player/NWR_text_logo_angle.png',
             cachedArtworkPath: '/player/publish/ca/',
             ...options
@@ -28,6 +29,7 @@ class LikeManager {
         });
         
         this.storageService = this.options.storageService;
+        this.analyticsService = this.options.analyticsService;
         this.lovedTracks = new Set();
         this.observers = new Set(); // For notifying components about like changes
         
@@ -84,6 +86,8 @@ class LikeManager {
         // Get the current loved track details
         const lovedTrackDetails = this.storageService.getItem('lovedTrackDetails', {});
         
+        let trackDetails = null;
+        
         if (isLoved) {
             // Add to loved tracks
             this.lovedTracks.add(trackId);
@@ -95,14 +99,17 @@ class LikeManager {
                     trackData.artwork_hash = this.generateHash(trackData.artist, trackData.title);
                 }
                 
-                lovedTrackDetails[trackId] = {
+                trackDetails = {
                     id: trackId,
                     artist: trackData.artist,
                     title: trackData.title,
                     artwork_url: trackData.artwork_url || this.options.defaultArtwork,
                     artwork_hash: trackData.artwork_hash,
+                    album: trackData.album,
                     last_played: trackData.played_at || new Date().toISOString()
                 };
+                
+                lovedTrackDetails[trackId] = trackDetails;
             } else {
                 // Try to parse track info from ID if no data provided
                 const parts = trackId.split('-');
@@ -110,7 +117,7 @@ class LikeManager {
                     const artist = parts.shift();
                     const title = parts.join('-');
                     
-                    lovedTrackDetails[trackId] = {
+                    trackDetails = {
                         id: trackId,
                         artist: artist,
                         title: title,
@@ -118,12 +125,27 @@ class LikeManager {
                         artwork_hash: this.generateHash(artist, title),
                         last_played: new Date().toISOString()
                     };
+                    
+                    lovedTrackDetails[trackId] = trackDetails;
                 }
             }
+            
+            // Send analytics
+            if (this.analyticsService && trackDetails) {
+                this.analyticsService.trackLike(trackDetails);
+            }
         } else {
+            // Get track details before removing
+            trackDetails = lovedTrackDetails[trackId];
+            
             // Remove from loved tracks
             this.lovedTracks.delete(trackId);
             delete lovedTrackDetails[trackId];
+            
+            // Send analytics
+            if (this.analyticsService && trackDetails) {
+                this.analyticsService.trackUnlike(trackDetails);
+            }
         }
         
         // Save to storage
