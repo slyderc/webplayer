@@ -238,16 +238,18 @@ $audioLibs = $audioLibraries;
     <div id="gdprConsentOverlay" class="gdpr-consent-overlay">
         <div class="gdpr-consent-container">
             <div class="gdpr-logo-container">
-                <img src="/player/logo_head.png" alt="Now Wave Radio" class="gdpr-logo">
+                <a href="https://nowwave.radio/" target="_blank" rel="noopener noreferrer">
+                    <img src="/player/logo_head.png" alt="Now Wave Radio" class="gdpr-logo">
+                </a>
                 <p class="gdpr-slogan">The Next Wave Today!</p>
                 <p class="gdpr-copyright">Copyright ©2021-<?php echo date('Y'); ?> Now Wave Radio™️</p>
             </div>
             <hr class="gdpr-divider">
             <div class="gdpr-content">
                 <h2>We Value Your Privacy</h2>
-                <p>Hey there! We use cookies and similar technologies to enhance your listening experience, remember your preferences, and analyze our traffic. These help us provide a better service and personalize content for you.</p>
-                <p>By clicking "OK", you're giving us permission to collect and use this information. You can always change your mind later by clicking on our logo in the Live tab.</p>
-                <p>For more information on how we handle your data, please visit our website.</p>
+                <p>Hey there! We use cookies and similar technologies to enhance your listening experience, remember your likes, and analyze our music popularity. These help us provide a better service and personalize content for you.</p>
+                <p>All data is anonymous and not tracked to individual listeners. By clicking "OK", you're giving us permission to collect and use this information.</p>
+                <p>For more information on how we handle your data, please <a href="https://nowwave.radio/" target="_blank" rel="noopener noreferrer" class="gdpr-link">visit our website</a>.</p>
                 <button id="gdprConsentButton" class="gdpr-consent-button">OK</button>
             </div>
         </div>

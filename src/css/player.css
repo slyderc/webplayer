@@ -1625,6 +1625,11 @@ body[data-active-tab="live"] .contact-button-container {
     max-width: 150px;
     height: auto;
     margin-bottom: 0.5rem;
+    transition: transform 0.2s ease;
+}
+
+.gdpr-logo-container a:hover .gdpr-logo {
+    transform: scale(1.05);
 }
 
 .gdpr-slogan {
@@ -1661,6 +1666,17 @@ body[data-active-tab="live"] .contact-button-container {
     line-height: 1.5;
     font-size: 0.95rem;
     color: var(--medium-text-color);
+}
+
+.gdpr-content .gdpr-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.gdpr-content .gdpr-link:hover {
+    text-decoration: underline;
+    color: var(--contact-button-hover-bg);
 }
 
 .gdpr-consent-button {
