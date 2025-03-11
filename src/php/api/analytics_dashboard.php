@@ -21,7 +21,7 @@ if (isset($_GET['key']) && $_GET['key'] === 'admin123') {
 
 // Check if SQLite3 is available
 $sqliteAvailable = class_exists('SQLite3');
-$dbPath = realpath(__DIR__ . '/../../../data/tracks.db');
+$dbPath = realpath(__DIR__ . '/data/tracks.db');
 
 // Initialize with empty data in case SQLite is not available
 $popularTracks = [];
@@ -36,7 +36,7 @@ if ($sqliteAvailable) {
         $popularTracks = $trackManager->getPopularTracks(20);
 
         // Get action counts by type
-        $db = new SQLite3(__DIR__ . '/../../../data/tracks.db');
+        $db = new SQLite3(__DIR__ . '/data/tracks.db');
         $actionTypes = ['like', 'unlike', 'play', 'stop'];
 
         foreach ($actionTypes as $type) {

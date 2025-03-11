@@ -12,7 +12,7 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
 // Check if data directory exists and is writable
-$dataDir = __DIR__ . '/../../../data';
+$dataDir = __DIR__ . '/data';
 if (!file_exists($dataDir)) {
     mkdir($dataDir, 0755, true);
 }

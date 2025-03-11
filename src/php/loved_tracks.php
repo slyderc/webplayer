@@ -14,7 +14,7 @@ class TrackManager {
             return;
         }
         
-        $dbPath = __DIR__ . '/../../data/tracks.db';
+        $dbPath = __DIR__ . '/data/tracks.db';
         $dbDir = dirname($dbPath);
         
         // Ensure the directory exists with proper permissions
