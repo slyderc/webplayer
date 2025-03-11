@@ -1,9 +1,14 @@
-# Prevent direct access to the dashboard without proper authentication
-<FilesMatch "analytics_dashboard\.php$">
-    # Only allow access when correct key parameter is provided
-    RewriteEngine On
-    RewriteCond %{QUERY_STRING} !key=admin123
-    RewriteRule ^ - [F]
+# Prevent direct access to sensitive files
+<FilesMatch "(auth\.php|auth_config\.php|generate_password_hash\.php)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Allow local access to the password hash generator with proper parameter
+<FilesMatch "generate_password_hash\.php$">
+    Order Deny,Allow
+    Allow from 127.0.0.1
+    Allow from ::1
 </FilesMatch>
 
 # Disable directory listing

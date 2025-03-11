@@ -1,0 +1,2 @@
+# Ignore authentication configuration with real credentials
+auth_config.php

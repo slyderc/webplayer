@@ -5,23 +5,41 @@ error_reporting(E_ALL);
 
 require_once '../loved_tracks.php';
 require_once '../config.php';
+require_once 'auth.php';
 
 // Disable caching for dashboard
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-// Simple authentication check - replace with your own auth method
-$authorized = true;
-
-// Check for simple authentication (demo purposes only)
-if (isset($_GET['key']) && $_GET['key'] === 'admin123') {
-    $authorized = true;
+// Check for login attempt
+$loginError = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    if (login($username, $password)) {
+        // Redirect to remove POST data and prevent form resubmission
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    } else {
+        $loginError = 'Invalid username or password';
+    }
 }
+
+// Check for logout
+if (isset($_GET['logout'])) {
+    logout();
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+// Check if user is authenticated
+$authorized = isAuthenticated();
 
 // Check if SQLite3 is available
 $sqliteAvailable = class_exists('SQLite3');
-$dbPath = realpath(__DIR__ . '../data/tracks.db');
+$dbPath = realpath(__DIR__ . '/../../../data/tracks.db');
 
 // Initialize with empty data in case SQLite is not available
 $popularTracks = [];
@@ -36,7 +54,7 @@ if ($sqliteAvailable) {
         $popularTracks = $trackManager->getPopularTracks(20);
 
         // Get action counts by type
-        $db = new SQLite3(__DIR__ . '../data/tracks.db');
+        $db = new SQLite3(__DIR__ . '/../../../data/tracks.db');
         $actionTypes = ['like', 'unlike', 'play', 'stop'];
 
         foreach ($actionTypes as $type) {
@@ -221,6 +239,74 @@ if ($sqliteAvailable && isset($db)) {
             border-radius: 4px;
             overflow-x: auto;
         }
+        
+        /* Login form styles */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .login-button:hover {
+            background-color: #1e50c8;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .logout-button {
+            padding: 6px 12px;
+            background-color: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .logout-button:hover {
+            background-color: #e9ecef;
+        }
     </style>
 </head>
 <body>
@@ -230,6 +316,7 @@ if ($sqliteAvailable && isset($db)) {
                 <h1>Now Wave Radio Analytics</h1>
                 <div>
                     <span>Data updated: <?= date('Y-m-d H:i:s') ?></span>
+                    <a href="?logout=1" class="logout-button">Logout</a>
                 </div>
             </div>
             
@@ -319,9 +406,29 @@ if ($sqliteAvailable && isset($db)) {
             <p>Database location: <?= $dbPath ?: 'Unknown' ?></p>
             
         <?php else: ?>
-            <div class="unauthorized">
-                <h1>Unauthorized Access</h1>
-                <p>You are not authorized to view this dashboard.</p>
+            <div class="login-container">
+                <div class="login-header">
+                    <h2>Now Wave Radio Analytics</h2>
+                    <p>Please log in to access the dashboard</p>
+                </div>
+                
+                <?php if ($loginError): ?>
+                    <div class="error-message"><?= htmlspecialchars($loginError) ?></div>
+                <?php endif; ?>
+                
+                <form method="post" action="">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required autocomplete="username">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
+                    </div>
+                    
+                    <button type="submit" class="login-button" name="login" value="1">Login</button>
+                </form>
             </div>
         <?php endif; ?>
     </div>
