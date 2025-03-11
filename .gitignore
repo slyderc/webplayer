@@ -10,6 +10,7 @@ schedule.json
 vendor/
 messages/
 data/
+icons/
 composer.lock
 .htaccess
 
