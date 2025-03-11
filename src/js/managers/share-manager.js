@@ -498,12 +498,7 @@ class ShareManager {
                     </div>
                     <div class="share-options">
                         <button class="share-option" data-share-method="bluesky">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M5.3 14.5c-.8 1.6 3.6 5.7 7.6 1.9C9 15.8 7.1 15 5.3 14.5z"/>
-                                <path d="M18.7 14.5c.8 1.6-3.6 5.7-7.6 1.9C15 15.8 16.9 15 18.7 14.5z"/>
-                                <path d="M12 14.5c-1 0-2-.4-2.8-1.1C7.7 12 8.6 9.7 10 8.6c1.1-.9 1.1-1.2 3-1.2 1 0 1.5.3 2 .8s.8 1.4 0 2.5c-.3.4-.7.7-1 1.1-1 1.1-1 2.7-2 2.7z"/>
-                                <path d="M12 14.5c1 0 2-.4 2.8-1.1C16.3 12 15.4 9.7 14 8.6c-1.1-.9-1.1-1.2-3-1.2-1 0-1.5.3-2 .8s-.8 1.4 0 2.5c.3.4.7.7 1 1.1 1 1.1 1 2.7 2 2.7z"/>
-                            </svg>
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bluesky"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.335 5.144c-1.654 -1.199 -4.335 -2.127 -4.335 .826c0 .59 .35 4.953 .556 5.661c.713 2.463 3.13 2.75 5.444 2.369c-4.045 .665 -4.889 3.208 -2.667 5.41c1.03 1.018 1.913 1.59 2.667 1.59c2 0 3.134 -2.769 3.5 -3.5c.333 -.667 .5 -1.167 .5 -1.5c0 .333 .167 .833 .5 1.5c.366 .731 1.5 3.5 3.5 3.5c.754 0 1.637 -.571 2.667 -1.59c2.222 -2.203 1.378 -4.746 -2.667 -5.41c2.314 .38 4.73 .094 5.444 -2.369c.206 -.708 .556 -5.072 .556 -5.661c0 -2.953 -2.68 -2.025 -4.335 -.826c-2.293 1.662 -4.76 5.048 -5.665 6.856c-.905 -1.808 -3.372 -5.194 -5.665 -6.856z" /></svg>
                             <span>Bluesky</span>
                         </button>
                         <button class="share-option" data-share-method="instagram">
@@ -513,9 +508,7 @@ class ShareManager {
                             <span>Instagram</span>
                         </button>
                         <button class="share-option" data-share-method="facebook">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                                <path fill="currentColor" d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396v8.01Z"></path>
-                            </svg>
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-facebook"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 10v4h3v7h4v-7h3l1 -4h-4v-2a1 1 0 0 1 1 -1h3v-4h-3a5 5 0 0 0 -5 5v2h-3" /></svg>
                             <span>Facebook</span>
                         </button>
                         <button class="share-option" data-share-method="twitter">
@@ -525,11 +518,7 @@ class ShareManager {
                             <span>Twitter/X</span>
                         </button>
                         <button class="share-option" data-share-method="whatsapp">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17.4 14.3c-1.8 1.6-3.9 2.7-6.4 2.7-4.7 0-8.5-3.8-8.5-8.5 0-2.3 1-4.4 2.9-5.7 3.7-2.4 8.5-1.6 11.3 1.9 2.1 2.7 1.4 8.4-1.4 9.6"/>
-                                <path d="M14.2 7.6c.8.9 1 2.3.7 3.6-.2 1.2-1 2-2.1 2.6-2.5 1.2-5.5-.1-6.4-2.9-1-2.8.8-6.1 4.8-5.9 1.1 0 2.2.5 3 1.4v1.2"/>
-                                <path d="M12.8 16c-1.3.7-3.9-.2-6-2.9-1.6-2.1-2.1-4.2-1-5.1l1 .8c-1.2 1.5-.4 2.6.7 4.2 1.2 1.6 2.7 2.1 3.8 1.5"/>
-                            </svg>
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-whatsapp"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" /><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" /></svg>
                             <span>WhatsApp</span>
                         </button>
                         <button class="share-option" data-share-method="telegram">
@@ -547,9 +536,7 @@ class ShareManager {
                             <span>Email</span>
                         </button>
                         <button class="share-option" data-share-method="sms">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-messages"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10" /><path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2" /></svg>
                             <span>Text Message</span>
                         </button>
                         <button class="share-option" data-share-method="copy">
