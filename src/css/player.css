@@ -411,8 +411,13 @@ body[data-active-tab="live"] .logo-container {
     max-width: 250px;
     width: 100%;
     height: auto;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease, transform 0.2s ease;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    cursor: pointer;
+}
+
+.header-logo:hover {
+    transform: scale(1.05);
 }
 
 /* Album Artwork */
