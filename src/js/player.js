@@ -605,10 +605,15 @@ class NowWavePlayer {
         );
     }
     
-    handleError() {
-        console.error('Audio stream error occurred');
+    handleError(error, errorType) {
+        console.error(`Audio stream error occurred: ${errorType || 'unknown'}`, error);
         this.isPlaying = false;
         this.uiManager.updatePlayButton(false);
         this.uiManager.resetToDefault();
+        
+        // Stop metadata polling when stream errors
+        if (this.metadataService) {
+            this.metadataService.startPolling(false);
+        }
     }
 }
