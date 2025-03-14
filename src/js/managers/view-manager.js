@@ -125,8 +125,8 @@ class ViewManager {
                                 this.onerror = null; 
                                 }">
                     <div class="track-info">
-                        <p class="track-title">${track.title}</p>
-                        <p class="track-artist">${track.artist}</p>
+                        <p class="track-title" title="${track.title}">${track.title}</p>
+                        <p class="track-artist" title="${track.artist}">${track.artist}</p>
                     </div>
                     <div class="track-actions">
                         <button class="heart-button" 
@@ -228,8 +228,8 @@ class ViewManager {
                                 this.onerror = null; /* Prevent further errors */
                                 }">
                     <div class="track-info">
-                        <p class="track-title">${track.title}</p>
-                        <p class="track-artist">${track.artist}</p>
+                        <p class="track-title" title="${track.title}">${track.title}</p>
+                        <p class="track-artist" title="${track.artist}">${track.artist}</p>
                     </div>
                     <div class="track-actions">
                         <button class="heart-button" 

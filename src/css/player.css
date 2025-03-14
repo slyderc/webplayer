@@ -527,7 +527,7 @@ body[data-active-tab="live"] .artwork-background {
 
 /* ---- RECENT TAB STYLING ---- */
 /* Recent view specific styles */
-#recentView, #favoritesView {
+#recentView, #favoritesView, #catchupView {
     overflow: hidden;
     max-height: calc(100vh - 200px); /* Adjust based on your player bar height */
 }
@@ -855,6 +855,263 @@ body[data-active-tab="live"] .artwork-background {
 
 .item-subtitle, .item-description {
     color: var(--medium-text-color);
+}
+
+/* ==========================================================================
+   6b. Mixcloud Archive Styling
+   ========================================================================== */
+
+/* Mixcloud Archive View */
+#catchupView {
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--small-spacing);
+}
+
+#catchupView::-webkit-scrollbar {
+    width: 6px;
+}
+
+#catchupView::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#catchupView::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+#archiveShowsContainer {
+    padding: var(--small-spacing);
+}
+
+.archive-item {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border-bottom: 1px solid var(--light-border-color);
+    padding: var(--small-spacing) 0;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.archive-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.archive-item:last-child {
+    border-bottom: none;
+}
+
+.archive-artwork-container {
+    position: relative;
+    width: 4rem;
+    height: 4rem;
+    margin-right: 1rem;
+    border-radius: var(--standard-radius);
+    overflow: hidden;
+}
+
+.archive-artwork {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.archive-item:hover .play-overlay {
+    opacity: 1;
+}
+
+.archive-item:hover .archive-artwork {
+    transform: scale(1.1);
+}
+
+.play-icon {
+    width: 30px;
+    height: 30px;
+    color: var(--light-text-color);
+}
+
+.archive-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.archive-title {
+    font-weight: bold;
+    font-size: 0.85rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--light-text-color);
+}
+
+.archive-time {
+    margin-left: 1rem;
+    min-width: 7rem;
+    text-align: right;
+}
+
+.time-display {
+    font-size: 0.75rem;
+    color: var(--medium-text-color);
+    white-space: nowrap;
+}
+
+/* Loading spinner and states */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 0;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-container {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.retry-button {
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: var(--standard-radius);
+    margin-top: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+    background-color: rgba(37, 99, 235, 0.9);
+}
+
+/* Mixcloud Embedded Player */
+.mixcloud-embed-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.mixcloud-embed-container iframe {
+    max-width: 100%;
+    width: 800px;
+    height: 400px;
+    border-radius: var(--standard-radius);
+}
+
+.return-to-live-button {
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: var(--standard-radius);
+    color: var(--light-text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.return-to-live-button:hover {
+    background-color: rgba(37, 99, 235, 0.9);
+}
+
+/* Empty state */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--light-text-color);
+}
+
+.empty-state p {
+    color: var(--medium-text-color);
+    max-width: 300px;
+}
+
+/* Tooltip styling for truncated text */
+.track-title[title], 
+.track-artist[title], 
+.archive-title[title] {
+    position: relative;
+    cursor: default;
+}
+
+/* Custom tooltip appearance */
+[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 0;
+    top: 100%;
+    z-index: 100;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: var(--light-text-color);
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    margin-top: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    max-width: 300px;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 /* ==========================================================================

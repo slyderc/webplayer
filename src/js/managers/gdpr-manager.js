@@ -59,6 +59,11 @@ class GDPRManager {
         
         // Hide consent overlay
         this.hideConsentOverlay();
+        
+        // Trigger any post-consent actions (like preloading content)
+        if (this.options.onConsentGiven && typeof this.options.onConsentGiven === 'function') {
+            this.options.onConsentGiven();
+        }
     }
     
     /**

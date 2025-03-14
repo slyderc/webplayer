@@ -28,6 +28,7 @@ $jsUIManagerVersion = filemtime(__DIR__ . '/js/managers/ui-manager.js');
 $jsScheduleManagerVersion = filemtime(__DIR__ . '/js/managers/schedule-manager.js');
 $jsArtworkZoomManagerVersion = filemtime(__DIR__ . '/js/managers/artwork-zoom-manager.js');
 $jsGDPRManagerVersion = filemtime(__DIR__ . '/js/managers/gdpr-manager.js');
+$jsMixcloudManagerVersion = filemtime(__DIR__ . '/js/managers/mixcloud-manager.js');
 
 // Core player files
 $jsPlayerVersion = filemtime(__DIR__ . '/js/player.js');
@@ -64,6 +65,7 @@ $audioLibs = $audioLibraries;
     <script src="./js/managers/ui-manager.js?v=<?php echo $jsUIManagerVersion; ?>"></script>
     <script src="./js/managers/schedule-manager.js?v=<?php echo $jsScheduleManagerVersion; ?>"></script>
     <script src="./js/managers/gdpr-manager.js?v=<?php echo $jsGDPRManagerVersion; ?>"></script>
+    <script src="./js/managers/mixcloud-manager.js?v=<?php echo $jsMixcloudManagerVersion; ?>"></script>
 
     <!-- Core player -->
     <script src="./js/player.js?v=<?php echo $jsPlayerVersion; ?>"></script>
@@ -151,7 +153,7 @@ $audioLibs = $audioLibraries;
                 <div class="tab-icon">
                 <svg focusable="false" width="1em" height="1em" style="transform: rotate(360deg);" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24" aria-hidden="true" role="presentation"><path d="M13 16.493C13 18.427 14.573 20 16.507 20s3.507-1.573 3.507-3.507c0-.177-.027-.347-.053-.517H20V6h2V4h-3a1 1 0 0 0-1 1v8.333a3.465 3.465 0 0 0-1.493-.346A3.51 3.51 0 0 0 13 16.493zM2 5h14v2H2z" fill="currentColor"></path><path d="M2 9h14v2H2zm0 4h9v2H2zm0 4h9v2H2z" fill="currentColor"></path><rect x="0" y="0" width="24" height="24" fill="rgba(0, 0, 0, 0)"></rect></svg>
                 </div>
-                <span>Catch Up</span>
+                <span>Catch-Up</span>
             </button>
             
             <button class="tab-button" data-tab="recent">

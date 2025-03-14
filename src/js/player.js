@@ -15,10 +15,16 @@ class NowWavePlayer {
             defaultTitle: 'Now Wave Radio',
             defaultArtist: 'The Next Wave Today',
             defaultProgram: '🛜 NowWave.Radio',
-            defaultPresenter: '💌 dj@NowWave.Radio'
+            defaultPresenter: '💌 dj@NowWave.Radio',
+            // Mixcloud configuration
+            mixcloud: {
+                username: 'nowwaveradio',
+                apiUrl: 'https://api.mixcloud.com'
+            }
         };
         
         this.isPlaying = false;
+        this.mixcloudContentLoaded = false;
         
         // Set GDPR manager if provided
         this.gdprManager = options.gdprManager || null;
@@ -39,6 +45,13 @@ class NowWavePlayer {
             pollInterval: this.config.pollInterval
         });
         
+        // If GDPR manager is provided, set up the consent callback
+        if (this.gdprManager) {
+            this.gdprManager.options.onConsentGiven = () => {
+                this.preloadMixcloudContent();
+            };
+        }
+        
         // Initialize managers
         this.scheduleManager = new ScheduleManager();      
 
@@ -48,6 +61,13 @@ class NowWavePlayer {
             storageService: this.storageService,
             cachedArtworkPath: this.config.cachedArtworkPath,
             defaultArtwork: this.config.defaultArtwork
+        });
+        
+        // Initialize Mixcloud manager for archived shows
+        this.mixcloudManager = new MixcloudManager({
+            mixcloudUsername: this.config.mixcloud?.username || 'nowwaveradio',
+            apiUrl: this.config.mixcloud?.apiUrl || 'https://api.mixcloud.com',
+            limit: 100
         });
         
         // New LikeManager handles all like functionality
@@ -87,6 +107,9 @@ class NowWavePlayer {
         this.setupMetadataHandling();       
         this.viewManager.switchTab('live');
         this.uiManager.resetToDefault();
+        
+        // Preload Mixcloud content in the background
+        this.preloadMixcloudContent();
     }
     
     setupEventHandlers() {
@@ -136,6 +159,14 @@ class NowWavePlayer {
             .registerTabCallback('favorites', () => {
                 console.log('Favorites tab activated');
                 this.updateFavoritesView();
+            })
+            .registerTabCallback('catchup', () => {
+                console.log('Mixcloud Archive tab activated');
+                if (this.mixcloudContentLoaded) {
+                    console.log('Using pre-loaded Mixcloud content');
+                } else {
+                    this.updateMixcloudArchiveView();
+                }
             });
     
         this.scheduleManager.initialize();
@@ -614,6 +645,126 @@ class NowWavePlayer {
         // Stop metadata polling when stream errors
         if (this.metadataService) {
             this.metadataService.startPolling(false);
+        }
+    }
+    
+    /**
+     * Update Mixcloud archive view
+     */
+    async updateMixcloudArchiveView() {
+        const catchupView = this.viewManager.views.catchup;
+        
+        if (!catchupView) {
+            console.error('Catchup view element not found');
+            return;
+        }
+        
+        // Set loading state
+        catchupView.innerHTML = this.mixcloudManager.generateArchiveShowsHTML();
+        
+        try {
+            // Fetch archived shows from Mixcloud
+            await this.mixcloudManager.fetchArchivedShows();
+            
+            // Update the view with the fetched shows
+            catchupView.innerHTML = this.mixcloudManager.generateArchiveShowsHTML();
+            
+            // Initialize event listeners
+            this.mixcloudManager.initializeEventListeners(catchupView, (showKey) => {
+                this.playMixcloudShow(showKey);
+            });
+            
+        } catch (error) {
+            console.error('Error updating Mixcloud archive view:', error);
+            catchupView.innerHTML = `
+                <div class="error-container scrollable-container">
+                    <p>Error loading Mixcloud archive: ${error.message}</p>
+                    <button id="retryMixcloudFetch" class="retry-button">Retry</button>
+                </div>
+            `;
+            
+            // Add retry button handler
+            const retryButton = catchupView.querySelector('#retryMixcloudFetch');
+            if (retryButton) {
+                retryButton.addEventListener('click', () => this.updateMixcloudArchiveView());
+            }
+        }
+    }
+    
+    /**
+     * Play a Mixcloud show
+     * @param {string} showKey - Mixcloud show key
+     */
+    playMixcloudShow(showKey) {
+        // Stop the current audio playback
+        if (this.isPlaying) {
+            this.audioService.stop();
+            this.isPlaying = false;
+            this.uiManager.updatePlayButton(false);
+        }
+        
+        // Create the embedded player
+        const embeddedPlayerHTML = this.mixcloudManager.generateEmbeddedPlayerHTML(showKey);
+        
+        // Create and append the embedded player container
+        const embeddedPlayerContainer = document.createElement('div');
+        embeddedPlayerContainer.id = 'mixcloudEmbeddedPlayer';
+        embeddedPlayerContainer.innerHTML = embeddedPlayerHTML;
+        document.body.appendChild(embeddedPlayerContainer);
+        
+        // Add click handler to the return button
+        const returnButton = document.getElementById('returnToLiveButton');
+        if (returnButton) {
+            returnButton.addEventListener('click', () => this.closeMixcloudPlayer());
+        }
+    }
+    
+    /**
+     * Close the Mixcloud embedded player and restore the main player
+     */
+    closeMixcloudPlayer() {
+        // Remove the embedded player
+        const embeddedPlayer = document.getElementById('mixcloudEmbeddedPlayer');
+        if (embeddedPlayer) {
+            embeddedPlayer.remove();
+        }
+    }
+    
+    /**
+     * Preload Mixcloud content in the background
+     * This allows the content to be ready when user clicks the tab
+     */
+    async preloadMixcloudContent() {
+        // Don't reload if already loaded
+        if (this.mixcloudContentLoaded) {
+            return;
+        }
+        
+        // Set initial content in the view (loading state)
+        const catchupView = this.viewManager.views.catchup;
+        if (catchupView) {
+            catchupView.innerHTML = this.mixcloudManager.generateArchiveShowsHTML();
+        }
+        
+        try {
+            // Fetch archived shows in the background
+            await this.mixcloudManager.fetchArchivedShows();
+            
+            // Update the view with the fetched shows
+            if (catchupView) {
+                catchupView.innerHTML = this.mixcloudManager.generateArchiveShowsHTML();
+                
+                // Initialize event listeners for when the tab is viewed
+                this.mixcloudManager.initializeEventListeners(catchupView, (showKey) => {
+                    this.playMixcloudShow(showKey);
+                });
+                
+                this.mixcloudContentLoaded = true;
+                console.log('Mixcloud content preloaded successfully');
+            }
+        } catch (error) {
+            console.error('Error preloading Mixcloud content:', error);
+            // We'll show the error when the user actually opens the tab
         }
     }
 }
