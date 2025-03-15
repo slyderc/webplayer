@@ -47,6 +47,11 @@ $actionCounts = ['like' => 0, 'unlike' => 0, 'play' => 0, 'stop' => 0];
 $dailyActions = [];
 $hourlyActions = [];
 $totalTracks = 0;
+$availableDates = [];
+
+// Get selected date from query parameter or default to today
+$today = date('Y-m-d');
+$selectedDate = isset($_GET['date']) ? $_GET['date'] : $today;
 
 if ($sqliteAvailable) {
     try {
@@ -93,11 +98,27 @@ if ($sqliteAvailable && isset($db)) {
         // Log timezone info for debugging
         error_log("Local timezone: " . date_default_timezone_get() . ", Offset from UTC: " . $offsetStr . " hours");
         
-        // For debugging purposes, log how many distinct days are in the database with timezone adjustment
-        $debug_stmt = $db->prepare("SELECT COUNT(DISTINCT date(timestamp, '{$offsetStr} hours')) as day_count FROM actions");
-        $debug_result = $debug_stmt->execute();
-        $debug_row = $debug_result->fetchArray(SQLITE3_ASSOC);
-        error_log("Total distinct days in database: " . $debug_row['day_count']);
+        // Get all available dates with activity data
+        $dates_stmt = $db->prepare("
+            SELECT DISTINCT date(timestamp, '{$offsetStr} hours') as activity_date 
+            FROM actions 
+            ORDER BY activity_date DESC
+        ");
+        $dates_result = $dates_stmt->execute();
+        
+        // Store all available dates in an array
+        $availableDates = [];
+        while ($date_row = $dates_result->fetchArray(SQLITE3_ASSOC)) {
+            $availableDates[] = $date_row['activity_date'];
+        }
+        
+        // Log the number of available dates
+        error_log("Total distinct days in database: " . count($availableDates));
+        
+        // If selected date is not in available dates and we have dates, use the most recent date
+        if (!empty($availableDates) && !in_array($selectedDate, $availableDates)) {
+            $selectedDate = $availableDates[0];
+        }
         
         // Get all days with activity, adjusting for timezone
         $stmt = $db->prepare("
@@ -142,7 +163,7 @@ if ($sqliteAvailable && isset($db)) {
     
     // Get hourly action counts
     try {
-        // Get hourly counts for each action type
+        // Get hourly counts for each action type for the selected date
         $stmt = $db->prepare("
             SELECT 
                 strftime('%H', timestamp, '{$offsetStr} hours') as hour,
@@ -150,11 +171,15 @@ if ($sqliteAvailable && isset($db)) {
                 COUNT(*) as count
             FROM 
                 actions
+            WHERE 
+                date(timestamp, '{$offsetStr} hours') = :selected_date
             GROUP BY 
                 hour, action_type
             ORDER BY 
                 hour, action_type
         ");
+        
+        $stmt->bindValue(':selected_date', $selectedDate, SQLITE3_TEXT);
         
         $result = $stmt->execute();
         
@@ -403,6 +428,56 @@ if ($sqliteAvailable && isset($db)) {
             font-size: 1.2rem;
             color: #333;
         }
+        
+        /* Date navigation styles */
+        .date-nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        
+        .date-nav-button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .date-nav-button:hover {
+            background-color: #1d4ed8;
+        }
+        
+        .date-nav-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .date-picker-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .date-picker {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .current-date-display {
+            font-weight: bold;
+            font-size: 16px;
+            margin: 0 10px;
+            min-width: 140px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -499,7 +574,54 @@ if ($sqliteAvailable && isset($db)) {
             </table>
             
             <!-- Hourly Activity Chart -->
-            <h2>Hourly Activity Chart (24-hour Distribution)</h2>
+            <h2>Hourly Activity Chart</h2>
+            
+            <div class="date-nav-container">
+                <?php
+                    // Find current date index and adjacent dates
+                    $currentIndex = array_search($selectedDate, $availableDates);
+                    $prevDate = ($currentIndex !== false && $currentIndex < count($availableDates) - 1) ? $availableDates[$currentIndex + 1] : null;
+                    $nextDate = ($currentIndex !== false && $currentIndex > 0) ? $availableDates[$currentIndex - 1] : null;
+                    
+                    // Format selected date for display
+                    $formattedDate = date('F j, Y', strtotime($selectedDate));
+                ?>
+                
+                <!-- Previous Day Button -->
+                <?php if ($prevDate): ?>
+                    <a href="?date=<?= $prevDate ?>" class="date-nav-button">
+                        &larr; Previous Day
+                    </a>
+                <?php else: ?>
+                    <button class="date-nav-button" disabled>
+                        &larr; Previous Day
+                    </button>
+                <?php endif; ?>
+                
+                <!-- Date Picker -->
+                <div class="date-picker-container">
+                    <span class="current-date-display"><?= $formattedDate ?></span>
+                    <select id="datePicker" class="date-picker" onchange="window.location.href='?date=' + this.value">
+                        <?php foreach ($availableDates as $date): ?>
+                            <option value="<?= $date ?>" <?= ($date === $selectedDate) ? 'selected' : '' ?>>
+                                <?= date('Y-m-d', strtotime($date)) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <!-- Next Day Button -->
+                <?php if ($nextDate): ?>
+                    <a href="?date=<?= $nextDate ?>" class="date-nav-button">
+                        Next Day &rarr;
+                    </a>
+                <?php else: ?>
+                    <button class="date-nav-button" disabled>
+                        Next Day &rarr;
+                    </button>
+                <?php endif; ?>
+            </div>
+            
             <div class="chart-container">
                 <canvas id="hourlyActivityChart"></canvas>
             </div>
@@ -566,7 +688,7 @@ if ($sqliteAvailable && isset($db)) {
                         plugins: {
                             title: {
                                 display: true,
-                                text: 'Hourly Activity Distribution',
+                                text: 'Hourly Activity Distribution for <?= $formattedDate ?>',
                                 font: {
                                     size: 18
                                 }
