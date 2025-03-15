@@ -420,6 +420,39 @@ if ($sqliteAvailable && isset($db)) {
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: opacity 0.3s ease;
+        }
+        
+        .chart-container.loading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            z-index: 10;
+        }
+        
+        .chart-container.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            margin-top: -25px;
+            margin-left: -25px;
+            border: 4px solid rgba(37, 99, 235, 0.3);
+            border-radius: 50%;
+            border-top-color: rgba(37, 99, 235, 0.9);
+            z-index: 11;
+            animation: spinner 1s linear infinite;
+        }
+        
+        @keyframes spinner {
+            to {transform: rotate(360deg);}
         }
         
         .chart-title {
@@ -588,20 +621,14 @@ if ($sqliteAvailable && isset($db)) {
                 ?>
                 
                 <!-- Previous Day Button -->
-                <?php if ($prevDate): ?>
-                    <a href="?date=<?= $prevDate ?>" class="date-nav-button">
-                        &larr; Previous Day
-                    </a>
-                <?php else: ?>
-                    <button class="date-nav-button" disabled>
-                        &larr; Previous Day
-                    </button>
-                <?php endif; ?>
+                <button id="prevDayBtn" class="date-nav-button" onclick="changeDate('prev')" <?= (!$prevDate) ? 'disabled' : '' ?>>
+                    &larr; Previous Day
+                </button>
                 
                 <!-- Date Picker -->
                 <div class="date-picker-container">
-                    <span class="current-date-display"><?= $formattedDate ?></span>
-                    <select id="datePicker" class="date-picker" onchange="window.location.href='?date=' + this.value">
+                    <span id="currentDateDisplay" class="current-date-display"><?= $formattedDate ?></span>
+                    <select id="datePicker" class="date-picker" onchange="changeDate('select', this.value)">
                         <?php foreach ($availableDates as $date): ?>
                             <option value="<?= $date ?>" <?= ($date === $selectedDate) ? 'selected' : '' ?>>
                                 <?= date('Y-m-d', strtotime($date)) ?>
@@ -611,15 +638,16 @@ if ($sqliteAvailable && isset($db)) {
                 </div>
                 
                 <!-- Next Day Button -->
-                <?php if ($nextDate): ?>
-                    <a href="?date=<?= $nextDate ?>" class="date-nav-button">
-                        Next Day &rarr;
-                    </a>
-                <?php else: ?>
-                    <button class="date-nav-button" disabled>
-                        Next Day &rarr;
-                    </button>
-                <?php endif; ?>
+                <button id="nextDayBtn" class="date-nav-button" onclick="changeDate('next')" <?= (!$nextDate) ? 'disabled' : '' ?>>
+                    Next Day &rarr;
+                </button>
+                
+                <!-- Store available dates for JavaScript -->
+                <script>
+                    // Store the available dates and current index for navigation
+                    const availableDates = <?= json_encode($availableDates) ?>;
+                    let currentDateIndex = <?= $currentIndex !== false ? $currentIndex : 0 ?>;
+                </script>
             </div>
             
             <div class="chart-container">
@@ -627,11 +655,102 @@ if ($sqliteAvailable && isset($db)) {
             </div>
             
             <script>
+            let hourlyChart; // Global chart instance
+            
+            // Function to change the date and update the chart
+            function changeDate(action, selectedDate = null) {
+                let newDate;
+                
+                // Determine the new date based on action
+                if (action === 'prev' && currentDateIndex < availableDates.length - 1) {
+                    currentDateIndex++;
+                    newDate = availableDates[currentDateIndex];
+                    
+                    // Enable/disable navigation buttons
+                    document.getElementById('nextDayBtn').disabled = currentDateIndex <= 0;
+                    document.getElementById('prevDayBtn').disabled = currentDateIndex >= availableDates.length - 1;
+                    
+                } else if (action === 'next' && currentDateIndex > 0) {
+                    currentDateIndex--;
+                    newDate = availableDates[currentDateIndex];
+                    
+                    // Enable/disable navigation buttons
+                    document.getElementById('nextDayBtn').disabled = currentDateIndex <= 0;
+                    document.getElementById('prevDayBtn').disabled = currentDateIndex >= availableDates.length - 1;
+                    
+                } else if (action === 'select') {
+                    newDate = selectedDate;
+                    
+                    // Find the index of the new date
+                    const newIndex = availableDates.indexOf(newDate);
+                    if (newIndex !== -1) {
+                        currentDateIndex = newIndex;
+                        
+                        // Enable/disable navigation buttons
+                        document.getElementById('nextDayBtn').disabled = currentDateIndex <= 0;
+                        document.getElementById('prevDayBtn').disabled = currentDateIndex >= availableDates.length - 1;
+                    }
+                } else {
+                    return; // Invalid action or boundary reached
+                }
+                
+                // Update the dropdown selection
+                document.getElementById('datePicker').value = newDate;
+                
+                // Show loading state
+                document.querySelector('.chart-container').classList.add('loading');
+                
+                // Fetch the new date's data
+                fetchChartData(newDate);
+            }
+            
+            // Function to fetch chart data via AJAX
+            function fetchChartData(date) {
+                fetch('hourly_activity_data.php?date=' + date)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        updateChart(data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching chart data:', error);
+                    })
+                    .finally(() => {
+                        document.querySelector('.chart-container').classList.remove('loading');
+                    });
+            }
+            
+            // Function to update the chart with new data
+            function updateChart(data) {
+                // Update the formatted date display
+                document.getElementById('currentDateDisplay').textContent = data.formattedDate;
+                
+                if (hourlyChart) {
+                    // Update existing chart
+                    hourlyChart.data.labels = data.chartData.hours;
+                    hourlyChart.data.datasets[0].data = data.chartData.plays;
+                    hourlyChart.data.datasets[1].data = data.chartData.stops;
+                    hourlyChart.data.datasets[2].data = data.chartData.likes;
+                    hourlyChart.data.datasets[3].data = data.chartData.unlikes;
+                    
+                    // Update the chart title
+                    hourlyChart.options.plugins.title.text = 'Hourly Activity Distribution for ' + data.formattedDate;
+                    
+                    // Update the chart
+                    hourlyChart.update();
+                }
+            }
+            
+            // Initialize the chart on page load
             document.addEventListener('DOMContentLoaded', function() {
                 // Get the canvas element
                 const ctx = document.getElementById('hourlyActivityChart').getContext('2d');
                 
-                // Prepare the data
+                // Prepare the initial data
                 const hours = <?php echo json_encode(array_keys($hourlyActions)); ?>;
                 const plays = <?php echo json_encode(array_column($hourlyActions, 'play')); ?>;
                 const stops = <?php echo json_encode(array_column($hourlyActions, 'stop')); ?>;
@@ -639,7 +758,7 @@ if ($sqliteAvailable && isset($db)) {
                 const unlikes = <?php echo json_encode(array_column($hourlyActions, 'unlike')); ?>;
                 
                 // Create the chart
-                const hourlyChart = new Chart(ctx, {
+                hourlyChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: hours,
