@@ -45,6 +45,7 @@ $dbPath = realpath(__DIR__ . '/../../../data/tracks.db');
 $popularTracks = [];
 $actionCounts = ['like' => 0, 'unlike' => 0, 'play' => 0, 'stop' => 0];
 $dailyActions = [];
+$totalTracks = 0;
 
 if ($sqliteAvailable) {
     try {
@@ -64,6 +65,12 @@ if ($sqliteAvailable) {
             $row = $result->fetchArray(SQLITE3_ASSOC);
             $actionCounts[$type] = $row['count'];
         }
+        
+        // Get total number of tracks in the database
+        $stmt = $db->prepare('SELECT COUNT(*) as count FROM tracks');
+        $result = $stmt->execute();
+        $row = $result->fetchArray(SQLITE3_ASSOC);
+        $totalTracks = $row['count'];
     } catch (Exception $e) {
         error_log("Error in analytics dashboard: " . $e->getMessage());
         // Continue with empty data if there's an error
@@ -73,6 +80,7 @@ if ($sqliteAvailable) {
 // Get daily action counts
 if ($sqliteAvailable && isset($db)) {
     try {
+        // Get the most recent days with activity (up to 30 unique days)
         $stmt = $db->prepare('
             SELECT 
                 date(timestamp) as day,
@@ -80,20 +88,31 @@ if ($sqliteAvailable && isset($db)) {
                 COUNT(*) as count
             FROM 
                 actions
-            WHERE 
-                timestamp >= date("now", "-7 days")
             GROUP BY 
                 day, action_type
             ORDER BY 
                 day DESC, action_type
         ');
-
+        
+        // We'll limit to the most recent 30 days with activity
         $result = $stmt->execute();
         $dailyActions = [];
-
+        $dayCount = 0;
+        $maxDays = 30;
+        
+        // Process results, limiting to the most recent days
         while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            if (!isset($dailyActions[$row['day']])) {
-                $dailyActions[$row['day']] = [
+            $day = $row['day'];
+            
+            // If this is a new day and we've reached our limit, stop
+            if (!isset($dailyActions[$day])) {
+                $dayCount++;
+                if ($dayCount > $maxDays) {
+                    break;
+                }
+                
+                // Initialize this day's action counts
+                $dailyActions[$day] = [
                     'like' => 0,
                     'unlike' => 0,
                     'play' => 0,
@@ -101,7 +120,7 @@ if ($sqliteAvailable && isset($db)) {
                 ];
             }
             
-            $dailyActions[$row['day']][$row['action_type']] = $row['count'];
+            $dailyActions[$day][$row['action_type']] = $row['count'];
         }
     } catch (Exception $e) {
         error_log("Error getting daily action counts: " . $e->getMessage());
@@ -335,11 +354,11 @@ if ($sqliteAvailable && isset($db)) {
                     <div class="stat-label">Total Plays</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value"><?= $actionCounts['like'] - ($actionCounts['unlike'] ?? 0) ?></div>
+                    <div class="stat-value"><?= max(0, $actionCounts['like'] - ($actionCounts['unlike'] ?? 0)) ?></div>
                     <div class="stat-label">Net Likes</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value"><?= count($popularTracks) ?></div>
+                    <div class="stat-value"><?= $totalTracks ?></div>
                     <div class="stat-label">Tracked Tracks</div>
                 </div>
                 <div class="stat-card">
@@ -378,7 +397,7 @@ if ($sqliteAvailable && isset($db)) {
                 <p>No popular tracks found.</p>
             <?php endif; ?>
             
-            <h2>Daily Activity (Last 7 Days)</h2>
+            <h2>Daily Activity (Most Recent Days)</h2>
             <table>
                 <thead>
                     <tr>
