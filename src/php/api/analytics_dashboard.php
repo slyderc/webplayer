@@ -45,6 +45,7 @@ $dbPath = realpath(__DIR__ . '/../data/tracks.db');
 $popularTracks = [];
 $actionCounts = ['like' => 0, 'unlike' => 0, 'play' => 0, 'stop' => 0];
 $dailyActions = [];
+$hourlyActions = [];
 $totalTracks = 0;
 
 if ($sqliteAvailable) {
@@ -138,6 +139,49 @@ if ($sqliteAvailable && isset($db)) {
     } catch (Exception $e) {
         error_log("Error getting daily action counts: " . $e->getMessage());
     }
+    
+    // Get hourly action counts
+    try {
+        // Get hourly counts for each action type
+        $stmt = $db->prepare("
+            SELECT 
+                strftime('%H', timestamp, '{$offsetStr} hours') as hour,
+                action_type,
+                COUNT(*) as count
+            FROM 
+                actions
+            GROUP BY 
+                hour, action_type
+            ORDER BY 
+                hour, action_type
+        ");
+        
+        $result = $stmt->execute();
+        
+        // Initialize hourly data with all hours (0-23) and zero counts
+        // We'll use an ordered array to ensure correct display on chart
+        $hourlyActions = [];
+        for ($i = 0; $i < 24; $i++) {
+            $hour = sprintf('%02d', $i);
+            $hourlyActions[$hour] = [
+                'like' => 0,
+                'unlike' => 0,
+                'play' => 0,
+                'stop' => 0,
+                'hour' => $hour // Store the hour label to ensure order
+            ];
+        }
+        
+        // Fill in the actual counts
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $hour = $row['hour'];
+            $hourlyActions[$hour][$row['action_type']] = $row['count'];
+        }
+        
+        error_log("Hourly data collected for " . count($hourlyActions) . " hours");
+    } catch (Exception $e) {
+        error_log("Error getting hourly action counts: " . $e->getMessage());
+    }
 }
 ?>
 
@@ -147,6 +191,7 @@ if ($sqliteAvailable && isset($db)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Now Wave Radio - Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -339,6 +384,25 @@ if ($sqliteAvailable && isset($db)) {
         .logout-button:hover {
             background-color: #e9ecef;
         }
+        
+        /* Chart container styles */
+        .chart-container {
+            position: relative;
+            margin: 30px 0;
+            height: 500px;
+            width: 100%;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -433,6 +497,140 @@ if ($sqliteAvailable && isset($db)) {
                     <?php endforeach; ?>
                 </tbody>
             </table>
+            
+            <!-- Hourly Activity Chart -->
+            <h2>Hourly Activity Chart (24-hour Distribution)</h2>
+            <div class="chart-container">
+                <canvas id="hourlyActivityChart"></canvas>
+            </div>
+            
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get the canvas element
+                const ctx = document.getElementById('hourlyActivityChart').getContext('2d');
+                
+                // Prepare the data
+                const hours = <?php echo json_encode(array_keys($hourlyActions)); ?>;
+                const plays = <?php echo json_encode(array_column($hourlyActions, 'play')); ?>;
+                const stops = <?php echo json_encode(array_column($hourlyActions, 'stop')); ?>;
+                const likes = <?php echo json_encode(array_column($hourlyActions, 'like')); ?>;
+                const unlikes = <?php echo json_encode(array_column($hourlyActions, 'unlike')); ?>;
+                
+                // Create the chart
+                const hourlyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: hours,
+                        datasets: [
+                            {
+                                label: 'Plays',
+                                data: plays,
+                                backgroundColor: 'rgba(53, 122, 232, 0.8)',
+                                borderColor: 'rgba(53, 122, 232, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                maxBarThickness: 20
+                            },
+                            {
+                                label: 'Stops',
+                                data: stops,
+                                backgroundColor: 'rgba(255, 153, 0, 0.8)',
+                                borderColor: 'rgba(255, 153, 0, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                maxBarThickness: 20
+                            },
+                            {
+                                label: 'Likes',
+                                data: likes,
+                                backgroundColor: 'rgba(220, 53, 89, 0.8)',
+                                borderColor: 'rgba(220, 53, 89, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                maxBarThickness: 20
+                            },
+                            {
+                                label: 'Unlikes',
+                                data: unlikes,
+                                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                maxBarThickness: 20
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Hourly Activity Distribution',
+                                font: {
+                                    size: 18
+                                }
+                            },
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    boxWidth: 12,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleFont: {
+                                    size: 14
+                                },
+                                bodyFont: {
+                                    size: 13
+                                },
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        return 'Hour: ' + tooltipItems[0].label + ':00 - ' + tooltipItems[0].label + ':59';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Hour of Day (24-hour format)',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Actions',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+            });
+            </script>
             
             <h2>Database Information</h2>
             <p>Database location: <?= $dbPath ?: 'Unknown' ?></p>
