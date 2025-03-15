@@ -39,7 +39,7 @@ $authorized = isAuthenticated();
 
 // Check if SQLite3 is available
 $sqliteAvailable = class_exists('SQLite3');
-$dbPath = realpath(__DIR__ . '/../../../data/tracks.db');
+$dbPath = realpath(__DIR__ . '/../data/tracks.db');
 
 // Initialize with empty data in case SQLite is not available
 $popularTracks = [];
@@ -55,7 +55,7 @@ if ($sqliteAvailable) {
         $popularTracks = $trackManager->getPopularTracks(20);
 
         // Get action counts by type
-        $db = new SQLite3(__DIR__ . '/../../../data/tracks.db');
+        $db = new SQLite3(__DIR__ . '/../data/tracks.db');
         $actionTypes = ['like', 'unlike', 'play', 'stop'];
 
         foreach ($actionTypes as $type) {
@@ -80,7 +80,13 @@ if ($sqliteAvailable) {
 // Get daily action counts
 if ($sqliteAvailable && isset($db)) {
     try {
-        // Get the most recent days with activity (up to 30 unique days)
+        // For debugging purposes, let's log how many distinct days are in the database
+        $debug_stmt = $db->prepare('SELECT COUNT(DISTINCT date(timestamp)) as day_count FROM actions');
+        $debug_result = $debug_stmt->execute();
+        $debug_row = $debug_result->fetchArray(SQLITE3_ASSOC);
+        error_log("Total distinct days in database: " . $debug_row['day_count']);
+        
+        // Get all days with activity (not just limited to 30)
         $stmt = $db->prepare('
             SELECT 
                 date(timestamp) as day,
@@ -94,24 +100,15 @@ if ($sqliteAvailable && isset($db)) {
                 day DESC, action_type
         ');
         
-        // We'll limit to the most recent 30 days with activity
         $result = $stmt->execute();
         $dailyActions = [];
-        $dayCount = 0;
-        $maxDays = 30;
         
-        // Process results, limiting to the most recent days
+        // Process all results without limiting
         while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
             $day = $row['day'];
             
-            // If this is a new day and we've reached our limit, stop
+            // Initialize day if not set
             if (!isset($dailyActions[$day])) {
-                $dayCount++;
-                if ($dayCount > $maxDays) {
-                    break;
-                }
-                
-                // Initialize this day's action counts
                 $dailyActions[$day] = [
                     'like' => 0,
                     'unlike' => 0,
@@ -120,8 +117,12 @@ if ($sqliteAvailable && isset($db)) {
                 ];
             }
             
+            // Set the specific action count for this day
             $dailyActions[$day][$row['action_type']] = $row['count'];
         }
+        
+        // Debug info - print count of days
+        error_log("Days processed in dailyActions array: " . count($dailyActions));
     } catch (Exception $e) {
         error_log("Error getting daily action counts: " . $e->getMessage());
     }
@@ -397,7 +398,7 @@ if ($sqliteAvailable && isset($db)) {
                 <p>No popular tracks found.</p>
             <?php endif; ?>
             
-            <h2>Daily Activity (Most Recent Days)</h2>
+            <h2>Daily Activity (All Recorded Days)</h2>
             <table>
                 <thead>
                     <tr>
