@@ -455,6 +455,61 @@ if ($sqliteAvailable && isset($db)) {
             to {transform: rotate(360deg);}
         }
         
+        /* Daily Activity Table Styles */
+        .daily-activity-container {
+            max-height: calc(2.5rem * 14 + 2.5rem); /* Height for 14 rows + header */
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        #dailyActivityTable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        #dailyActivityTable thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: #f3f4f6;
+        }
+        
+        #dailyActivityTable th {
+            padding: 12px 15px;
+            font-weight: 600;
+            color: #374151;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        #dailyActivityTable td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        #dailyActivityTable tbody tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        #dailyActivityTable tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        #dailyActivityTable tbody tr.selected-date {
+            background-color: rgba(37, 99, 235, 0.1);
+            border-left: 3px solid #2563eb;
+        }
+        
+        #dailyActivityTable tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
         .chart-title {
             text-align: center;
             margin-bottom: 20px;
@@ -582,29 +637,31 @@ if ($sqliteAvailable && isset($db)) {
                 <p>No popular tracks found.</p>
             <?php endif; ?>
             
-            <h2>Daily Activity (All Recorded Days - <?php echo date_default_timezone_get(); ?> Timezone)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Plays</th>
-                        <th>Stops</th>
-                        <th>Likes</th>
-                        <th>Unlikes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($dailyActions as $day => $counts): ?>
+            <h2>Daily Activity (<?php echo date_default_timezone_get(); ?> Timezone)</h2>
+            <div class="daily-activity-container">
+                <table id="dailyActivityTable">
+                    <thead>
                         <tr>
-                            <td><?= $day ?></td>
-                            <td><?= $counts['play'] ?></td>
-                            <td><?= $counts['stop'] ?></td>
-                            <td><?= $counts['like'] ?></td>
-                            <td><?= $counts['unlike'] ?></td>
+                            <th>Date</th>
+                            <th>Plays</th>
+                            <th>Stops</th>
+                            <th>Likes</th>
+                            <th>Unlikes</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($dailyActions as $day => $counts): ?>
+                            <tr data-date="<?= $day ?>" class="<?= ($day === $selectedDate) ? 'selected-date' : '' ?>">
+                                <td><?= date('M j, Y', strtotime($day)) ?></td>
+                                <td><?= $counts['play'] ?></td>
+                                <td><?= $counts['stop'] ?></td>
+                                <td><?= $counts['like'] ?></td>
+                                <td><?= $counts['unlike'] ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
             
             <!-- Hourly Activity Chart -->
             <h2>Hourly Activity Chart</h2>
@@ -700,6 +757,9 @@ if ($sqliteAvailable && isset($db)) {
                 // Show loading state
                 document.querySelector('.chart-container').classList.add('loading');
                 
+                // Highlight the corresponding row in the table
+                highlightTableRow(newDate);
+                
                 // Fetch the new date's data
                 fetchChartData(newDate);
             }
@@ -745,7 +805,31 @@ if ($sqliteAvailable && isset($db)) {
                 }
             }
             
-            // Initialize the chart on page load
+            // Function to highlight the selected date in the table
+            function highlightTableRow(date) {
+                // Remove highlight from all rows
+                const allRows = document.querySelectorAll('#dailyActivityTable tbody tr');
+                allRows.forEach(row => row.classList.remove('selected-date'));
+                
+                // Add highlight to the selected row
+                const selectedRow = document.querySelector(`#dailyActivityTable tbody tr[data-date="${date}"]`);
+                if (selectedRow) {
+                    selectedRow.classList.add('selected-date');
+                    
+                    // Scroll the row into view (with some margin)
+                    const container = document.querySelector('.daily-activity-container');
+                    const rowTop = selectedRow.offsetTop;
+                    const containerHeight = container.clientHeight;
+                    const scrollPosition = rowTop - (containerHeight / 2) + (selectedRow.clientHeight / 2);
+                    
+                    container.scrollTo({
+                        top: Math.max(0, scrollPosition),
+                        behavior: 'smooth'
+                    });
+                }
+            }
+            
+            // Initialize the chart and table interactions on page load
             document.addEventListener('DOMContentLoaded', function() {
                 // Get the canvas element
                 const ctx = document.getElementById('hourlyActivityChart').getContext('2d');
@@ -756,6 +840,39 @@ if ($sqliteAvailable && isset($db)) {
                 const stops = <?php echo json_encode(array_column($hourlyActions, 'stop')); ?>;
                 const likes = <?php echo json_encode(array_column($hourlyActions, 'like')); ?>;
                 const unlikes = <?php echo json_encode(array_column($hourlyActions, 'unlike')); ?>;
+                
+                // Add click event listeners to table rows
+                const tableRows = document.querySelectorAll('#dailyActivityTable tbody tr');
+                tableRows.forEach(row => {
+                    row.addEventListener('click', function() {
+                        const date = this.getAttribute('data-date');
+                        
+                        // Update the date picker
+                        document.getElementById('datePicker').value = date;
+                        
+                        // Find index in available dates
+                        const newIndex = availableDates.indexOf(date);
+                        if (newIndex !== -1) {
+                            currentDateIndex = newIndex;
+                            
+                            // Update navigation buttons
+                            document.getElementById('nextDayBtn').disabled = currentDateIndex <= 0;
+                            document.getElementById('prevDayBtn').disabled = currentDateIndex >= availableDates.length - 1;
+                        }
+                        
+                        // Highlight the clicked row
+                        highlightTableRow(date);
+                        
+                        // Fetch and update chart
+                        fetchChartData(date);
+                    });
+                });
+                
+                // Scroll the selected date into view on initial load
+                setTimeout(() => {
+                    const selectedDate = '<?= $selectedDate ?>';
+                    highlightTableRow(selectedDate);
+                }, 100);
                 
                 // Create the chart
                 hourlyChart = new Chart(ctx, {
