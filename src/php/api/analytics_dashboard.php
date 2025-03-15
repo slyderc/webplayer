@@ -80,16 +80,28 @@ if ($sqliteAvailable) {
 // Get daily action counts
 if ($sqliteAvailable && isset($db)) {
     try {
-        // For debugging purposes, let's log how many distinct days are in the database
-        $debug_stmt = $db->prepare('SELECT COUNT(DISTINCT date(timestamp)) as day_count FROM actions');
+        // Set the timezone for PHP
+        $localTimezone = new DateTimeZone(date_default_timezone_get());
+        $utcTimezone = new DateTimeZone('UTC');
+        
+        // Get timezone offset in hours
+        $now = new DateTime('now', $utcTimezone);
+        $offset = $localTimezone->getOffset($now) / 3600;
+        $offsetStr = ($offset >= 0 ? '+' : '') . $offset;
+        
+        // Log timezone info for debugging
+        error_log("Local timezone: " . date_default_timezone_get() . ", Offset from UTC: " . $offsetStr . " hours");
+        
+        // For debugging purposes, log how many distinct days are in the database with timezone adjustment
+        $debug_stmt = $db->prepare("SELECT COUNT(DISTINCT date(timestamp, '{$offsetStr} hours')) as day_count FROM actions");
         $debug_result = $debug_stmt->execute();
         $debug_row = $debug_result->fetchArray(SQLITE3_ASSOC);
         error_log("Total distinct days in database: " . $debug_row['day_count']);
         
-        // Get all days with activity (not just limited to 30)
-        $stmt = $db->prepare('
+        // Get all days with activity, adjusting for timezone
+        $stmt = $db->prepare("
             SELECT 
-                date(timestamp) as day,
+                date(timestamp, '{$offsetStr} hours') as day,
                 action_type,
                 COUNT(*) as count
             FROM 
@@ -98,7 +110,7 @@ if ($sqliteAvailable && isset($db)) {
                 day, action_type
             ORDER BY 
                 day DESC, action_type
-        ');
+        ");
         
         $result = $stmt->execute();
         $dailyActions = [];
@@ -398,7 +410,7 @@ if ($sqliteAvailable && isset($db)) {
                 <p>No popular tracks found.</p>
             <?php endif; ?>
             
-            <h2>Daily Activity (All Recorded Days)</h2>
+            <h2>Daily Activity (All Recorded Days - <?php echo date_default_timezone_get(); ?> Timezone)</h2>
             <table>
                 <thead>
                     <tr>
