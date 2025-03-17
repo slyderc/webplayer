@@ -35,10 +35,42 @@ class TrackManager {
                 this.recentTracks.pop();
             }
             
+            // Notify embeds on the same origin about track updates
+            this.notifyEmbeds(trackWithTimestamp);
+            
+            // Store recent tracks in localStorage for embeds to use
+            if (this.storageService) {
+                this.storageService.set('recent_tracks', JSON.stringify(this.recentTracks.slice(0, 10)));
+            }
+            
             return true;
         }
         
         return false;
+    }
+    
+    /**
+     * Notify embeds about track updates
+     * @param {Object} track - The track that was just added
+     */
+    notifyEmbeds(track) {
+        try {
+            // Send a message to all embedded iframes with the same origin
+            if (window.frames && window.frames.length) {
+                for (let i = 0; i < window.frames.length; i++) {
+                    try {
+                        window.frames[i].postMessage({ 
+                            type: 'nwr_track_update',
+                            track: track
+                        }, window.location.origin);
+                    } catch (e) {
+                        // Ignore cross-origin errors
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Error notifying embeds:', e);
+        }
     }
         
     getArtworkUrl(track) {

@@ -1,0 +1,137 @@
+/* Embed stylesheet for Now Wave Radio */
+
+/* Common styles for all embeds */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+body.embed-body {
+    overflow: hidden;
+    background: transparent;
+    color: #333;
+}
+
+/* Live embed styles */
+.embed-live-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.artwork-container {
+    width: 100%;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.artwork-container img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    display: block;
+}
+
+.embed-track-info {
+    padding: 8px 0;
+    text-align: center;
+}
+
+.embed-track-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #111;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.embed-track-artist {
+    font-size: 16px;
+    font-weight: 400;
+    font-style: italic;
+    color: #444;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Recent tracks embed styles */
+.embed-recent-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    overflow-y: auto;
+    max-height: 100vh;
+}
+
+.embed-recent-tracks {
+    display: flex;
+    flex-direction: column;
+}
+
+.embed-track-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    position: relative;
+}
+
+.embed-track-item:last-child {
+    border-bottom: none;
+}
+
+.embed-track-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ddd;
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    z-index: 1;
+}
+
+.embed-track-artwork {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    margin-right: 12px;
+    object-fit: cover;
+}
+
+.embed-track-details {
+    flex: 1;
+    min-width: 0; /* Enables proper text truncation */
+}
+
+.embed-track-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.embed-track-item-artist {
+    font-size: 12px;
+    color: #666;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.embed-track-timestamp {
+    font-size: 12px;
+    color: #999;
+    text-align: right;
+    min-width: 80px;
+}
