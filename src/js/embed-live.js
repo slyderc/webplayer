@@ -16,10 +16,14 @@
     const updateInterval = 15000; // 15 seconds
     
     // Create metadata service instance
-    const metadataService = new MetadataService({
-        endpoint: apiEndpoint,
-        defaultArtwork: defaultArtwork
-    });
+    const metadataService = (typeof MetadataService !== 'undefined') ?
+        new MetadataService({
+            endpoint: apiEndpoint,
+            defaultArtwork: defaultArtwork
+        }) :
+        {
+            getCurrentTrack: () => Promise.resolve(null)
+        };
     
     /**
      * Update the now playing display

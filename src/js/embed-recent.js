@@ -16,15 +16,22 @@
     const updateInterval = 60000; // 60 seconds
     
     // Create metadata service instance
-    const metadataService = new MetadataService({
-        endpoint: apiEndpoint,
-        defaultArtwork: defaultArtwork
-    });
+    const metadataService = (typeof MetadataService !== 'undefined') ?
+        new MetadataService({
+            endpoint: apiEndpoint,
+            defaultArtwork: defaultArtwork
+        }) :
+        {
+            getRecentTracks: () => Promise.resolve([])
+        };
     
     // Create storage service for persistence 
-    const storageService = new StorageService({
-        prefix: 'nwr_embed_'
-    });
+    const storageService = (typeof StorageService !== 'undefined') ? 
+        new StorageService({ prefix: 'nwr_embed_' }) : 
+        { 
+            get: () => null,
+            set: () => false 
+        };
     
     /**
      * Format time elapsed since a given date

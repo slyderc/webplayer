@@ -37,8 +37,8 @@ $audioLibs = $audioLibraries;
     </script>
     
     <!-- Core services needed for embeds -->
-    <script src="../js/services/metadata-service.js?v=<?php echo $jsMetadataServiceVersion; ?>"></script>
     <script src="../js/services/storage-service.js?v=<?php echo $jsStorageServiceVersion; ?>"></script>
+    <script src="../js/services/metadata-service.js?v=<?php echo $jsMetadataServiceVersion; ?>"></script>
 </head>
 <body class="embed-body embed-<?php echo $mode; ?>">
     <?php if ($mode === 'live'): ?>
