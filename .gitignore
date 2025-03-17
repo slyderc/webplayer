@@ -1,6 +1,7 @@
 # project-specific
 audio_files/
 schedule.json
+mockups/
 
 # Environment files
 .env
