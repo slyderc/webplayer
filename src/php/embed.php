@@ -209,21 +209,29 @@ $embedId = 'nwr_embed_' . uniqid();
             </div>
         </div>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Configure embed with unique IDs
-                window.NWR_EMBED_ELEMENTS = {
-                    albumArt: document.getElementById('embed-album-art-<?php echo $embedId; ?>'),
-                    trackTitle: document.getElementById('embed-track-title-<?php echo $embedId; ?>'),
-                    trackArtist: document.getElementById('embed-track-artist-<?php echo $embedId; ?>'),
-                    errorMessage: document.getElementById('embed-error-<?php echo $embedId; ?>')
-                };
-            });
+            /* Ensure this runs immediately and also after DOM is ready */
+            (function() {
+                function initElements() {
+                    window.NWR_EMBED_ELEMENTS = {
+                        albumArt: document.getElementById('embed-album-art-<?php echo $embedId; ?>'),
+                        trackTitle: document.getElementById('embed-track-title-<?php echo $embedId; ?>'),
+                        trackArtist: document.getElementById('embed-track-artist-<?php echo $embedId; ?>'),
+                        errorMessage: document.getElementById('embed-error-<?php echo $embedId; ?>')
+                    };
+                }
+                
+                // Try to initialize immediately
+                initElements();
+                
+                // And also when DOM is fully loaded
+                document.addEventListener('DOMContentLoaded', initElements);
+            })();
         </script>
         <script src="../js/embed-live.js"></script>
         <?php else: ?>
         <!-- Recent tracks embed view -->
         <div class="embed-recent-container">
-            <div id="embed-recent-tracks-<?php echo $embedId; ?>" class="embed-recent-tracks">
+            <div id="embedRecentTracks" class="embed-recent-tracks">
                 <div class="embed-loading">Loading recent tracks...</div>
             </div>
             <div id="embed-error-<?php echo $embedId; ?>" class="embed-error-message" style="display:none;">
@@ -231,13 +239,23 @@ $embedId = 'nwr_embed_' . uniqid();
             </div>
         </div>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Configure embed with unique IDs
-                window.NWR_EMBED_ELEMENTS = {
-                    recentTracks: document.getElementById('embed-recent-tracks-<?php echo $embedId; ?>'),
-                    errorMessage: document.getElementById('embed-error-<?php echo $embedId; ?>')
-                };
-            });
+            /* Ensure this runs immediately and also after DOM is ready */
+            (function() {
+                function initElements() {
+                    window.NWR_EMBED_ELEMENTS = {
+                        recentTracks: document.getElementById('embedRecentTracks') || document.querySelector('.embed-recent-tracks'),
+                        errorMessage: document.getElementById('embed-error-<?php echo $embedId; ?>')
+                    };
+                    
+                    console.log('Elements initialized: ', window.NWR_EMBED_ELEMENTS);
+                }
+                
+                // Try to initialize immediately
+                initElements();
+                
+                // And also when DOM is fully loaded
+                document.addEventListener('DOMContentLoaded', initElements);
+            })();
         </script>
         <script src="../js/embed-recent.js"></script>
         <?php endif; ?>
