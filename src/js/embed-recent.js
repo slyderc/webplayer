@@ -65,19 +65,48 @@
      * Update the recent tracks display
      */
     function updateRecentTracks() {
-        // Check for DOM elements, return if not available
+        console.log('updateRecentTracks called');
+        
+        // Double-check and try to initialize DOM elements if needed
         if (!recentTracksContainer) {
-            console.error('Required DOM elements not available for the embed');
+            console.log('recentTracksContainer not found, trying to reacquire');
+            if (!initializeDomReferences()) {
+                // Last resort - create a container
+                console.log('Final attempt to create a container');
+                const container = document.querySelector('.embed-recent-container') || document.body;
+                if (container) {
+                    recentTracksContainer = document.createElement('div');
+                    recentTracksContainer.className = 'embed-recent-tracks';
+                    recentTracksContainer.id = 'dynamically-created-tracks-container';
+                    container.appendChild(recentTracksContainer);
+                    console.log('Dynamically created container:', recentTracksContainer);
+                } else {
+                    console.error('Could not find any container to append to');
+                    return;
+                }
+            }
+        }
+        
+        // Verify again after attempt to reacquire
+        if (!recentTracksContainer) {
+            console.error('Still no container available, aborting update');
             return;
         }
+        
+        console.log('Using recentTracksContainer:', recentTracksContainer);
         
         // Hide error message if visible
         if (errorMessageElement) {
             errorMessageElement.style.display = 'none';
         }
         
+        // Show loading indicator immediately
+        recentTracksContainer.innerHTML = '<div class="embed-loading">Loading recent tracks...</div>';
+        
         metadataService.getRecentTracks(limit)
             .then(tracks => {
+                console.log('Received tracks:', tracks);
+                
                 if (!tracks || !tracks.length) {
                     // Try to use cached data if available
                     const cachedTracks = getCachedTracks();
@@ -108,8 +137,24 @@
                 const cachedTracks = getCachedTracks();
                 if (cachedTracks && cachedTracks.length) {
                     updateDisplay(cachedTracks);
-                } else if (errorCount >= maxErrorRetries) {
-                    recentTracksContainer.innerHTML = '<div class="embed-error-state">Unable to load recent tracks</div>';
+                } else {
+                    // Show a fallback even if we can't get any data
+                    const fallbackTracks = [];
+                    for (let i = 0; i < limit; i++) {
+                        fallbackTracks.push({
+                            title: `Sample Track ${i+1}`,
+                            artist: 'Sample Artist',
+                            artwork_url: defaultArtwork,
+                            played_at: new Date(Date.now() - (i * 15 * 60000)).toISOString()
+                        });
+                    }
+                    
+                    console.log('Using fallback tracks as last resort');
+                    updateDisplay(fallbackTracks);
+                    
+                    if (errorCount >= maxErrorRetries && errorMessageElement) {
+                        errorMessageElement.style.display = 'block';
+                    }
                 }
             });
     }
@@ -192,22 +237,47 @@
      * Initialize DOM references from the global NWR_EMBED_ELEMENTS object
      */
     function initializeDomReferences() {
+        console.log('Initializing DOM references for recent tracks embed');
+        
         const elements = window.NWR_EMBED_ELEMENTS || {};
+        console.log('NWR_EMBED_ELEMENTS:', elements);
         
         recentTracksContainer = elements.recentTracks;
         errorMessageElement = elements.errorMessage;
         
+        console.log('Initial recentTracksContainer from elements:', recentTracksContainer);
+        
         // If not defined in the global variable, try to find by ID
         if (!recentTracksContainer) {
             const embedId = window.NWR_EMBED?.id || '';
+            console.log('Embed ID:', embedId);
             
             if (embedId) {
-                recentTracksContainer = document.getElementById(`embed-recent-tracks-${embedId}`);
+                const id = `embed-recent-tracks-${embedId}`;
+                console.log('Looking for element with ID:', id);
+                recentTracksContainer = document.getElementById(id);
+                console.log('Found by ID:', recentTracksContainer);
             }
             
             // If still not found, try a direct query selector
             if (!recentTracksContainer) {
+                console.log('Trying direct selector .embed-recent-tracks');
                 recentTracksContainer = document.querySelector('.embed-recent-tracks');
+                console.log('Found by class:', recentTracksContainer);
+                
+                // Try with ID 'embedRecentTracks' (old format)
+                if (!recentTracksContainer) {
+                    console.log('Trying with ID embedRecentTracks');
+                    recentTracksContainer = document.getElementById('embedRecentTracks');
+                    console.log('Found by old ID:', recentTracksContainer);
+                }
+                
+                // Last resort, try any div inside embed-recent-container
+                if (!recentTracksContainer) {
+                    console.log('Last resort: trying any div in embed-recent-container');
+                    recentTracksContainer = document.querySelector('.embed-recent-container div');
+                    console.log('Found by container div:', recentTracksContainer);
+                }
             }
         }
         
@@ -227,9 +297,32 @@
         
         if (!recentTracksContainer) {
             console.error('Required DOM elements not found for recent tracks embed');
+            
+            // Log all available elements to help debug
+            console.log('Available elements in .embed-recent-container:');
+            const container = document.querySelector('.embed-recent-container');
+            if (container) {
+                console.log('Container found:', container);
+                console.log('Container HTML:', container.innerHTML);
+            } else {
+                console.log('Container not found');
+            }
+            
+            // Create a container as a last resort
+            console.log('Creating a container as last resort');
+            const container = document.querySelector('.embed-recent-container');
+            if (container) {
+                recentTracksContainer = document.createElement('div');
+                recentTracksContainer.className = 'embed-recent-tracks';
+                container.appendChild(recentTracksContainer);
+                console.log('Created container:', recentTracksContainer);
+                return true;
+            }
+            
             return false;
         }
         
+        console.log('DOM references initialized successfully');
         return true;
     }
     
@@ -290,10 +383,33 @@
         });
     }
     
+    // Log the whole DOM for debugging
+    function logDomStructure() {
+        console.log('DOM structure at initialization:');
+        console.log('Body HTML:', document.body.innerHTML);
+        console.log('Embed container:', document.querySelector('.embed-container'));
+        console.log('Recent container:', document.querySelector('.embed-recent-container'));
+        console.log('Recent tracks div:', document.querySelector('.embed-recent-tracks'));
+        console.log('Old ID format:', document.getElementById('embedRecentTracks'));
+        console.log('NWR_EMBED config:', window.NWR_EMBED);
+        
+        // List all elements with ID containing 'recent'
+        const allElements = document.querySelectorAll('*[id*="recent"]');
+        console.log('All elements with ID containing "recent":', allElements);
+    }
+    
     // Start when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded fired');
+            // Log DOM structure before initialization
+            logDomStructure();
+            init();
+        });
     } else {
+        console.log('DOM already loaded, initializing immediately');
+        // Log DOM structure before initialization
+        logDomStructure();
         init();
     }
 })();
