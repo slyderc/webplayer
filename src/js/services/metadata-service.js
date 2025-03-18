@@ -135,10 +135,14 @@ class MetadataService {
             // Try various endpoints that might contain track history
             const possibleEndpoints = [
                 '/player/history.json',              // Direct history endpoint
-                '/webplayer/api/history.json',       // API-based history endpoint
-                '/webplayer/api/track_history.php',  // PHP-based history endpoint
+                '/api/track_history.php',            // PHP-based history endpoint
                 '/api/track_history'                 // General API endpoint
             ];
+            
+            console.log('Attempting to fetch track history with options:', {
+                limit: limit,
+                endpointsToTry: possibleEndpoints
+            });
             
             // Current track as fallback
             let currentTrack = null;
@@ -160,7 +164,7 @@ class MetadataService {
                         const data = await response.json();
                         
                         if (Array.isArray(data) && data.length > 0) {
-                            console.log(`Found history data at ${endpoint}:`, data);
+                            console.log(`Found history data at ${endpoint}`); // Don't log the entire data
                             
                             // Format the tracks according to our expected format
                             return data.slice(0, limit).map(track => ({
@@ -191,10 +195,10 @@ class MetadataService {
                         if (storedData) {
                             const parsed = JSON.parse(storedData);
                             if (Array.isArray(parsed) && parsed.length > 0) {
-                                console.log(`Found history in localStorage key "${key}":`, parsed);
+                                console.log(`Found history in localStorage key "${key}"`);
                                 return parsed.slice(0, limit);
                             } else if (parsed?.tracks && Array.isArray(parsed.tracks)) {
-                                console.log(`Found history in localStorage key "${key}.tracks":`, parsed.tracks);
+                                console.log(`Found history in localStorage key "${key}.tracks"`); // Don't log the entire data
                                 return parsed.tracks.slice(0, limit);
                             }
                         }

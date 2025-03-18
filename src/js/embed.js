@@ -226,7 +226,9 @@
             console.log('Initializing NWR Embed base module');
             
             // Initialize services
+            console.log('Initializing services...');
             this.services = initializeServices();
+            console.log('Services initialized:', this.services);
             
             // Apply theme
             applyTheme();

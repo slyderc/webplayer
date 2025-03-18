@@ -77,6 +77,25 @@
             // Show loading indicator immediately
             recentTracksContainer.innerHTML = '<div class="embed-loading">Loading recent tracks...</div>';
             
+            console.log('Requesting recent tracks with limit:', settings.limit);
+            
+            // Handle null metadataService gracefully
+            if (!metadataService || typeof metadataService.getRecentTracks !== 'function') {
+                console.error('MetadataService not available or missing getRecentTracks method');
+                // Create fallback tracks
+                const fallbackTracks = [];
+                for (let i = 0; i < settings.limit; i++) {
+                    fallbackTracks.push({
+                        title: `Track ${i+1}`,
+                        artist: 'Unknown Artist',
+                        artwork_url: settings.defaultArtwork,
+                        played_at: new Date(Date.now() - (i * 15 * 60000)).toISOString()
+                    });
+                }
+                updateDisplay(fallbackTracks);
+                return;
+            }
+            
             metadataService.getRecentTracks(settings.limit)
                 .then(tracks => {
                     if (!tracks || !tracks.length) {
@@ -294,27 +313,42 @@
     
     // Check if we can initialize now or need to wait
     function checkAndInitialize() {
-        if (window.NWR && window.NWR.embed && window.NWR.embed.services) {
-            console.log('Recent tracks embed: Base module ready with services');
-            initialize();
-        } else {
-            console.log('Recent tracks embed: Waiting for base module');
-            
-            // Listen for the ready event
-            document.addEventListener('nwr:embed:ready', function() {
-                console.log('Recent tracks embed: Received ready event');
+        try {
+            if (window.NWR && window.NWR.embed && window.NWR.embed.services) {
+                console.log('Recent tracks embed: Base module ready with services');
                 initialize();
-            });
-            
-            // Also try again after a delay as a fallback
-            setTimeout(function() {
-                if (window.NWR && window.NWR.embed && window.NWR.embed.services) {
-                    console.log('Recent tracks embed: Base module ready after delay');
-                    initialize();
-                } else {
-                    console.warn('Recent tracks embed: Base module still not ready after delay');
-                }
-            }, 500);
+            } else {
+                console.log('Recent tracks embed: Waiting for base module');
+                
+                // Listen for the ready event
+                document.addEventListener('nwr:embed:ready', function() {
+                    console.log('Recent tracks embed: Received ready event');
+                    try {
+                        initialize();
+                    } catch (err) {
+                        console.error('Error during initialization after ready event:', err);
+                    }
+                });
+                
+                // Also try again after a delay as a fallback
+                setTimeout(function() {
+                    try {
+                        if (window.NWR && window.NWR.embed && window.NWR.embed.services) {
+                            console.log('Recent tracks embed: Base module ready after delay');
+                            initialize();
+                        } else {
+                            console.warn('Recent tracks embed: Base module still not ready after delay');
+                            // Last resort - try to initialize even without services
+                            console.log('Attempting last resort initialization');
+                            initialize();
+                        }
+                    } catch (err) {
+                        console.error('Error during delayed initialization:', err);
+                    }
+                }, 1000); // Increased delay time
+            }
+        } catch (err) {
+            console.error('Error in checkAndInitialize:', err);
         }
     }
     
