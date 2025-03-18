@@ -15,7 +15,7 @@
     const apiEndpoint = config.apiEndpoint || '/api/nowplaying';
     const defaultArtwork = config.defaultArtwork || '/player/NWR_text_logo_angle.png';
     const limit = embedConfig.limit || 5;
-    const updateInterval = 60000; // 60 seconds
+    const updateInterval = 30000; // 30 seconds - check twice as often for new tracks
     const maxErrorRetries = 3;
     
     // State tracking
@@ -377,7 +377,17 @@
             // Verify origin for security
             if (event.origin !== window.location.origin) return;
             
-            if (event.data && event.data.type === 'nwr_track_update') {
+            if (event.data && (event.data.type === 'nwr_track_update' || event.data.type === 'track_change')) {
+                console.log('Received track update notification');
+                updateRecentTracks();
+            }
+        });
+        
+        // Also listen for storage events which might indicate a track change
+        window.addEventListener('storage', function(event) {
+            // If the main player updates current track in localStorage, we should refresh
+            if (event.key && (event.key.includes('track') || event.key.includes('current'))) {
+                console.log('Storage event detected, refreshing tracks');
                 updateRecentTracks();
             }
         });

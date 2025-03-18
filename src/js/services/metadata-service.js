@@ -63,6 +63,32 @@ class MetadataService {
                 data.image_hash = window.generateHash(data.artist, data.title);
             }
             
+            // Broadcast a message for any embeds on the page
+            if (window.parent && window.parent.postMessage) {
+                try {
+                    window.parent.postMessage({ 
+                        type: 'track_change',
+                        data: {
+                            title: data.title,
+                            artist: data.artist,
+                            timestamp: new Date().toISOString()
+                        } 
+                    }, '*');
+                    
+                    // If we're not in an iframe, this will broadcast to the current window
+                    window.postMessage({ 
+                        type: 'track_change',
+                        data: {
+                            title: data.title,
+                            artist: data.artist,
+                            timestamp: new Date().toISOString()
+                        } 
+                    }, '*');
+                } catch (e) {
+                    console.warn('Could not broadcast track change event:', e);
+                }
+            }
+            
             if (this.callbacks.onMetadataUpdate) {
                 this.callbacks.onMetadataUpdate(data);
             }
