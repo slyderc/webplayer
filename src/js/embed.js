@@ -167,17 +167,29 @@
     function setupEventListeners(updateCallback) {
         if (!updateCallback) return;
         
-        // Listen for metadata updates if in same domain
+        // Listen for our custom track change event
+        document.addEventListener('nwr:track:change', function(event) {
+            const now = Date.now();
+            if (now - lastUpdateTime > UPDATE_THROTTLE) {
+                console.log('Received track change DOM event with data:', event.detail);
+                lastUpdateTime = now;
+                updateCallback(event.detail);
+            } else {
+                console.log('DOM event update throttled (too frequent)');
+            }
+        });
+        
+        // Listen for metadata updates via window messages
         window.addEventListener('message', function(event) {
             // Accept messages from any origin for embeds
             if (event.data && (event.data.type === 'nwr_track_update' || event.data.type === 'track_change')) {
                 const now = Date.now();
                 if (now - lastUpdateTime > UPDATE_THROTTLE) {
-                    console.log('Received track update notification');
+                    console.log('Received track update notification via postMessage');
                     lastUpdateTime = now;
                     updateCallback();
                 } else {
-                    console.log('Update throttled (too frequent)');
+                    console.log('PostMessage update throttled (too frequent)');
                 }
             }
         });
@@ -192,7 +204,7 @@
                     lastUpdateTime = now;
                     updateCallback();
                 } else {
-                    console.log('Update throttled (too frequent)');
+                    console.log('Storage update throttled (too frequent)');
                 }
             }
         });

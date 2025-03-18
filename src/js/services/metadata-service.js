@@ -63,27 +63,78 @@ class MetadataService {
                 data.image_hash = window.generateHash(data.artist, data.title);
             }
             
-            // Only broadcast a message if this isn't an embed itself
-            if (!window.NWR || !window.NWR.embed) {
-                // Broadcast a message for any embeds on the page
-                if (window.parent && window.parent.postMessage) {
+            // For embeds, store the current track in localStorage for history building
+            if (window.NWR && window.NWR.embed) {
+                try {
+                    // Store in localStorage so other embeds can use it
+                    const trackHistoryKey = 'nwr_track_history';
+                    let trackHistory = [];
+                    
                     try {
-                        window.parent.postMessage({ 
-                            type: 'track_change',
-                            data: {
-                                title: data.title,
-                                artist: data.artist,
-                                timestamp: new Date().toISOString()
-                            } 
-                        }, '*');
-                        
-                        console.log('Broadcasting track change to parent');
+                        const savedHistory = localStorage.getItem(trackHistoryKey);
+                        if (savedHistory) {
+                            trackHistory = JSON.parse(savedHistory);
+                            if (!Array.isArray(trackHistory)) trackHistory = [];
+                        }
                     } catch (e) {
-                        console.warn('Could not broadcast track change event:', e);
+                        console.warn('Error reading track history from localStorage:', e);
                     }
+                    
+                    // Check if this track is already in the history
+                    const existingTrackIndex = trackHistory.findIndex(
+                        track => track.title === data.title && track.artist === data.artist
+                    );
+                    
+                    if (existingTrackIndex === -1) {
+                        // This is a new track, add it to history
+                        const newTrack = {
+                            title: data.title,
+                            artist: data.artist,
+                            artwork_url: data.artwork_url || data.image_url,
+                            played_at: new Date().toISOString()
+                        };
+                        
+                        // Add new track to the beginning
+                        trackHistory.unshift(newTrack);
+                        
+                        // Keep only the last 10 tracks
+                        trackHistory = trackHistory.slice(0, 10);
+                        
+                        // Save back to localStorage
+                        localStorage.setItem(trackHistoryKey, JSON.stringify(trackHistory));
+                        
+                        // Dispatch a DOM event for track change
+                        try {
+                            const trackEvent = new CustomEvent('nwr:track:change', { 
+                                detail: { track: newTrack, history: trackHistory } 
+                            });
+                            document.dispatchEvent(trackEvent);
+                            console.log('Dispatched track change event with history');
+                        } catch (e) {
+                            console.warn('Error dispatching track change event:', e);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error updating track history:', e);
                 }
-            } else {
-                console.log('Skipping broadcast because we are an embed');
+            }
+            
+            // Broadcast to parent window if we're an iframe
+            if (window.parent && window.parent !== window) {
+                try {
+                    window.parent.postMessage({ 
+                        type: 'track_change',
+                        data: {
+                            title: data.title,
+                            artist: data.artist,
+                            timestamp: new Date().toISOString()
+                        } 
+                    }, '*');
+                    
+                    console.log('Broadcasting track change to parent');
+                } catch (e) {
+                    console.warn('Could not broadcast track change event:', e);
+                }
             }
             
             if (this.callbacks.onMetadataUpdate) {
@@ -207,22 +258,46 @@ class MetadataService {
             // If we got here, none of the endpoints worked
             console.log('No history endpoints worked, creating recent tracks from localStorage');
             
-            // Try to get history from localStorage
+            // Check for our new consolidated history in localStorage
             if (typeof localStorage !== 'undefined') {
                 try {
-                    // Check various possible localStorage keys
+                    // First check our new history key that we maintain ourselves
+                    const trackHistoryKey = 'nwr_track_history';
+                    const storedHistory = localStorage.getItem(trackHistoryKey);
+                    
+                    if (storedHistory) {
+                        const historyData = JSON.parse(storedHistory);
+                        if (Array.isArray(historyData) && historyData.length > 0) {
+                            console.log(`Found track history in localStorage (${historyData.length} tracks)`);
+                            return historyData.slice(0, limit);
+                        }
+                    }
+                    
+                    // Fallback to checking various possible localStorage keys
                     const possibleKeys = ['recentTracks', 'trackHistory', 'playHistory', 'nwr_recent_tracks'];
                     
                     for (const key of possibleKeys) {
                         const storedData = localStorage.getItem(key);
                         if (storedData) {
-                            const parsed = JSON.parse(storedData);
-                            if (Array.isArray(parsed) && parsed.length > 0) {
-                                console.log(`Found history in localStorage key "${key}"`);
-                                return parsed.slice(0, limit);
-                            } else if (parsed?.tracks && Array.isArray(parsed.tracks)) {
-                                console.log(`Found history in localStorage key "${key}.tracks"`); // Don't log the entire data
-                                return parsed.tracks.slice(0, limit);
+                            try {
+                                const parsed = JSON.parse(storedData);
+                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                    console.log(`Found history in localStorage key "${key}"`);
+                                    
+                                    // Save to our consolidated history for future use
+                                    localStorage.setItem(trackHistoryKey, JSON.stringify(parsed.slice(0, 10)));
+                                    
+                                    return parsed.slice(0, limit);
+                                } else if (parsed?.tracks && Array.isArray(parsed.tracks)) {
+                                    console.log(`Found history in localStorage key "${key}.tracks"`);
+                                    
+                                    // Save to our consolidated history for future use
+                                    localStorage.setItem(trackHistoryKey, JSON.stringify(parsed.tracks.slice(0, 10)));
+                                    
+                                    return parsed.tracks.slice(0, limit);
+                                }
+                            } catch (innerErr) {
+                                console.warn(`Error parsing JSON from ${key}:`, innerErr);
                             }
                         }
                     }

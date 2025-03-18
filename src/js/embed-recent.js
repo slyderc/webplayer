@@ -296,8 +296,17 @@
             // Set up periodic updates
             timers.updateTimer = setInterval(updateRecentTracks, settings.updateInterval.recent);
             
-            // Set up event listeners for track changes
-            embed.setupEvents(updateRecentTracks);
+            // Set up event listeners for track changes with callback that can handle track data
+            embed.setupEvents((eventData) => {
+                if (eventData && eventData.history && Array.isArray(eventData.history)) {
+                    // If we received track history data directly, use it
+                    console.log('Received track history from event, updating display directly');
+                    updateDisplay(eventData.history);
+                } else {
+                    // Otherwise, fetch tracks as usual
+                    updateRecentTracks();
+                }
+            });
             
             // Set up visibility change detection
             embed.setupVisibility(timers, updateRecentTracks, settings.updateInterval.recent);
