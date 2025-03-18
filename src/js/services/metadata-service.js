@@ -68,7 +68,7 @@ class MetadataService {
     async getCurrentTrack() {
         try {
             // Make a direct request to playlist.json for the current track
-            const playlistUrl = '/player/playlist.json';
+            const playlistUrl = '/player/publish/playlist.json';
             console.log(`Fetching current track from ${playlistUrl}`);
             
             const controller = new AbortController();
@@ -115,7 +115,7 @@ class MetadataService {
     async getRecentTracks(limit = 5) {
         try {
             // Primary endpoint for track history
-            const historyEndpoint = '/player/history.json';
+            const historyEndpoint = '/player/publish/history.json';
             
             console.log(`Fetching track history from ${historyEndpoint} with limit: ${limit}`);
             
