@@ -52,6 +52,15 @@ class StorageService {
             return false;
         }
     }
+    
+    // Aliases for backward compatibility
+    get(key, defaultValue = null) {
+        return this.getItem(key, defaultValue);
+    }
+    
+    set(key, value) {
+        return this.setItem(key, value);
+    }
 }
 
 // Export as global or module depending on environment

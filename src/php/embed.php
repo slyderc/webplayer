@@ -78,6 +78,9 @@ $embedId = 'nwr_embed_' . uniqid();
                 getItem(key, defaultValue = null) { return defaultValue; }
                 setItem(key, value) { return false; }
                 removeItem(key) { return false; }
+                // Aliases for backward compatibility
+                get(key, defaultValue = null) { return defaultValue; }
+                set(key, value) { return false; }
             }
             window.StorageService = StorageService;
         }

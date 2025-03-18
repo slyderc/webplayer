@@ -39,7 +39,9 @@
         new StorageService() : 
         { 
             getItem: () => null,
-            setItem: () => false 
+            setItem: () => false,
+            get: () => null,   // Alias for backward compatibility
+            set: () => false   // Alias for backward compatibility
         };
     
     /**
