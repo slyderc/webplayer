@@ -91,10 +91,75 @@ $embedId = 'nwr_embed_' . uniqid();
             console.warn('MetadataService not loaded, using fallback implementation');
             class MetadataService {
                 constructor(options = {}) {
-                    this.options = options;
+                    this.options = {
+                        metadataUrl: 'https://nowwave.radio/player/publish/playlist.json',
+                        pollInterval: 5000,
+                        defaultArtwork: '/player/NWR_text_logo_angle.png',
+                        ...options
+                    };
                 }
-                getCurrentTrack() { return Promise.resolve(null); }
-                getRecentTracks() { return Promise.resolve([]); }
+                
+                async fetchMetadata() {
+                    try {
+                        const response = await fetch(this.options.metadataUrl);
+                        if (!response.ok) throw new Error('Failed to fetch metadata');
+                        return await response.json();
+                    } catch (e) {
+                        console.error('Error fetching metadata:', e);
+                        return null;
+                    }
+                }
+                
+                async getCurrentTrack() {
+                    try {
+                        const data = await this.fetchMetadata();
+                        if (!data) return null;
+                        
+                        return {
+                            title: data.title || 'Unknown Track',
+                            artist: data.artist || 'Unknown Artist',
+                            album: data.album || '',
+                            artwork_url: data.artwork_url || data.image_url || this.options.defaultArtwork,
+                            played_at: data.timestamp || new Date().toISOString()
+                        };
+                    } catch (e) {
+                        console.error('Error getting current track:', e);
+                        return null;
+                    }
+                }
+                
+                async getRecentTracks(limit = 5) {
+                    try {
+                        // Try to get track history first
+                        const historyUrl = this.options.metadataUrl.replace('playlist.json', 'history.json');
+                        const response = await fetch(historyUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            
+                            if (Array.isArray(data) && data.length > 0) {
+                                return data.slice(0, limit).map(track => ({
+                                    title: track.title || 'Unknown Track',
+                                    artist: track.artist || 'Unknown Artist',
+                                    album: track.album || '',
+                                    artwork_url: track.artwork_url || track.image_url || this.options.defaultArtwork,
+                                    played_at: track.timestamp || new Date().toISOString()
+                                }));
+                            }
+                        }
+                        
+                        // Fallback to just current track if no history
+                        const currentTrack = await this.getCurrentTrack();
+                        return currentTrack ? [currentTrack] : [];
+                    } catch (e) {
+                        console.error('Error getting recent tracks:', e);
+                        return [];
+                    }
+                }
+                
+                setCallback() { return this; }
+                startPolling() {}
+                stopPolling() {}
             }
             window.MetadataService = MetadataService;
         }
