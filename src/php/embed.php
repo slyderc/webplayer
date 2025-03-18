@@ -72,15 +72,16 @@ $embedId = 'nwr_embed_' . uniqid();
         if (typeof StorageService === 'undefined') {
             console.warn('StorageService not loaded, using fallback implementation');
             class StorageService {
-                constructor() {
+                constructor(options = {}) {
                     this.isAvailable = false;
+                    this.prefix = options.prefix || '';
                 }
                 getItem(key, defaultValue = null) { return defaultValue; }
                 setItem(key, value) { return false; }
                 removeItem(key) { return false; }
                 // Aliases for backward compatibility
-                get(key, defaultValue = null) { return defaultValue; }
-                set(key, value) { return false; }
+                get(key, defaultValue = null) { return this.getItem(key, defaultValue); }
+                set(key, value) { return this.setItem(key, value); }
             }
             window.StorageService = StorageService;
         }

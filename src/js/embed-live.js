@@ -36,12 +36,14 @@
     
     // Create storage service for caching
     const storageService = (typeof StorageService !== 'undefined') ? 
-        new StorageService() : 
+        new StorageService({
+            prefix: 'nwr_embed_'
+        }) : 
         { 
             getItem: () => null,
             setItem: () => false,
-            get: () => null,   // Alias for backward compatibility
-            set: () => false   // Alias for backward compatibility
+            get: () => null,
+            set: () => false
         };
     
     /**

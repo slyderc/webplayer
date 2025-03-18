@@ -2,8 +2,9 @@
  * StorageService - Handles local storage operations
  */
 class StorageService {
-    constructor() {
+    constructor(options = {}) {
         this.isAvailable = this._checkStorageAvailability();
+        this.prefix = options.prefix || '';
     }
     
     _checkStorageAvailability() {
@@ -17,11 +18,16 @@ class StorageService {
         }
     }
     
+    _getFullKey(key) {
+        return this.prefix ? `${this.prefix}${key}` : key;
+    }
+    
     getItem(key, defaultValue = null) {
         if (!this.isAvailable) return defaultValue;
         
         try {
-            const item = localStorage.getItem(key);
+            const fullKey = this._getFullKey(key);
+            const item = localStorage.getItem(fullKey);
             return item ? JSON.parse(item) : defaultValue;
         } catch (e) {
             console.error('Error getting item from storage:', e);
@@ -33,7 +39,8 @@ class StorageService {
         if (!this.isAvailable) return false;
         
         try {
-            localStorage.setItem(key, JSON.stringify(value));
+            const fullKey = this._getFullKey(key);
+            localStorage.setItem(fullKey, JSON.stringify(value));
             return true;
         } catch (e) {
             console.error('Error setting item in storage:', e);
@@ -45,7 +52,8 @@ class StorageService {
         if (!this.isAvailable) return false;
         
         try {
-            localStorage.removeItem(key);
+            const fullKey = this._getFullKey(key);
+            localStorage.removeItem(fullKey);
             return true;
         } catch (e) {
             console.error('Error removing item from storage:', e);
