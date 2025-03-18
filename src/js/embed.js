@@ -23,8 +23,8 @@
         defaultArtwork: '/player/NWR_text_logo_angle.png',
         storagePrefix: 'nwr_embed_',
         updateInterval: {
-            live: 15000,   // 15 seconds for live mode
-            recent: 30000  // 30 seconds for recent tracks mode
+            live: 30000,   // 30 seconds for live mode
+            recent: 120000  // 2 minutes for recent tracks mode
         },
         mode: 'live',
         limit: 5,
@@ -156,6 +156,10 @@
         }
     }
     
+    // Track the last update time to prevent too frequent updates
+    let lastUpdateTime = 0;
+    const UPDATE_THROTTLE = 5000; // 5 seconds
+
     /**
      * Set up event listeners for track changes
      * @param {Function} updateCallback - Function to call when track changes
@@ -167,8 +171,14 @@
         window.addEventListener('message', function(event) {
             // Accept messages from any origin for embeds
             if (event.data && (event.data.type === 'nwr_track_update' || event.data.type === 'track_change')) {
-                console.log('Received track update notification');
-                updateCallback();
+                const now = Date.now();
+                if (now - lastUpdateTime > UPDATE_THROTTLE) {
+                    console.log('Received track update notification');
+                    lastUpdateTime = now;
+                    updateCallback();
+                } else {
+                    console.log('Update throttled (too frequent)');
+                }
             }
         });
         
@@ -176,8 +186,14 @@
         window.addEventListener('storage', function(event) {
             // If the main player updates current track in localStorage, we should refresh
             if (event.key && (event.key.includes('track') || event.key.includes('current'))) {
-                console.log('Storage event detected, refreshing');
-                updateCallback();
+                const now = Date.now();
+                if (now - lastUpdateTime > UPDATE_THROTTLE) {
+                    console.log('Storage event detected, refreshing');
+                    lastUpdateTime = now;
+                    updateCallback();
+                } else {
+                    console.log('Update throttled (too frequent)');
+                }
             }
         });
     }

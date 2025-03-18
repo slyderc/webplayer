@@ -63,30 +63,27 @@ class MetadataService {
                 data.image_hash = window.generateHash(data.artist, data.title);
             }
             
-            // Broadcast a message for any embeds on the page
-            if (window.parent && window.parent.postMessage) {
-                try {
-                    window.parent.postMessage({ 
-                        type: 'track_change',
-                        data: {
-                            title: data.title,
-                            artist: data.artist,
-                            timestamp: new Date().toISOString()
-                        } 
-                    }, '*');
-                    
-                    // If we're not in an iframe, this will broadcast to the current window
-                    window.postMessage({ 
-                        type: 'track_change',
-                        data: {
-                            title: data.title,
-                            artist: data.artist,
-                            timestamp: new Date().toISOString()
-                        } 
-                    }, '*');
-                } catch (e) {
-                    console.warn('Could not broadcast track change event:', e);
+            // Only broadcast a message if this isn't an embed itself
+            if (!window.NWR || !window.NWR.embed) {
+                // Broadcast a message for any embeds on the page
+                if (window.parent && window.parent.postMessage) {
+                    try {
+                        window.parent.postMessage({ 
+                            type: 'track_change',
+                            data: {
+                                title: data.title,
+                                artist: data.artist,
+                                timestamp: new Date().toISOString()
+                            } 
+                        }, '*');
+                        
+                        console.log('Broadcasting track change to parent');
+                    } catch (e) {
+                        console.warn('Could not broadcast track change event:', e);
+                    }
                 }
+            } else {
+                console.log('Skipping broadcast because we are an embed');
             }
             
             if (this.callbacks.onMetadataUpdate) {
@@ -154,30 +151,56 @@ class MetadataService {
                 console.warn('Could not get current track:', e);
             }
             
-            // Try all possible endpoints until we find one with data
-            for (const endpoint of possibleEndpoints) {
+            // Check if we've recently tried and failed to get history data
+            const lastAttemptKey = 'recent_tracks_last_attempt';
+            const lastAttemptTime = parseInt(localStorage.getItem(lastAttemptKey) || '0', 10);
+            const now = Date.now();
+            const RETRY_INTERVAL = 60000; // Only retry once per minute 
+            
+            if (lastAttemptTime && (now - lastAttemptTime < RETRY_INTERVAL)) {
+                console.log(`Skipping endpoint attempts, last tried ${Math.round((now - lastAttemptTime)/1000)}s ago`);
+                // Skip the endpoint attempts if we tried recently
+            } else {
+                // Save the attempt time
                 try {
-                    console.log(`Trying history endpoint: ${endpoint}`);
-                    const response = await fetch(endpoint);
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        
-                        if (Array.isArray(data) && data.length > 0) {
-                            console.log(`Found history data at ${endpoint}`); // Don't log the entire data
-                            
-                            // Format the tracks according to our expected format
-                            return data.slice(0, limit).map(track => ({
-                                title: track.title || track.name || 'Unknown Track',
-                                artist: track.artist || track.artistName || 'Unknown Artist',
-                                album: track.album || track.albumName || '',
-                                artwork_url: track.artwork_url || track.image || track.cover || this.options.defaultArtwork,
-                                played_at: track.played_at || track.timestamp || track.date || new Date().toISOString()
-                            }));
-                        }
-                    }
+                    localStorage.setItem(lastAttemptKey, now.toString());
                 } catch (e) {
-                    console.warn(`Could not fetch from ${endpoint}:`, e);
+                    // Ignore storage errors
+                }
+                
+                // Try all possible endpoints until we find one with data
+                for (const endpoint of possibleEndpoints) {
+                    try {
+                        console.log(`Trying history endpoint: ${endpoint}`);
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                        
+                        const response = await fetch(endpoint, { 
+                            signal: controller.signal,
+                            headers: { 'Cache-Control': 'no-cache' }
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            
+                            if (Array.isArray(data) && data.length > 0) {
+                                console.log(`Found history data at ${endpoint}`); // Don't log the entire data
+                                
+                                // Format the tracks according to our expected format
+                                return data.slice(0, limit).map(track => ({
+                                    title: track.title || track.name || 'Unknown Track',
+                                    artist: track.artist || track.artistName || 'Unknown Artist',
+                                    album: track.album || track.albumName || '',
+                                    artwork_url: track.artwork_url || track.image || track.cover || this.options.defaultArtwork,
+                                    played_at: track.played_at || track.timestamp || track.date || new Date().toISOString()
+                                }));
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Could not fetch from ${endpoint}:`, e);
+                    }
                 }
             }
             
