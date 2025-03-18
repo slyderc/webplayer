@@ -43,30 +43,12 @@
          * Update the recent tracks display
          */
         function updateRecentTracks() {
-            // Double-check and try to initialize DOM elements if needed
+            // Make sure we have our container
             if (!recentTracksContainer) {
-                console.log('recentTracksContainer not found, trying to reacquire');
                 if (!initializeDomReferences()) {
-                    // Last resort - create a container
-                    console.log('Final attempt to create a container');
-                    const container = document.querySelector('.embed-recent-container') || document.body;
-                    if (container) {
-                        recentTracksContainer = document.createElement('div');
-                        recentTracksContainer.className = 'embed-recent-tracks';
-                        recentTracksContainer.id = 'dynamically-created-tracks-container';
-                        container.appendChild(recentTracksContainer);
-                        console.log('Dynamically created container:', recentTracksContainer);
-                    } else {
-                        console.error('Could not find any container to append to');
-                        return;
-                    }
+                    console.error('Could not find tracks container element');
+                    return;
                 }
-            }
-            
-            // Verify again after attempt to reacquire
-            if (!recentTracksContainer) {
-                console.error('Still no container available, aborting update');
-                return;
             }
             
             // Hide error message if visible
@@ -74,38 +56,13 @@
                 errorMessageElement.style.display = 'none';
             }
             
-            // Show loading indicator immediately
+            // Show loading indicator
             recentTracksContainer.innerHTML = '<div class="embed-loading">Loading recent tracks...</div>';
             
-            console.log('Requesting recent tracks with limit:', settings.limit);
-            
-            // Handle null metadataService gracefully
-            if (!metadataService || typeof metadataService.getRecentTracks !== 'function') {
-                console.error('MetadataService not available or missing getRecentTracks method');
-                // Create fallback tracks
-                const fallbackTracks = [];
-                for (let i = 0; i < settings.limit; i++) {
-                    fallbackTracks.push({
-                        title: `Track ${i+1}`,
-                        artist: 'Unknown Artist',
-                        artwork_url: settings.defaultArtwork,
-                        played_at: new Date(Date.now() - (i * 15 * 60000)).toISOString()
-                    });
-                }
-                updateDisplay(fallbackTracks);
-                return;
-            }
-            
+            // Fetch track history from our server
             metadataService.getRecentTracks(settings.limit)
                 .then(tracks => {
                     if (!tracks || !tracks.length) {
-                        // Try to use cached data if available
-                        const cachedTracks = getCachedTracks();
-                        if (cachedTracks && cachedTracks.length) {
-                            updateDisplay(cachedTracks);
-                            return;
-                        }
-                        
                         // Handle no data case
                         recentTracksContainer.innerHTML = '<div class="embed-empty-state">No recent tracks to display</div>';
                         return;
@@ -114,38 +71,17 @@
                     // Reset error count on success
                     errorCount = 0;
                     
-                    // Cache the tracks data
-                    cacheTracks(tracks);
-                    
-                    // Update the display
+                    // Update the display with tracks from history.json
                     updateDisplay(tracks);
                 })
                 .catch(error => {
                     console.error('Error fetching recent tracks:', error);
                     incrementErrorCount();
                     
-                    // Try to use cached data if available
-                    const cachedTracks = getCachedTracks();
-                    if (cachedTracks && cachedTracks.length) {
-                        updateDisplay(cachedTracks);
-                    } else {
-                        // Show a fallback even if we can't get any data
-                        const fallbackTracks = [];
-                        for (let i = 0; i < settings.limit; i++) {
-                            fallbackTracks.push({
-                                title: `Sample Track ${i+1}`,
-                                artist: 'Sample Artist',
-                                artwork_url: settings.defaultArtwork,
-                                played_at: new Date(Date.now() - (i * 15 * 60000)).toISOString()
-                            });
-                        }
-                        
-                        console.log('Using fallback tracks as last resort');
-                        updateDisplay(fallbackTracks);
-                        
-                        if (errorCount >= settings.maxErrorRetries && errorMessageElement) {
-                            errorMessageElement.style.display = 'block';
-                        }
+                    // Show error message after too many retries
+                    if (errorCount >= settings.maxErrorRetries && errorMessageElement) {
+                        errorMessageElement.style.display = 'block';
+                        recentTracksContainer.innerHTML = '<div class="embed-empty-state">Unable to load track history</div>';
                     }
                 });
         }
@@ -182,35 +118,17 @@
         }
         
         /**
-         * Cache tracks data for offline/error cases
+         * We don't need caching since we're using history.json directly
+         * These functions remain as stubs for compatibility
          */
         function cacheTracks(tracks) {
-            if (!tracks || !tracks.length) return;
-            
-            try {
-                storageService.setItem('recent_tracks', JSON.stringify({
-                    tracks: tracks,
-                    cached_at: new Date().toISOString()
-                }));
-            } catch (e) {
-                console.warn('Error caching tracks data:', e);
-            }
+            // No longer needed - history.json handles persistence
+            return;
         }
         
-        /**
-         * Get cached tracks data
-         */
         function getCachedTracks() {
-            try {
-                const cachedData = storageService.getItem('recent_tracks');
-                if (!cachedData) return null;
-                
-                const data = JSON.parse(cachedData);
-                return data.tracks || [];
-            } catch (e) {
-                console.warn('Error retrieving cached tracks:', e);
-                return null;
-            }
+            // No longer needed - history.json is our source of truth
+            return null;
         }
         
         /**
@@ -231,38 +149,27 @@
             const embedId = utils.getEmbedId();
             console.log('Recent tracks embed initializing with ID:', embedId);
             
-            // Try to get elements from the global object first
+            // Get elements from the global object if available
             const elements = window.NWR_EMBED_ELEMENTS || {};
             recentTracksContainer = elements.recentTracks;
             errorMessageElement = elements.errorMessage;
             
-            // Try to find by ID if not found
+            // If not found via global object, try standard selectors
             if (!recentTracksContainer) {
-                // Try all possible IDs
-                recentTracksContainer = document.getElementById(`embed-recent-tracks-${embedId}`) || 
-                                       document.getElementById('embedRecentTracks');
-                
-                // Try classes if ID not found
-                if (!recentTracksContainer) {
-                    recentTracksContainer = document.querySelector('.embed-recent-tracks');
-                }
-                
-                // Last resort, try any div inside embed-recent-container
-                if (!recentTracksContainer) {
-                    const container = document.querySelector('.embed-recent-container');
-                    if (container) {
-                        recentTracksContainer = container.querySelector('div');
-                    }
-                }
+                recentTracksContainer = 
+                    document.getElementById(`embed-recent-tracks-${embedId}`) ||
+                    document.getElementById('embedRecentTracks') ||
+                    document.querySelector('.embed-recent-tracks');
             }
             
             if (!errorMessageElement) {
-                errorMessageElement = document.getElementById(`embed-error-${embedId}`) || 
-                                     document.querySelector('.embed-error-message');
+                errorMessageElement = 
+                    document.getElementById(`embed-error-${embedId}`) ||
+                    document.querySelector('.embed-error-message');
             }
             
             if (!recentTracksContainer) {
-                console.error('Required DOM elements not found for recent tracks embed');
+                console.error('Required container not found for recent tracks embed');
                 return false;
             }
             
@@ -284,13 +191,7 @@
             // Mark as initialized
             isInitialized = true;
             
-            // Try to use cached data immediately
-            const cachedTracks = getCachedTracks();
-            if (cachedTracks && cachedTracks.length) {
-                updateDisplay(cachedTracks);
-            }
-            
-            // Initial update
+            // Initial update immediately
             updateRecentTracks();
             
             // Set up periodic updates
