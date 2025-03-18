@@ -208,8 +208,8 @@
         }
     }
     
-    // Export shared functionality
-    window.NWR.embed = {
+    // Create the embed object
+    const embedObj = {
         services: null,
         settings: settings,
         utils: {
@@ -218,12 +218,29 @@
             getEmbedId,
             applyTheme
         },
+        isInitialized: false,
         init: function() {
+            // Only initialize once
+            if (this.isInitialized) return this;
+            
+            console.log('Initializing NWR Embed base module');
+            
             // Initialize services
             this.services = initializeServices();
             
             // Apply theme
             applyTheme();
+            
+            this.isInitialized = true;
+            
+            // Broadcast that initialization is complete
+            try {
+                const event = new CustomEvent('nwr:embed:ready', { detail: { embedId: settings.id } });
+                document.dispatchEvent(event);
+                console.log('Embed ready event dispatched');
+            } catch (e) {
+                console.warn('Could not dispatch embed ready event', e);
+            }
             
             return this;
         },
@@ -231,10 +248,18 @@
         setupVisibility: setupVisibilityDetection
     };
     
-    // Auto-initialize on load
+    // Export shared functionality
+    window.NWR.embed = embedObj;
+    
+    // Ensure initialization happens immediately
+    console.log('Starting NWR Embed initialization');
+    embedObj.init();
+    
+    // Also initialize on DOM load to be safe
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.NWR.embed.init());
-    } else {
-        window.NWR.embed.init();
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded: ensuring embed is initialized');
+            embedObj.init();
+        });
     }
 })();

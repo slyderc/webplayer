@@ -21,6 +21,12 @@
         let recentTracksContainer;
         let errorMessageElement;
         
+        // Make sure services are available
+        if (!embed.services) {
+            console.error('Embed services not initialized');
+            return;
+        }
+        
         // Services
         const services = embed.services;
         const metadataService = services.metadataService;
@@ -286,11 +292,32 @@
         }
     }
     
-    // Make sure the base embed module is loaded before initializing
-    if (window.NWR && window.NWR.embed) {
-        initialize();
-    } else {
-        // Wait for the base embed module to load
-        window.addEventListener('load', initialize);
+    // Check if we can initialize now or need to wait
+    function checkAndInitialize() {
+        if (window.NWR && window.NWR.embed && window.NWR.embed.services) {
+            console.log('Recent tracks embed: Base module ready with services');
+            initialize();
+        } else {
+            console.log('Recent tracks embed: Waiting for base module');
+            
+            // Listen for the ready event
+            document.addEventListener('nwr:embed:ready', function() {
+                console.log('Recent tracks embed: Received ready event');
+                initialize();
+            });
+            
+            // Also try again after a delay as a fallback
+            setTimeout(function() {
+                if (window.NWR && window.NWR.embed && window.NWR.embed.services) {
+                    console.log('Recent tracks embed: Base module ready after delay');
+                    initialize();
+                } else {
+                    console.warn('Recent tracks embed: Base module still not ready after delay');
+                }
+            }, 500);
+        }
     }
+    
+    // Start initialization process
+    checkAndInitialize();
 })();

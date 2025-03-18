@@ -253,11 +253,32 @@
         }
     }
     
-    // Make sure the base embed module is loaded before initializing
-    if (window.NWR && window.NWR.embed) {
-        initialize();
-    } else {
-        // Wait for the base embed module to load
-        window.addEventListener('load', initialize);
+    // Check if we can initialize now or need to wait
+    function checkAndInitialize() {
+        if (window.NWR && window.NWR.embed && window.NWR.embed.services) {
+            console.log('Live embed: Base module ready with services');
+            initialize();
+        } else {
+            console.log('Live embed: Waiting for base module');
+            
+            // Listen for the ready event
+            document.addEventListener('nwr:embed:ready', function() {
+                console.log('Live embed: Received ready event');
+                initialize();
+            });
+            
+            // Also try again after a delay as a fallback
+            setTimeout(function() {
+                if (window.NWR && window.NWR.embed && window.NWR.embed.services) {
+                    console.log('Live embed: Base module ready after delay');
+                    initialize();
+                } else {
+                    console.warn('Live embed: Base module still not ready after delay');
+                }
+            }, 500);
+        }
     }
+    
+    // Start initialization process
+    checkAndInitialize();
 })();
