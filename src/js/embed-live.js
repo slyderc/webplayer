@@ -36,7 +36,7 @@
         let isInitialized = false;
         
         /**
-         * Update the now playing display
+         * Update the now playing display from playlist.json
          */
         function updateNowPlaying() {
             // Check for DOM elements, return if not available
@@ -50,26 +50,17 @@
                 errorMessageElement.style.display = 'none';
             }
             
+            // Fetch current track data from playlist.json
             metadataService.getCurrentTrack()
                 .then(trackData => {
                     if (!trackData) {
-                        // Try to use cached data if available
-                        const cachedTrack = getCachedTrack();
-                        if (cachedTrack) {
-                            updateDisplay(cachedTrack);
-                            return;
-                        }
-                        
-                        // Handle no data case
+                        // No track data available
                         incrementErrorCount();
                         return;
                     }
                     
                     // Reset error count on success
                     errorCount = 0;
-                    
-                    // Cache the track data
-                    cacheTrack(trackData);
                     
                     // Update the display
                     updateDisplay(trackData);
@@ -78,10 +69,8 @@
                     console.error('Error fetching current track:', error);
                     incrementErrorCount();
                     
-                    // Try to use cached data if available
-                    const cachedTrack = getCachedTrack();
-                    if (cachedTrack) {
-                        updateDisplay(cachedTrack);
+                    if (errorCount >= settings.maxErrorRetries && errorMessageElement) {
+                        errorMessageElement.style.display = 'block';
                     }
                 });
         }
@@ -92,50 +81,40 @@
         function updateDisplay(trackData) {
             if (!trackData) return;
             
-            // Update the display
+            // Update the artwork - use image from playlist.json
             if (trackData.artwork_url) {
                 albumArtElement.src = trackData.artwork_url;
             } else {
                 albumArtElement.src = settings.defaultArtwork;
             }
             
+            // Update text elements
             trackTitleElement.textContent = trackData.title || 'Unknown Track';
             trackArtistElement.textContent = trackData.artist || 'Unknown Artist';
             
-            // Set titles for tooltips on truncated text
+            // Set tooltips for truncated text
             trackTitleElement.title = trackData.title || '';
             trackArtistElement.title = trackData.artist || '';
+            
+            console.log('Updated display with:', {
+                title: trackData.title,
+                artist: trackData.artist,
+                artwork: trackData.artwork_url
+            });
         }
         
         /**
-         * Cache track data for offline/error cases
+         * We don't need caching since we're using playlist.json directly
+         * These functions remain as stubs for compatibility if needed
          */
         function cacheTrack(trackData) {
-            if (!trackData) return;
-            
-            try {
-                storageService.setItem('current_track', JSON.stringify({
-                    ...trackData,
-                    cached_at: new Date().toISOString()
-                }));
-            } catch (e) {
-                console.warn('Error caching track data:', e);
-            }
+            // No longer needed
+            return;
         }
         
-        /**
-         * Get cached track data
-         */
         function getCachedTrack() {
-            try {
-                const cachedData = storageService.getItem('current_track');
-                if (!cachedData) return null;
-                
-                return JSON.parse(cachedData);
-            } catch (e) {
-                console.warn('Error retrieving cached track:', e);
-                return null;
-            }
+            // No longer needed
+            return null;
         }
         
         /**
@@ -226,13 +205,7 @@
             // Mark as initialized
             isInitialized = true;
             
-            // Try to use cached data immediately
-            const cachedTrack = getCachedTrack();
-            if (cachedTrack) {
-                updateDisplay(cachedTrack);
-            }
-            
-            // Initial update
+            // Initial update immediately
             updateNowPlaying();
             
             // Set up periodic updates
