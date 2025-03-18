@@ -197,6 +197,34 @@
         recentTracksContainer = elements.recentTracks;
         errorMessageElement = elements.errorMessage;
         
+        // If not defined in the global variable, try to find by ID
+        if (!recentTracksContainer) {
+            const embedId = window.NWR_EMBED?.id || '';
+            
+            if (embedId) {
+                recentTracksContainer = document.getElementById(`embed-recent-tracks-${embedId}`);
+            }
+            
+            // If still not found, try a direct query selector
+            if (!recentTracksContainer) {
+                recentTracksContainer = document.querySelector('.embed-recent-tracks');
+            }
+        }
+        
+        // Do the same for error message element
+        if (!errorMessageElement) {
+            const embedId = window.NWR_EMBED?.id || '';
+            
+            if (embedId) {
+                errorMessageElement = document.getElementById(`embed-error-${embedId}`);
+            }
+            
+            // If still not found, try a direct query selector
+            if (!errorMessageElement) {
+                errorMessageElement = document.querySelector('.embed-error-message');
+            }
+        }
+        
         if (!recentTracksContainer) {
             console.error('Required DOM elements not found for recent tracks embed');
             return false;

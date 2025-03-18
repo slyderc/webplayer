@@ -171,6 +171,42 @@
         trackArtistElement = elements.trackArtist;
         errorMessageElement = elements.errorMessage;
         
+        // If not defined in the global variable, try to find by ID
+        const embedId = window.NWR_EMBED?.id || '';
+        
+        if (!albumArtElement && embedId) {
+            albumArtElement = document.getElementById(`embed-album-art-${embedId}`);
+        }
+        
+        if (!trackTitleElement && embedId) {
+            trackTitleElement = document.getElementById(`embed-track-title-${embedId}`);
+        }
+        
+        if (!trackArtistElement && embedId) {
+            trackArtistElement = document.getElementById(`embed-track-artist-${embedId}`);
+        }
+        
+        if (!errorMessageElement && embedId) {
+            errorMessageElement = document.getElementById(`embed-error-${embedId}`);
+        }
+        
+        // If still not found, try direct selectors
+        if (!albumArtElement) {
+            albumArtElement = document.querySelector('.embed-album-art') || document.querySelector('.artwork-container img');
+        }
+        
+        if (!trackTitleElement) {
+            trackTitleElement = document.querySelector('.embed-track-title');
+        }
+        
+        if (!trackArtistElement) {
+            trackArtistElement = document.querySelector('.embed-track-artist');
+        }
+        
+        if (!errorMessageElement) {
+            errorMessageElement = document.querySelector('.embed-error-message');
+        }
+        
         if (!albumArtElement || !trackTitleElement || !trackArtistElement) {
             console.error('Required DOM elements not found for live embed');
             return false;
