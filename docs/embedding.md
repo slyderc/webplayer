@@ -24,11 +24,11 @@ The live embed displays the current track's album artwork with title and artist 
 </iframe>
 ```
 
-#### Size Variations
+#### Size and Theme Variations
 
 **Compact (for sidebars)**
 ```html
-<iframe src="https://nowwave.radio/embed.php?mode=live" 
+<iframe src="https://nowwave.radio/embed.php?mode=live&compact=1" 
         style="width:200px;height:250px;max-width:100%;border:none;"
         title="Now Wave Radio - Now Playing">
 </iframe>
@@ -38,6 +38,14 @@ The live embed displays the current track's album artwork with title and artist 
 ```html
 <iframe src="https://nowwave.radio/embed.php?mode=live" 
         style="width:100%;height:380px;max-width:500px;border:none;display:block;margin:0 auto;"
+        title="Now Wave Radio - Now Playing">
+</iframe>
+```
+
+**Dark Theme**
+```html
+<iframe src="https://nowwave.radio/embed.php?mode=live&theme=dark" 
+        style="width:300px;height:380px;max-width:100%;border:none;background-color:#121212;"
         title="Now Wave Radio - Now Playing">
 </iframe>
 ```
@@ -55,11 +63,11 @@ The recent tracks embed shows a list of recently played songs with album artwork
 </iframe>
 ```
 
-#### Size and Count Variations
+#### Size, Count, and Theme Variations
 
 **Compact (3 tracks for sidebars)**
 ```html
-<iframe src="https://nowwave.radio/embed.php?mode=recent&limit=3" 
+<iframe src="https://nowwave.radio/embed.php?mode=recent&limit=3&compact=1" 
         style="width:300px;height:250px;max-width:100%;border:none;"
         title="Now Wave Radio - Recent Tracks">
 </iframe>
@@ -73,7 +81,22 @@ The recent tracks embed shows a list of recently played songs with album artwork
 </iframe>
 ```
 
+**Dark Theme**
+```html
+<iframe src="https://nowwave.radio/embed.php?mode=recent&limit=5&theme=dark" 
+        style="width:400px;height:400px;max-width:100%;border:none;background-color:#121212;"
+        title="Now Wave Radio - Recent Tracks">
+</iframe>
+```
+
 ## URL Parameters
+
+### Common Parameters (for all embeds)
+
+| Parameter | Default | Description                                   |
+|-----------|---------|-----------------------------------------------|
+| `theme`   | `auto`  | Color theme: `light`, `dark`, or `auto` (follows user's system preference) |
+| `compact` | `0`     | Set to `1` to enable compact mode for smaller spaces |
 
 ### Live Embed Parameters
 
@@ -121,9 +144,12 @@ The recent tracks embed shows a list of recently played songs with album artwork
 ## Styling Considerations
 
 - The embeds are designed with transparent backgrounds to match your site
-- If your site has a dark theme, the embeds will automatically adjust
-- No additional CSS is required on your site
+- For dark websites, use `theme=dark` parameter for better text contrast
+- For automatic theme detection, use `theme=auto` (this is the default)
+- For smaller spaces, use the `compact=1` parameter for a more condensed layout
 - To disable scrolling, add `scrolling="no"` to the iframe tag
+- For dark themes, consider adding `background-color:#121212;` to the iframe style
+- All embeds include subtle hover effects and responsive behavior
 
 ## Technical Notes
 

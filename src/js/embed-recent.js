@@ -4,8 +4,10 @@
 (function() {
     'use strict';
     
-    // DOM Elements
-    const recentTracksContainer = document.getElementById('embedRecentTracks');
+    // DOM Elements - initialized from window.NWR_EMBED_ELEMENTS
+    // which is set in the embed.php file to handle unique IDs
+    let recentTracksContainer;
+    let errorMessageElement;
     
     // Config
     const config = window.NWR_CONFIG || {};
@@ -14,6 +16,12 @@
     const defaultArtwork = config.defaultArtwork || '/player/NWR_text_logo_angle.png';
     const limit = embedConfig.limit || 5;
     const updateInterval = 60000; // 60 seconds
+    const maxErrorRetries = 3;
+    
+    // State tracking
+    let errorCount = 0;
+    let updateTimer = null;
+    let isInitialized = false;
     
     // Create metadata service instance
     const metadataService = (typeof MetadataService !== 'undefined') ?
@@ -27,10 +35,10 @@
     
     // Create storage service for persistence 
     const storageService = (typeof StorageService !== 'undefined') ? 
-        new StorageService({ prefix: 'nwr_embed_' }) : 
+        new StorageService() : 
         { 
-            get: () => null,
-            set: () => false 
+            getItem: () => null,
+            setItem: () => false 
         };
     
     /**
@@ -53,81 +61,191 @@
      * Update the recent tracks display
      */
     function updateRecentTracks() {
+        // Check for DOM elements, return if not available
+        if (!recentTracksContainer) {
+            console.error('Required DOM elements not available for the embed');
+            return;
+        }
+        
+        // Hide error message if visible
+        if (errorMessageElement) {
+            errorMessageElement.style.display = 'none';
+        }
+        
         metadataService.getRecentTracks(limit)
             .then(tracks => {
                 if (!tracks || !tracks.length) {
+                    // Try to use cached data if available
+                    const cachedTracks = getCachedTracks();
+                    if (cachedTracks && cachedTracks.length) {
+                        updateDisplay(cachedTracks);
+                        return;
+                    }
+                    
+                    // Handle no data case
                     recentTracksContainer.innerHTML = '<div class="embed-empty-state">No recent tracks to display</div>';
                     return;
                 }
                 
-                const tracksHTML = tracks.map((track, index) => {
-                    const artworkUrl = track.artwork_url || defaultArtwork;
-                    const timeAgo = formatTimeElapsed(track.played_at);
-                    
-                    return `
-                        <div class="embed-track-item">
-                            <div class="embed-track-number">${index + 1}</div>
-                            <img class="embed-track-artwork" 
-                                 src="${artworkUrl}" 
-                                 alt="${track.title} artwork"
-                                 onerror="this.src='${defaultArtwork}'">
-                            <div class="embed-track-details">
-                                <p class="embed-track-item-title" title="${track.title}">${track.title}</p>
-                                <p class="embed-track-item-artist" title="${track.artist}">${track.artist}</p>
-                            </div>
-                            <div class="embed-track-timestamp">${timeAgo}</div>
-                        </div>
-                    `;
-                }).join('');
+                // Reset error count on success
+                errorCount = 0;
                 
-                recentTracksContainer.innerHTML = tracksHTML;
+                // Cache the tracks data
+                cacheTracks(tracks);
+                
+                // Update the display
+                updateDisplay(tracks);
             })
             .catch(error => {
                 console.error('Error fetching recent tracks:', error);
-                recentTracksContainer.innerHTML = '<div class="embed-error-state">Unable to load recent tracks</div>';
+                incrementErrorCount();
+                
+                // Try to use cached data if available
+                const cachedTracks = getCachedTracks();
+                if (cachedTracks && cachedTracks.length) {
+                    updateDisplay(cachedTracks);
+                } else if (errorCount >= maxErrorRetries) {
+                    recentTracksContainer.innerHTML = '<div class="embed-error-state">Unable to load recent tracks</div>';
+                }
             });
+    }
+    
+    /**
+     * Update the display with track data
+     */
+    function updateDisplay(tracks) {
+        if (!tracks || !tracks.length) return;
+        
+        const tracksHTML = tracks.slice(0, limit).map((track, index) => {
+            const artworkUrl = track.artwork_url || defaultArtwork;
+            const timeAgo = formatTimeElapsed(track.played_at);
+            const title = track.title || 'Unknown Track';
+            const artist = track.artist || 'Unknown Artist';
+            
+            return `
+                <div class="embed-track-item">
+                    <div class="embed-track-number">${index + 1}</div>
+                    <img class="embed-track-artwork" 
+                         src="${artworkUrl}" 
+                         alt="${title} artwork"
+                         onerror="this.src='${defaultArtwork}'">
+                    <div class="embed-track-details">
+                        <p class="embed-track-item-title" title="${title}">${title}</p>
+                        <p class="embed-track-item-artist" title="${artist}">${artist}</p>
+                    </div>
+                    <div class="embed-track-timestamp">${timeAgo}</div>
+                </div>
+            `;
+        }).join('');
+        
+        recentTracksContainer.innerHTML = tracksHTML;
+    }
+    
+    /**
+     * Cache tracks data for offline/error cases
+     */
+    function cacheTracks(tracks) {
+        if (!tracks || !tracks.length) return;
+        
+        try {
+            storageService.setItem('recent_tracks', JSON.stringify({
+                tracks: tracks,
+                cached_at: new Date().toISOString()
+            }));
+        } catch (e) {
+            console.warn('Error caching tracks data:', e);
+        }
+    }
+    
+    /**
+     * Get cached tracks data
+     */
+    function getCachedTracks() {
+        try {
+            const cachedData = storageService.getItem('recent_tracks');
+            if (!cachedData) return null;
+            
+            const data = JSON.parse(cachedData);
+            return data.tracks || [];
+        } catch (e) {
+            console.warn('Error retrieving cached tracks:', e);
+            return null;
+        }
+    }
+    
+    /**
+     * Increment error count and show error message if needed
+     */
+    function incrementErrorCount() {
+        errorCount++;
+        
+        if (errorCount >= maxErrorRetries && errorMessageElement) {
+            errorMessageElement.style.display = 'block';
+        }
+    }
+    
+    /**
+     * Initialize DOM references from the global NWR_EMBED_ELEMENTS object
+     */
+    function initializeDomReferences() {
+        const elements = window.NWR_EMBED_ELEMENTS || {};
+        
+        recentTracksContainer = elements.recentTracks;
+        errorMessageElement = elements.errorMessage;
+        
+        if (!recentTracksContainer) {
+            console.error('Required DOM elements not found for recent tracks embed');
+            return false;
+        }
+        
+        return true;
     }
     
     // Initialize
     function init() {
-        // Check for cached recent tracks to display immediately
-        const cachedTracks = storageService.get('recent_tracks');
-        if (cachedTracks) {
-            try {
-                const tracks = JSON.parse(cachedTracks);
-                if (tracks && tracks.length) {
-                    const tracksHTML = tracks.slice(0, limit).map((track, index) => {
-                        const artworkUrl = track.artwork_url || defaultArtwork;
-                        const timeAgo = formatTimeElapsed(track.played_at);
-                        
-                        return `
-                            <div class="embed-track-item">
-                                <div class="embed-track-number">${index + 1}</div>
-                                <img class="embed-track-artwork" 
-                                     src="${artworkUrl}" 
-                                     alt="${track.title} artwork"
-                                     onerror="this.src='${defaultArtwork}'">
-                                <div class="embed-track-details">
-                                    <p class="embed-track-item-title" title="${track.title}">${track.title}</p>
-                                    <p class="embed-track-item-artist" title="${track.artist}">${track.artist}</p>
-                                </div>
-                                <div class="embed-track-timestamp">${timeAgo}</div>
-                            </div>
-                        `;
-                    }).join('');
-                    
-                    recentTracksContainer.innerHTML = tracksHTML;
-                }
-            } catch (e) {
-                console.warn('Error parsing cached tracks:', e);
-            }
+        // Check if already initialized
+        if (isInitialized) return;
+        
+        // Initialize DOM references
+        if (!initializeDomReferences()) {
+            // If DOM elements not available, try again in 100ms
+            setTimeout(init, 100);
+            return;
+        }
+        
+        // Mark as initialized
+        isInitialized = true;
+        
+        // Try to use cached data immediately
+        const cachedTracks = getCachedTracks();
+        if (cachedTracks && cachedTracks.length) {
+            updateDisplay(cachedTracks);
         }
         
         // Initial update
         updateRecentTracks();
         
         // Set up periodic updates
-        setInterval(updateRecentTracks, updateInterval);
+        updateTimer = setInterval(updateRecentTracks, updateInterval);
+        
+        // Register for visibility changes to pause updates when not visible
+        if (typeof document.hidden !== 'undefined') {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    // Page is hidden, clear timer to save resources
+                    if (updateTimer) {
+                        clearInterval(updateTimer);
+                        updateTimer = null;
+                    }
+                } else {
+                    // Page is visible again, restart updates
+                    if (!updateTimer) {
+                        updateRecentTracks();
+                        updateTimer = setInterval(updateRecentTracks, updateInterval);
+                    }
+                }
+            });
+        }
         
         // Listen for metadata updates if in same domain
         window.addEventListener('message', function(event) {
