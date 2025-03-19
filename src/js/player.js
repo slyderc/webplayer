@@ -482,7 +482,11 @@ class NowWavePlayer {
             this.uiManager.resetToDefault();
         } else {
             // Immediate metadata fetch when starting playback
-            this.metadataService.fetchMetadata();
+            this.metadataService.getCurrentTrack()
+                .then(data => {
+                    if (data) this.handleMetadataUpdate(data);
+                })
+                .catch(error => console.error('Error fetching current track:', error));
         }
     }
     

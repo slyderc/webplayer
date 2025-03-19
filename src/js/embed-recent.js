@@ -93,7 +93,14 @@
             if (!tracks || !tracks.length) return;
             
             const tracksHTML = tracks.slice(0, settings.limit).map((track, index) => {
-                const artworkUrl = track.artwork_url || settings.defaultArtwork;
+                // Prefer hashed artwork URL if available, fall back to regular artwork_url
+                let artworkUrl = settings.defaultArtwork;
+                if (track.hashed_artwork_url) {
+                    artworkUrl = track.hashed_artwork_url;
+                } else if (track.artwork_url) {
+                    artworkUrl = track.artwork_url;
+                }
+                
                 const timeAgo = utils.formatTimeElapsed(track.played_at);
                 const title = track.title || 'Unknown Track';
                 const artist = track.artist || 'Unknown Artist';

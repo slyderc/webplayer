@@ -30,13 +30,29 @@ class MetadataService {
         
         // If playing, fetch metadata immediately
         if (isPlaying) {
-            this.fetchMetadata();
+            this.getCurrentTrack().then(data => {
+                if (data && this.callbacks.onMetadataUpdate) {
+                    this.callbacks.onMetadataUpdate(data);
+                }
+            }).catch(error => {
+                if (this.callbacks.onError) {
+                    this.callbacks.onError(error);
+                }
+            });
         }
         
         // Set up the interval
         this.pollingInterval = setInterval(() => {
             if (isPlaying) {
-                this.fetchMetadata();
+                this.getCurrentTrack().then(data => {
+                    if (data && this.callbacks.onMetadataUpdate) {
+                        this.callbacks.onMetadataUpdate(data);
+                    }
+                }).catch(error => {
+                    if (this.callbacks.onError) {
+                        this.callbacks.onError(error);
+                    }
+                });
             }
         }, this.options.pollInterval);
     }
