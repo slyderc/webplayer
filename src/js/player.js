@@ -525,10 +525,21 @@ class NowWavePlayer {
     }
     
     handleArtworkLoad(imageUrl) {
-        this.backgroundManager.updateBackground(
-            imageUrl,
-            this.viewManager.getCurrentTab()
-        );
+        console.log('Album artwork loaded:', imageUrl);
+        
+        // Skip background update if it's the default image or invalid
+        if (imageUrl && 
+            !imageUrl.includes(this.config.defaultArtwork) && 
+            !imageUrl.includes('error')) {
+            
+            console.log('Updating background with artwork:', imageUrl);
+            this.backgroundManager.updateBackground(
+                imageUrl,
+                this.viewManager.getCurrentTab()
+            );
+        } else {
+            console.log('Skipping background update for default/invalid image');
+        }
     }
     
     updateScheduleView() {

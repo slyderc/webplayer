@@ -75,9 +75,18 @@ class UIManager {
             const cleanImagePath = data.image.replace(/^\/+/, '').replace(/\/+/g, '/');
             
             // Use environment-aware URL construction
-            const artworkUrl = window.location.origin.includes('localhost') 
-                ? `/artwork/${cleanImagePath}`
-                : `https://nowwave.radio/${cleanImagePath}`;
+            let artworkUrl;
+            
+            // Check if the URL is already absolute (starts with http or https)
+            if (cleanImagePath.startsWith('http')) {
+                artworkUrl = cleanImagePath;
+            } else {
+                artworkUrl = window.location.origin.includes('localhost') 
+                    ? `/artwork/${cleanImagePath}`
+                    : `https://nowwave.radio/${cleanImagePath}`;
+            }
+            
+            console.log('Setting album art to:', artworkUrl);
             
             // Only update if the image URL has changed
             if (this.elements.albumArt.src !== artworkUrl) {

@@ -51,9 +51,12 @@ class BackgroundManager {
     }
     
     updateBackground(imageUrl, currentTab, forceUpdate = false) {
+        console.log('Background update requested:', imageUrl, 'Tab:', currentTab);
+        
         // Skip if it's the same URL or a default image, unless force update is requested
         if (!forceUpdate && (imageUrl === this.currentArtworkUrl || 
-            imageUrl.includes(this.options.defaultArtwork))) {
+            (this.options.defaultArtwork && imageUrl.includes(this.options.defaultArtwork)))) {
+            console.log('Skipping background update - same URL or default image');
             return;
         }
         
@@ -61,14 +64,18 @@ class BackgroundManager {
         this.currentArtworkUrl = imageUrl;
         
         // Don't update background if it's the default image
-        if (imageUrl.includes(this.options.defaultArtwork)) {
+        if (this.options.defaultArtwork && imageUrl.includes(this.options.defaultArtwork)) {
+            console.log('Skipping background update - default artwork');
             return;
         }
         
         // Only update if we're on the live tab
         if (currentTab !== 'live' && !forceUpdate) {
+            console.log('Skipping background update - not on live tab');
             return;
         }
+        
+        console.log('Updating background with image:', imageUrl);
         
         // Toggle between the two background containers for smooth transitions
         const activeBg = this.activeBackground === 1 ? this.bgImage2 : this.bgImage;

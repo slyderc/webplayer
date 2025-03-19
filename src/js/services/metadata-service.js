@@ -114,8 +114,11 @@ class MetadataService {
                 artist: data.artist || '',
                 album: data.album || '',
                 artwork_url: data.image || this.options.defaultArtwork,
+                image: data.image || this.options.defaultArtwork,  // Keep the original image property
                 played_at: data.timestamp || new Date().toISOString(),
-                image_hash: data.image_hash || null
+                image_hash: data.image_hash || null,
+                program_title: data.program_title || '',
+                presenter: data.presenter || ''
             };
         } catch (error) {
             console.error('Error getting current track:', error);

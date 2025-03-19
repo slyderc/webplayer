@@ -261,22 +261,31 @@ class LikeManager {
             };
         }
         
-        // Try the original URL first (with fallback)
-        let url = track.artwork_url || defaultArtwork;
+        // Determine primary URL, with preferences in order:
+        // 1. hashed_artwork_url (from history.json)
+        // 2. artwork_url (regular URL)
+        // 3. Default artwork
+        let primaryUrl = track.hashed_artwork_url || track.artwork_url || defaultArtwork;
         
-        // If there's a hash, create a fallback URL
+        // Create fallback URL if there's a hash
         if (track.artwork_hash) {
             // Always use absolute path with direct string concatenation
             const fallbackUrl = cachedArtworkPath + track.artwork_hash + '.jpg';
             
             console.log('Generated artwork URLs:', {
-                primaryUrl: url,
+                primaryUrl: primaryUrl,
                 fallbackUrl: fallbackUrl,
-                defaultUrl: defaultArtwork
+                defaultUrl: defaultArtwork,
+                trackInfo: {
+                    id: track.id,
+                    hashedArtworkUrl: track.hashed_artwork_url,
+                    artworkUrl: track.artwork_url,
+                    hash: track.artwork_hash
+                }
             });
             
             return {
-                primaryUrl: url,
+                primaryUrl: primaryUrl,
                 fallbackUrl: fallbackUrl,
                 defaultUrl: defaultArtwork
             };
