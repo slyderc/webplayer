@@ -121,7 +121,7 @@ class ViewManager {
                                 } 
                                 else { 
                                 this.dataset.retry = '2'; 
-                                this.src = '/player/NWR_text_logo_angle.png';
+                                this.src = '${this.options.defaultArtwork}';
                                 this.onerror = null; 
                                 }">
                     <div class="track-info">
@@ -224,7 +224,7 @@ class ViewManager {
                                 } 
                                 else { 
                                 this.dataset.retry = '2'; 
-                                this.src = '/player/NWR_text_logo_angle.png';
+                                this.src = '${this.options.defaultArtwork}';
                                 this.onerror = null; /* Prevent further errors */
                                 }">
                     <div class="track-info">

@@ -20,8 +20,10 @@ if (file_exists($configPath)) {
 function getCurrentTrack() {
     global $streamConfig;
     
-    // Default values
-    $defaultArtwork = isset($streamConfig['defaultArtwork']) ? $streamConfig['defaultArtwork'] : '/player/NWR_text_logo_angle.png';
+    // Get default artwork from global config
+    global $audioConfig;
+    $defaultArtwork = isset($streamConfig['defaultArtwork']) ? $streamConfig['defaultArtwork'] : 
+                     (isset($audioConfig['defaultArtwork']) ? $audioConfig['defaultArtwork'] : '/player/NWR_text_logo_angle.png');
     
     try {
         // Try to get track data from the metadata source

@@ -7,6 +7,7 @@ class ScheduleManager {
             scheduleUrl: './schedule.json',
             pollInterval: 900000, // 15 minutes
             daysToShow: 7, // Number of days to display in the schedule
+            defaultArtwork: window.NWR_CONFIG?.defaultArtwork || '/player/NWR_text_logo_angle.png',
             ...options
         };
         
@@ -722,7 +723,7 @@ class ScheduleManager {
             const title = show.title || 'Untitled Show';
             const presenter = show.presenter || 'Unknown';
             const description = show.description || '';
-            const imgSrc = show.image || '/player/NWR_text_logo_angle.png';
+            const imgSrc = show.image || this.options.defaultArtwork;
             
             // Format time with AM/PM
             let timeStr = 'TBD';

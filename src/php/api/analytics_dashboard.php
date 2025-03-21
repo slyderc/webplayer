@@ -624,7 +624,7 @@ if ($sqliteAvailable && isset($db)) {
                                 <td>
                                     <img src="/player/publish/ca/<?= $track['hash'] ?>.jpg" 
                                          class="track-image"
-                                         onerror="this.src='/player/NWR_text_logo_angle.png';">
+                                         onerror="this.src='<?= $streamConfig['defaultArtwork'] ?>';">
                                 </td>
                                 <td><?= htmlspecialchars($track['artist']) ?></td>
                                 <td><?= htmlspecialchars($track['title']) ?></td>

@@ -12,7 +12,7 @@ $audioConfig = [
     'pollInterval' => 5000, // Metadata polling interval in milliseconds
     
     // Default display values when stream is stopped
-    'defaultArtwork' => '/player/NWR_text_logo_angle.png',
+    'defaultArtwork' => '/player/NWR_text_logo_angle.png',  // This is the centralized default artwork path
     'defaultTitle' => 'Now Wave Radio',
     'defaultArtist' => 'The Next Wave Today',
     'defaultProgram' => '🛜 NowWave.Radio',

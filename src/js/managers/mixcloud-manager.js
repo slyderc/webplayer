@@ -7,6 +7,7 @@ class MixcloudManager {
             mixcloudUsername: 'nowwaveradio', // Default Mixcloud username
             apiUrl: 'https://api.mixcloud.com',
             limit: 100, // Number of shows to fetch
+            defaultArtwork: window.NWR_CONFIG?.defaultArtwork || '/player/NWR_text_logo_angle.png',
             ...options
         };
         
@@ -105,9 +106,9 @@ class MixcloudManager {
                     <div class="archive-item" data-key="${show.key}">
                         <div class="archive-artwork-container">
                             <img class="archive-artwork" 
-                                src="${show.pictures?.large || '/player/NWR_text_logo_angle.png'}" 
+                                src="${show.pictures?.large || this.options.defaultArtwork}" 
                                 alt="${show.name} artwork"
-                                onerror="this.src='/player/NWR_text_logo_angle.png'">
+                                onerror="this.src='${this.options.defaultArtwork}'">
                             <div class="play-overlay">
                                 <svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polygon points="5 3 19 12 5 21 5 3" fill="white" stroke="white"></polygon>
