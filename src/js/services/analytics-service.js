@@ -3,14 +3,17 @@
  */
 class AnalyticsService {
     constructor(options = {}) {
+        // Use global configuration with fallback
+        const defaultEndpoint = window.NWR_CONFIG?.analyticsEndpoint || '/webplayer/php/api/track_analytics.php';
+        
         this.options = {
-            apiEndpoint: '/webplayer/php/api/track_analytics.php',
-            enabled: true,
+            apiEndpoint: defaultEndpoint,
             ...options
         };
         
         this.queuedActions = [];
-        this.isProcessing = false;
+        this.isProcessing = false;       
+        this._apiAvailable = true;
         
         // Process queued actions periodically
         setInterval(() => this.processQueue(), 5000);
@@ -21,16 +24,14 @@ class AnalyticsService {
                 this.processQueue(true);
             }
         });
-        
-        console.log('AnalyticsService initialized');
     }
     
     /**
      * Queue an action to be sent to the server
      */
     queueAction(action) {
-        if (!this.options.enabled) return;
-        
+        if (!this._apiAvailable) return;
+    
         // Add timestamp to action
         const actionWithTimestamp = {
             ...action,
@@ -49,7 +50,7 @@ class AnalyticsService {
      * Process the queue of actions
      */
     async processQueue(sync = false) {
-        if (!this.options.enabled || this.queuedActions.length === 0 || this.isProcessing) {
+        if (!this._apiAvailable || this.queuedActions.length === 0 || this.isProcessing) {
             return;
         }
         
@@ -174,9 +175,9 @@ class AnalyticsService {
                 console.warn('Analytics API is unavailable, disabling temporarily');
                 
                 // Disable for 5 minutes then try again
-                this.options.enabled = false;
+                this._apiAvailable = false;
                 setTimeout(() => {
-                    this.options.enabled = true;
+                    this._apiAvailable = true;
                     console.log('Re-enabling analytics after temporary pause');
                 }, 5 * 60 * 1000);
             }

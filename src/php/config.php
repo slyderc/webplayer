@@ -16,7 +16,10 @@ $audioConfig = [
     'defaultTitle' => 'Now Wave Radio',
     'defaultArtist' => 'The Next Wave Today',
     'defaultProgram' => '🛜 NowWave.Radio',
-    'defaultPresenter' => '💌 dj@NowWave.Radio'
+    'defaultPresenter' => '💌 dj@NowWave.Radio',
+    
+    // API endpoints
+    'analyticsEndpoint' => '/webplayer/php/api/track_analytics.php'
 ];
 
 // Audio libraries

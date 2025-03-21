@@ -3,25 +3,8 @@
  */
 class NowWavePlayer {
     constructor(options = {}) {
-        // Get configuration from global object
-        this.config = window.NWR_CONFIG || {
-            streamUrl: 'https://streaming.live365.com/a78360_2',
-            format: 'aac',
-            metadataUrl: 'https://nowwave.radio/player/publish/playlist.json',
-            pollInterval: 5000,
-            defaultVolume: 1.0,
-            defaultArtwork: '/player/NWR_text_logo_angle.png',
-            cachedArtworkPath: '/player/publish/ca/',
-            defaultTitle: 'Now Wave Radio',
-            defaultArtist: 'The Next Wave Today',
-            defaultProgram: '🛜 NowWave.Radio',
-            defaultPresenter: '💌 dj@NowWave.Radio',
-            // Mixcloud configuration
-            mixcloud: {
-                username: 'nowwaveradio',
-                apiUrl: 'https://api.mixcloud.com'
-            }
-        };
+        // Get configuration from global object in config.php via the window.NWR_CONFIG global set in index.php
+        this.config = window.NWR_CONFIG;
         
         this.isPlaying = false;
         this.mixcloudContentLoaded = false;
@@ -32,8 +15,7 @@ class NowWavePlayer {
         // Initialize services
         this.storageService = new StorageService();
         this.analyticsService = new AnalyticsService({
-            apiEndpoint: '/webplayer/php/api/track_analytics.php',
-            enabled: true
+            apiEndpoint: this.config.analyticsEndpoint
         });
         this.audioService = new AudioService({
             streamUrl: this.config.streamUrl,
