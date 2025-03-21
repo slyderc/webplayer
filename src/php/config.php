@@ -3,22 +3,22 @@
  * Audio Configuration for Now Wave Radio Player
  */
 
-// Stream configuration
 $audioConfig = [
+    // Stream & player configuration
     'streamUrl' => 'https://streaming.live365.com/a78360_2',
     'format' => 'aac',
     'metadataUrl' => 'https://nowwave.radio/player/publish/playlist.json',
     'defaultVolume' => 1.0,
-    'pollInterval' => 5000, // Metadata polling interval in milliseconds
+    'pollInterval' => 5000, // "now playing" metadata polling interval in milliseconds
     
     // Default display values when stream is stopped
-    'defaultArtwork' => '/player/NWR_text_logo_angle.png',  // This is the centralized default artwork path
+    'defaultArtwork' => '/player/NWR_text_logo_angle.png',  // centralized default artwork path used throughout
     'defaultTitle' => 'Now Wave Radio',
     'defaultArtist' => 'The Next Wave Today',
     'defaultProgram' => '🛜 NowWave.Radio',
     'defaultPresenter' => '💌 dj@NowWave.Radio',
     
-    // API endpoints
+    // Analytics API
     'analyticsEndpoint' => '/webplayer/php/api/track_analytics.php'
 ];
 
