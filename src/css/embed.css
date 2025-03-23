@@ -115,7 +115,8 @@ body.embed-body {
 /* Recent tracks embed styles */
 .embed-recent-container {
     width: 100%;
-    max-width: 400px;
+    /* Allow container to grow with the browser width */
+    max-width: none;
     margin: 0 auto;
     overflow-y: auto;
     max-height: 100vh;
@@ -187,7 +188,8 @@ body.embed-body {
     color: var(--timestamp-color);
     text-align: right;
     white-space: nowrap;
-    margin-left: 8px;
+    margin-left: auto; /* Push timestamp to the right */
+    padding-left: 16px; /* Maintain minimum spacing from track details */
 }
 
 /* Error and empty states */
@@ -250,7 +252,8 @@ body.embed-body {
 }
 
 .embed-compact .embed-recent-container {
-    max-width: 300px;
+    /* Allow compact container to also grow with browser width */
+    max-width: none;
 }
 
 .embed-compact .embed-track-item {
@@ -280,6 +283,7 @@ body.embed-body {
 
 .embed-compact .embed-track-timestamp {
     font-size: 10px;
+    padding-left: 10px; /* Smaller padding for compact mode */
 }
 
 /* Responsive adjustments */
@@ -322,5 +326,6 @@ body.embed-body {
     
     .embed-track-timestamp {
         font-size: 9px;
+        padding-left: 6px; /* Even smaller padding for tiny screens */
     }
 }
