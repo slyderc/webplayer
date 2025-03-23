@@ -33,11 +33,14 @@ show_help() {
   echo -e "  ${GREEN}composer${NC}    Run Composer commands (e.g. ./manage.sh composer install)"
   echo -e "  ${GREEN}clear-cache${NC} Clear PHP opcache and restart PHP-FPM"
   echo -e "  ${GREEN}bash${NC}        Open bash shell in PHP container"
+  echo -e "  ${GREEN}analytics${NC}   View development analytics data"
+  echo -e "  ${GREEN}clear-analytics${NC} Clear development analytics data"
+  echo -e "  ${GREEN}check${NC}       Run diagnostics on the development environment"
   echo
   echo -e "${YELLOW}Examples:${NC}"
   echo -e "  ./manage.sh start"
   echo -e "  ./manage.sh composer install"
-  echo -e "  ./manage.sh bash"
+  echo -e "  ./manage.sh analytics"
 }
 
 # Check if Docker is running
@@ -120,6 +123,145 @@ run_bash() {
   docker-compose exec php sh
 }
 
+# View analytics data in development
+view_analytics() {
+  echo -e "${BLUE}Development analytics data:${NC}"
+  docker-compose exec php sh -c "cd /var/www/html/php && php -r '
+    if (!class_exists(\"SQLite3\")) {
+      echo \"SQLite3 extension not available - cannot view analytics data\n\";
+      exit(1);
+    }
+    try {
+      \$db = new SQLite3(\"data/dev/tracks.db\");
+      echo \"\nPopular tracks:\n\";
+      \$results = \$db->query(\"
+        SELECT 
+            t.artist, 
+            t.title, 
+            COUNT(CASE WHEN a.action_type = \\\"like\\\" THEN 1 END) - 
+            COUNT(CASE WHEN a.action_type = \\\"unlike\\\" THEN 1 END) AS net_likes
+        FROM 
+            tracks t
+        LEFT JOIN 
+            actions a ON t.hash = a.hash
+        GROUP BY 
+            t.hash
+        HAVING 
+            net_likes > 0
+        ORDER BY 
+            net_likes DESC, t.first_seen DESC
+        LIMIT 10
+      \");
+      
+      \$found = false;
+      while (\$row = \$results->fetchArray(SQLITE3_ASSOC)) {
+        \$found = true;
+        echo \"· {\$row[\"artist\"]} - {\$row[\"title\"]} ({\$row[\"net_likes\"]} likes)\n\";
+      }
+      
+      if (!\$found) {
+        echo \"No liked tracks yet.\n\";
+      }
+      
+      echo \"\nRecent actions:\n\";
+      \$results = \$db->query(\"
+        SELECT 
+            t.artist, 
+            t.title,
+            a.action_type,
+            a.timestamp
+        FROM 
+            actions a
+        JOIN 
+            tracks t ON a.hash = t.hash
+        ORDER BY 
+            a.timestamp DESC
+        LIMIT 10
+      \");
+      
+      \$found = false;
+      while (\$row = \$results->fetchArray(SQLITE3_ASSOC)) {
+        \$found = true;
+        echo \"· {\$row[\"timestamp\"]}: {\$row[\"action_type\"]} - {\$row[\"artist\"]} - {\$row[\"title\"]}\n\";
+      }
+      
+      if (!\$found) {
+        echo \"No actions recorded yet.\n\";
+      }
+      
+    } catch (Exception \$e) {
+      echo \"Error: \" . \$e->getMessage() . \"\n\";
+    }
+  '";
+}
+
+# Clear development analytics data
+clear_analytics() {
+  echo -e "${YELLOW}Warning: This will clear all development analytics data.${NC}"
+  read -p "Are you sure you want to continue? (y/n) " -n 1 -r
+  echo
+  
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${BLUE}Clearing development analytics data...${NC}"
+    docker-compose exec php sh -c "rm -f /var/www/html/php/data/dev/tracks.db"
+    echo -e "${GREEN}Analytics data cleared.${NC}"
+  else
+    echo -e "${BLUE}Operation cancelled.${NC}"
+  fi
+}
+
+# Run diagnostic checks on the environment
+run_diagnostics() {
+  echo -e "${BLUE}Running development environment diagnostics...${NC}"
+  
+  # Check if containers are running
+  echo -e "\n${YELLOW}Container Status:${NC}"
+  docker-compose ps
+  
+  # Check PHP version and extensions
+  echo -e "\n${YELLOW}PHP Version and Extensions:${NC}"
+  docker-compose exec php php -v
+  
+  echo -e "\n${YELLOW}Critical PHP Extensions:${NC}"
+  docker-compose exec php php -r "
+    \$extensions = [
+      'sqlite3' => extension_loaded('sqlite3'),
+      'pdo_sqlite' => extension_loaded('pdo_sqlite'),
+      'json' => extension_loaded('json')
+    ];
+    
+    foreach (\$extensions as \$ext => \$loaded) {
+      echo \$loaded ? \"✅ \$ext: Loaded\n\" : \"❌ \$ext: MISSING\n\";
+    }
+  "
+  
+  # Check SQLite3 functionality
+  echo -e "\n${YELLOW}Testing SQLite3 Functionality:${NC}"
+  docker-compose exec php php -r "
+    try {
+      \$db = new SQLite3(':memory:');
+      \$db->exec('CREATE TABLE test (id INTEGER, name TEXT)');
+      \$db->exec('INSERT INTO test VALUES (1, \"Test successful\")');
+      \$result = \$db->query('SELECT * FROM test');
+      \$row = \$result->fetchArray(SQLITE3_ASSOC);
+      echo \"✅ SQLite3 test: \$row[name]\n\";
+      \$db->close();
+    } catch (Exception \$e) {
+      echo \"❌ SQLite3 test failed: \" . \$e->getMessage() . \"\n\";
+    }
+  "
+  
+  # Check web server access
+  echo -e "\n${YELLOW}Testing Web Server:${NC}"
+  docker-compose exec php curl -I http://nginx/webplayer/ 2>/dev/null || echo "❌ Web server test failed"
+  
+  # Check data directory permissions
+  echo -e "\n${YELLOW}Data Directory Permissions:${NC}"
+  docker-compose exec php sh -c "ls -l /var/www/html/php/data"
+  
+  echo -e "\n${GREEN}Diagnostics complete!${NC}"
+}
+
 # Main 
 show_banner
 check_docker
@@ -156,6 +298,15 @@ case "$1" in
     ;;
   bash)
     run_bash
+    ;;
+  analytics)
+    view_analytics
+    ;;
+  clear-analytics)
+    clear_analytics
+    ;;
+  check)
+    run_diagnostics
     ;;
   help|--help|-h)
     show_help

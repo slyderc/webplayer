@@ -35,9 +35,7 @@ services:
       start_period: 10s
 
   php:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: php:8.2-fpm-alpine
     volumes:
       - ./src:/var/www/html
       - ./audio_files:/var/www/audio_files
@@ -57,3 +55,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    # Initialize data directories with correct permissions on startup
+    command: >
+      sh -c "
+             mkdir -p /var/www/html/php/data/dev && 
+             chmod -R 777 /var/www/html/php/data && 
+             apk add --no-cache sqlite-dev &&
+             docker-php-ext-install -j$(nproc) pdo_sqlite && 
+             php-fpm"

@@ -11,8 +11,19 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-// Check if data directory exists and is writable
-$dataDir = __DIR__ . '/data';
+// Get environment
+$env = getEnvironment();
+
+// Use separate data directories for development and production
+if ($env === 'development') {
+    // In development, store analytics in a separate database
+    $dataDir = __DIR__ . '/../data/dev';
+} else {
+    // In production, use the standard data directory
+    $dataDir = __DIR__ . '/data';
+}
+
+// Ensure directory exists
 if (!file_exists($dataDir)) {
     mkdir($dataDir, 0755, true);
 }
@@ -22,6 +33,9 @@ if (!is_writable($dataDir)) {
     echo json_encode(['error' => 'Data directory is not writable: ' . $dataDir]);
     exit;
 }
+
+// Log environment and data directory for debugging
+error_log("Analytics running in {$env} environment with data directory: {$dataDir}");
 
 // Set content type to JSON
 header('Content-Type: application/json');

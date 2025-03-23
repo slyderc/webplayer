@@ -14,7 +14,15 @@ class TrackManager {
             return;
         }
         
-        $dbPath = __DIR__ . '/data/tracks.db';
+        // Use different database paths for development and production
+        $env = getEnvironment();
+        
+        if ($env === 'development') {
+            $dbPath = __DIR__ . '/data/dev/tracks.db';
+        } else {
+            $dbPath = __DIR__ . '/data/tracks.db';
+        }
+        
         $dbDir = dirname($dbPath);
         
         // Ensure the directory exists with proper permissions

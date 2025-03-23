@@ -11,6 +11,12 @@ mockups/
 vendor/
 messages/
 data/
+src/php/data/
+src/php/api/data/
+# But keep .gitkeep files to maintain directory structure
+!data/.gitkeep
+!src/php/data/.gitkeep
+!src/php/api/data/.gitkeep
 icons/
 composer.lock
 .htaccess
