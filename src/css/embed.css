@@ -5,10 +5,10 @@
     /* Light theme (default) */
     --bg-color: transparent;
     --text-color: #333;
-    --title-color: #111;
-    --artist-color: #444;
+    --title-color: #000;
+    --artist-color: #333;
     --border-color: #eee;
-    --number-color: #ddd;
+    --number-color: #333;
     --timestamp-color: #999;
     --error-bg: #fef0f0;
     --error-color: #e74c3c;
@@ -22,7 +22,7 @@
     --bg-color: transparent;
     --text-color: #eee;
     --title-color: #fff;
-    --artist-color: #bbb;
+    --artist-color: #ddd;
     --border-color: #333;
     --number-color: #bbb;
     --timestamp-color: #bbb;
@@ -88,28 +88,32 @@ body.embed-body {
 }
 
 .embed-track-info {
-    padding: 8px 0;
-    text-align: center;
+    padding: 12px 0;
+    text-align: left;
 }
 
 .embed-track-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 4px;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 6px;
     color: var(--title-color);
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .embed-track-artist {
-    font-size: 16px;
-    font-weight: 400;
+    font-size: 18px;
+    font-weight: 500;
     font-style: italic;
     color: var(--artist-color);
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Recent tracks embed styles */
@@ -244,11 +248,12 @@ body.embed-body {
 }
 
 .embed-compact .embed-track-title {
-    font-size: 16px;
+    font-size: 20px;
+    margin-bottom: 4px;
 }
 
 .embed-compact .embed-track-artist {
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .embed-compact .embed-recent-container {
