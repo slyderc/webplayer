@@ -25,7 +25,7 @@
     --artist-color: #bbb;
     --border-color: #333;
     --number-color: #444;
-    --timestamp-color: #777;
+    --timestamp-color: #bbb;
     --error-bg: #4a2c2c;
     --error-color: #ff6b6b;
     --link-color: #999;
@@ -140,13 +140,14 @@ body.embed-body {
 }
 
 .embed-track-number {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--number-color);
-    position: absolute;
-    left: 4px;
-    top: 4px;
-    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    margin-right: 4px;
 }
 
 .embed-track-artwork {
@@ -256,6 +257,12 @@ body.embed-body {
     padding: 8px 6px;
 }
 
+.embed-compact .embed-track-number {
+    font-size: 14px;
+    width: 18px;
+    margin-right: 2px;
+}
+
 .embed-compact .embed-track-artwork {
     width: 36px;
     height: 36px;
@@ -294,7 +301,9 @@ body.embed-body {
 
 @media (max-width: 320px) {
     .embed-track-number {
-        display: none;
+        font-size: 12px;
+        width: 16px;
+        margin-right: 2px;
     }
     
     .embed-track-artwork {
