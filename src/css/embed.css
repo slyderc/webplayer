@@ -61,7 +61,7 @@ body.embed-body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 450px; /* Increased to accommodate longer text */
+    max-width: 300px; /* Original size for artwork */
     margin: 0 auto;
     flex: 1;
 }
@@ -90,8 +90,9 @@ body.embed-body {
 .embed-track-info {
     padding: 6px 0;
     text-align: left;
-    max-width: 450px; /* Allow text to extend beyond album art width */
     width: 100%;
+    overflow: visible; /* Allow children to overflow */
+    position: relative; /* Create a positioning context */
 }
 
 .embed-track-title {
@@ -104,7 +105,8 @@ body.embed-body {
     overflow: hidden;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    max-width: 100%; /* Use full available width */
+    max-width: 450px; /* Allow ~30 chars at this font size before ellipsis */
+    display: inline-block; /* Makes width: max-content work better */
 }
 
 .embed-track-artist {
@@ -117,7 +119,8 @@ body.embed-body {
     overflow: hidden;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    max-width: 100%; /* Use full available width */
+    max-width: 450px; /* Allow ~30 chars at this font size before ellipsis */
+    display: inline-block; /* Makes width: max-content work better */
 }
 
 /* Recent tracks embed styles */
@@ -248,16 +251,18 @@ body.embed-body {
 
 /* Compact mode styles */
 .embed-compact .embed-live-container {
-    max-width: 350px; /* Increased to accommodate longer text in compact mode */
+    max-width: 200px; /* Original size for compact mode artwork */
 }
 
 .embed-compact .embed-track-title {
     font-size: 20px;
     margin-bottom: 4px;
+    max-width: 350px; /* Allow ~30 chars at this smaller font size before ellipsis */
 }
 
 .embed-compact .embed-track-artist {
     font-size: 14px;
+    max-width: 350px; /* Allow ~30 chars at this smaller font size before ellipsis */
 }
 
 .embed-compact .embed-recent-container {
