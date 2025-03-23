@@ -11,6 +11,7 @@ mockups/
 vendor/
 messages/
 data/
+php/config.php
 src/php/config.php
 src/php/data/
 src/php/api/data/
