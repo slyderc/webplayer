@@ -131,12 +131,13 @@ $jsConfig = json_encode([
         <script src="../js/embed-recent.js?v=<?php echo $jsVersion; ?>"></script>
         <?php endif; ?>
         
-        <!-- Common footer with subtle branding -->
+        <!-- Common footer with subtle branding
         <div class="embed-footer">
             <a href="https://nowwave.radio" target="_blank" rel="noopener noreferrer" class="embed-footer-link">
                 Powered by Now Wave Radio
             </a>
         </div>
+        --->
     </div>
 </body>
 </html>
