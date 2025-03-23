@@ -61,6 +61,29 @@ class StorageService {
         }
     }
     
+    clear() {
+        if (!this.isAvailable) return false;
+        
+        try {
+            if (this.prefix) {
+                // If we have a prefix, only clear items with that prefix
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith(this.prefix)) {
+                        localStorage.removeItem(key);
+                    }
+                }
+            } else {
+                // No prefix, clear everything
+                localStorage.clear();
+            }
+            return true;
+        } catch (e) {
+            console.error('Error clearing storage:', e);
+            return false;
+        }
+    }
+    
     // Aliases for backward compatibility
     get(key, defaultValue = null) {
         return this.getItem(key, defaultValue);

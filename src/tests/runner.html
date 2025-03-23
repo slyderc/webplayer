@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebPlayer Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.5;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f7f7f7;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .test-controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #0077cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #005fa3;
+        }
+        #console {
+            padding: 15px;
+            background-color: #222;
+            color: #eee;
+            border-radius: 5px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .pass {
+            color: #4caf50;
+        }
+        .fail {
+            color: #f44336;
+        }
+        .info {
+            color: #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebPlayer Test Suite</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <div class="test-controls">
+            <button id="runStorageTests">Run Storage Tests</button>
+            <button id="runMetadataTests">Run Metadata Tests</button>
+            <button id="runAllTests">Run All Tests</button>
+            <button id="clearResults">Clear Results</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Console</h2>
+        <div id="console"></div>
+    </div>
+    
+    <!-- Load required WebPlayer services -->
+    <script src="../js/services/storage-service.js"></script>
+    <script src="../js/services/metadata-service.js"></script>
+    
+    <!-- Custom console logger to capture output -->
+    <script>
+        const consoleOutput = document.getElementById('console');
+        
+        // Save original console methods
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            info: console.info
+        };
+        
+        // Override console methods to capture output
+        console.log = function(...args) {
+            originalConsole.log.apply(console, args);
+            appendToConsole(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalConsole.error.apply(console, args);
+            appendToConsole(args.join(' '), 'fail');
+        };
+        
+        console.warn = function(...args) {
+            originalConsole.warn.apply(console, args);
+            appendToConsole(args.join(' '), 'warn');
+        };
+        
+        console.info = function(...args) {
+            originalConsole.info.apply(console, args);
+            appendToConsole(args.join(' '), 'info');
+        };
+        
+        function appendToConsole(text, type) {
+            const line = document.createElement('div');
+            line.textContent = text;
+            if (type === 'fail') line.className = 'fail';
+            if (type === 'info') line.className = 'info';
+            if (text.includes('✅')) line.className = 'pass';
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        // Clear console output
+        document.getElementById('clearResults').addEventListener('click', function() {
+            consoleOutput.innerHTML = '';
+        });
+        
+        // Run storage tests
+        document.getElementById('runStorageTests').addEventListener('click', function() {
+            consoleOutput.innerHTML = ''; // Clear previous results
+            appendToConsole('Loading storage tests...', 'info');
+            
+            // Load and run the storage tests
+            const script = document.createElement('script');
+            script.src = 'storage-service-test.js?' + new Date().getTime(); // Prevent caching
+            script.onerror = function() {
+                appendToConsole('Error loading test script', 'fail');
+            };
+            document.body.appendChild(script);
+        });
+        
+        // Run metadata tests
+        document.getElementById('runMetadataTests').addEventListener('click', function() {
+            consoleOutput.innerHTML = ''; // Clear previous results
+            appendToConsole('Loading metadata tests...', 'info');
+            
+            // Load and run the metadata tests
+            const script = document.createElement('script');
+            script.src = 'metadata-service-test.js?' + new Date().getTime(); // Prevent caching
+            script.onerror = function() {
+                appendToConsole('Error loading test script', 'fail');
+            };
+            document.body.appendChild(script);
+        });
+        
+        // Run all tests
+        document.getElementById('runAllTests').addEventListener('click', function() {
+            consoleOutput.innerHTML = ''; // Clear previous results
+            appendToConsole('Running all tests...', 'info');
+            
+            // Run storage tests first
+            const storageScript = document.createElement('script');
+            storageScript.src = 'storage-service-test.js?' + new Date().getTime();
+            storageScript.onload = function() {
+                // Then run metadata tests
+                const metadataScript = document.createElement('script');
+                metadataScript.src = 'metadata-service-test.js?' + new Date().getTime();
+                metadataScript.onerror = function() {
+                    appendToConsole('Error loading metadata test script', 'fail');
+                };
+                document.body.appendChild(metadataScript);
+            };
+            storageScript.onerror = function() {
+                appendToConsole('Error loading storage test script', 'fail');
+            };
+            document.body.appendChild(storageScript);
+        });
+    </script>
+</body>
+</html>

@@ -36,11 +36,13 @@ show_help() {
   echo -e "  ${GREEN}analytics${NC}   View development analytics data"
   echo -e "  ${GREEN}clear-analytics${NC} Clear development analytics data"
   echo -e "  ${GREEN}check${NC}       Run diagnostics on the development environment"
+  echo -e "  ${GREEN}test${NC}        Open the test runner in your default browser"
   echo
   echo -e "${YELLOW}Examples:${NC}"
   echo -e "  ./manage.sh start"
   echo -e "  ./manage.sh composer install"
   echo -e "  ./manage.sh analytics"
+  echo -e "  ./manage.sh test"
 }
 
 # Check if Docker is running
@@ -266,6 +268,33 @@ run_diagnostics() {
 show_banner
 check_docker
 
+# Open test runner in browser
+run_tests() {
+  echo -e "${BLUE}Opening WebPlayer test runner in your browser...${NC}"
+  
+  # Determine operating system and open browser accordingly
+  case "$(uname)" in
+    "Darwin")  # macOS
+      open "http://localhost:8080/webplayer/tests/runner.html"
+      ;;
+    "Linux")
+      if command -v xdg-open > /dev/null; then
+        xdg-open "http://localhost:8080/webplayer/tests/runner.html"
+      else
+        echo -e "${YELLOW}Could not open browser automatically.${NC}"
+        echo -e "Please visit: ${GREEN}http://localhost:8080/webplayer/tests/runner.html${NC}"
+      fi
+      ;;
+    "MINGW"*|"MSYS"*|"CYGWIN"*)  # Windows
+      start "http://localhost:8080/webplayer/tests/runner.html"
+      ;;
+    *)
+      echo -e "${YELLOW}Could not open browser automatically.${NC}"
+      echo -e "Please visit: ${GREEN}http://localhost:8080/webplayer/tests/runner.html${NC}"
+      ;;
+  esac
+}
+
 # Process arguments
 case "$1" in
   start)
@@ -307,6 +336,9 @@ case "$1" in
     ;;
   check)
     run_diagnostics
+    ;;
+  test)
+    run_tests
     ;;
   help|--help|-h)
     show_help
