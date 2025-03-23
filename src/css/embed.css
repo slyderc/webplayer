@@ -71,7 +71,7 @@ body.embed-body {
     position: relative;
     border-radius: 8px;
     overflow: hidden;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -88,7 +88,7 @@ body.embed-body {
 }
 
 .embed-track-info {
-    padding: 12px 0;
+    padding: 6px 0;
     text-align: left;
 }
 
