@@ -5,11 +5,11 @@
     /* Light theme (default) */
     --bg-color: transparent;
     --text-color: #333;
-    --title-color: #111;
-    --artist-color: #444;
-    --border-color: #eee;
-    --number-color: #ddd;
-    --timestamp-color: #999;
+    --title-color: #000;
+    --artist-color: #333;
+    --border-color: #eaeaea;
+    --number-color: #888;
+    --timestamp-color: #888;
     --error-bg: #fef0f0;
     --error-color: #e74c3c;
     --link-color: #888;
@@ -22,10 +22,10 @@
     --bg-color: transparent;
     --text-color: #eee;
     --title-color: #fff;
-    --artist-color: #bbb;
+    --artist-color: #aaa;
     --border-color: #333;
-    --number-color: #bbb;
-    --timestamp-color: #bbb;
+    --number-color: #999;
+    --timestamp-color: #999;
     --error-bg: #4a2c2c;
     --error-color: #ff6b6b;
     --link-color: #999;
@@ -131,13 +131,22 @@ body.embed-body {
 .embed-track-item {
     display: flex;
     align-items: center;
-    padding: 12px 8px;
+    padding: 16px 8px;
     position: relative;
     transition: background-color 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.embed-track-item:last-child {
+    border-bottom: none;
 }
 
 .embed-track-item:hover {
-    background-color: rgba(0, 0, 0, 0.03);
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .embed-track-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .embed-track-number {
@@ -152,12 +161,12 @@ body.embed-body {
 }
 
 .embed-track-artwork {
-    width: 50px;
-    height: 50px;
-    border-radius: 6px;
-    margin-right: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+    margin-right: 16px;
     object-fit: cover;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .embed-track-details {
@@ -166,7 +175,7 @@ body.embed-body {
 }
 
 .embed-track-item-title {
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 600;
     margin-bottom: 4px;
     text-overflow: ellipsis;
@@ -176,7 +185,7 @@ body.embed-body {
 }
 
 .embed-track-item-artist {
-    font-size: 12px;
+    font-size: 15px;
     color: var(--artist-color);
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -184,7 +193,7 @@ body.embed-body {
 }
 
 .embed-track-timestamp {
-    font-size: 12px;
+    font-size: 15px;
     color: var(--timestamp-color);
     text-align: right;
     white-space: nowrap;
@@ -257,7 +266,7 @@ body.embed-body {
 }
 
 .embed-compact .embed-track-item {
-    padding: 8px 6px;
+    padding: 12px 6px;
 }
 
 .embed-compact .embed-track-number {
@@ -267,65 +276,73 @@ body.embed-body {
 }
 
 .embed-compact .embed-track-artwork {
-    width: 36px;
-    height: 36px;
-    margin-right: 8px;
+    width: 42px;
+    height: 42px;
+    margin-right: 12px;
 }
 
 .embed-compact .embed-track-item-title {
-    font-size: 12px;
-    margin-bottom: 2px;
+    font-size: 15px;
+    margin-bottom: 3px;
 }
 
 .embed-compact .embed-track-item-artist {
-    font-size: 10px;
+    font-size: 13px;
 }
 
 .embed-compact .embed-track-timestamp {
-    font-size: 10px;
-    padding-left: 10px; /* Smaller padding for compact mode */
+    font-size: 13px;
+    padding-left: 12px; /* Smaller padding for compact mode */
 }
 
 /* Responsive adjustments */
 @media (max-width: 400px) {
     .embed-track-timestamp {
-        font-size: 10px;
+        font-size: 13px;
     }
     
     .embed-track-artwork {
-        width: 38px;
-        height: 38px;
-        margin-right: 8px;
+        width: 46px;
+        height: 46px;
+        margin-right: 12px;
     }
     
     .embed-track-item {
-        padding: 8px 6px;
+        padding: 12px 6px;
+    }
+    
+    .embed-track-item-title {
+        font-size: 16px;
+    }
+    
+    .embed-track-item-artist {
+        font-size: 14px;
     }
 }
 
 @media (max-width: 320px) {
     .embed-track-number {
-        font-size: 12px;
+        font-size: 13px;
         width: 16px;
         margin-right: 2px;
     }
     
     .embed-track-artwork {
-        width: 32px;
-        height: 32px;
-        margin-right: 6px;
+        width: 38px;
+        height: 38px;
+        margin-right: 10px;
     }
     
     .embed-track-item-title {
-        font-size: 12px;
+        font-size: 14px;
     }
     
     .embed-track-item-artist {
-        font-size: 10px;
+        font-size: 12px;
     }
     
     .embed-track-timestamp {
-        font-size: 9px;
-        padding-left: 6px; /* Even smaller padding for tiny screens */
+        font-size: 12px;
+        padding-left: 8px;
     }
 }
