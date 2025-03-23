@@ -48,7 +48,14 @@ function getStreamConfig() {
     
     // Adjust URLs based on environment
     if ($env === 'development') {
-        $config['metadataUrl'] = '/proxy/player/publish/playlist.json';
+        // Using direct proxy to production playlist.json
+        $config['metadataUrl'] = '/player/publish/playlist.json';
+        
+        // Use relative path for default artwork in development
+        $config['defaultArtwork'] = '/webplayer/NWR_text_logo_angle.png';
+        
+        // Analytics endpoint should point to local development
+        $config['analyticsEndpoint'] = '/webplayer/php/api/track_analytics.php';
     }
 
     return $config;
