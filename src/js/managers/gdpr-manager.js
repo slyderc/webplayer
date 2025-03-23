@@ -60,6 +60,11 @@ class GDPRManager {
         // Hide consent overlay
         this.hideConsentOverlay();
         
+        // Enable Umami tracking if it exists and was previously disabled
+        if (window.umami && typeof window.umami.setEnabled === 'function') {
+            window.umami.setEnabled(true);
+        }
+        
         // Trigger any post-consent actions (like preloading content)
         if (this.options.onConsentGiven && typeof this.options.onConsentGiven === 'function') {
             this.options.onConsentGiven();
@@ -71,26 +76,36 @@ class GDPRManager {
      */
     checkConsent() {
         const consent = this.storageService.getItem(this.options.consentCookieName, null);
+        let hasValidConsent = false;
         
         // If no consent at all, we need to show the overlay
         if (!consent) {
             this.showConsentOverlay();
-            return false;
-        }
-        
-        // Check if consent has expired
-        if (consent.expires) {
-            const expiryDate = new Date(consent.expires);
-            const now = new Date();
-            
-            // If expired, show overlay again
-            if (now > expiryDate) {
-                this.showConsentOverlay();
-                return false;
+            hasValidConsent = false;
+        } else {
+            // Check if consent has expired
+            if (consent.expires) {
+                const expiryDate = new Date(consent.expires);
+                const now = new Date();
+                
+                // If expired, show overlay again
+                if (now > expiryDate) {
+                    this.showConsentOverlay();
+                    hasValidConsent = false;
+                } else {
+                    hasValidConsent = true;
+                }
+            } else {
+                hasValidConsent = true;
             }
         }
         
-        return true;
+        // Enable or disable Umami based on consent status
+        if (window.umami && typeof window.umami.setEnabled === 'function') {
+            window.umami.setEnabled(hasValidConsent);
+        }
+        
+        return hasValidConsent;
     }
     
     /**

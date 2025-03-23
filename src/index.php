@@ -47,6 +47,17 @@ $audioLibs = $audioLibraries;
     <script>
         window.NWR_CONFIG = <?php echo getJsConfig(); ?>;
     </script>
+    
+    <?php if (isset($streamConfig['umamiEnabled']) && $streamConfig['umamiEnabled'] && !empty($streamConfig['umamiWebsiteId']) && !empty($streamConfig['umamiScriptUrl'])): ?>
+    <!-- Umami Analytics (privacy-first analytics) -->
+    <script async defer
+        data-website-id="<?php echo htmlspecialchars($streamConfig['umamiWebsiteId']); ?>"
+        src="<?php echo htmlspecialchars($streamConfig['umamiScriptUrl']); ?>"
+        data-domains="auto"
+        data-do-not-track="true">
+    </script>
+    <?php endif; ?>
+    
     <script src="<?php echo $audioLibs['howler']['cdn']; ?>"></script>
     
     <!-- Services -->

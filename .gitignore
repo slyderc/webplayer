@@ -11,6 +11,7 @@ mockups/
 vendor/
 messages/
 data/
+src/php/config.php
 src/php/data/
 src/php/api/data/
 # But keep .gitkeep files to maintain directory structure
