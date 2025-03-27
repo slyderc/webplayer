@@ -1,6 +1,7 @@
 /**
  * AudioService - Handles all audio streaming functionality for Now Wave Radio
- * This alternative implementation completely recreates the audio object on each play/stop toggle
+ * This implementation completely recreates the audio object on each play/stop toggle
+ * to prevent caching issues and ensure reliable streaming
  */
 class AudioService {
     constructor(options = {}) {
@@ -9,6 +10,7 @@ class AudioService {
             format: ['aac'],
             volume: 1.0,
             networkErrorCheckInterval: 10000, // 10 seconds
+            debugMode: false, // Set to true to enable debug logging
             ...options
         };
         
@@ -27,11 +29,26 @@ class AudioService {
         this.stuckPlaybackCounter = 0;
     }
     
+    /**
+     * Debug logging function that only logs when debugMode is enabled
+     * @param {string} message - Message to log
+     * @param {*} data - Optional data to log
+     */
+    debug(message, data) {
+        if (this.options.debugMode) {
+            if (data !== undefined) {
+                console.log(`[AudioService] ${message}`, data);
+            } else {
+                console.log(`[AudioService] ${message}`);
+            }
+        }
+    }
+    
     createAudio() {
         // Generate a unique stream URL each time to force a completely fresh connection
         // But we'll be more gentle with our cache-busting
         const uniqueStreamUrl = this.options.streamUrl + '?nocache=' + Date.now();
-        console.log('Creating fresh audio stream with URL:', uniqueStreamUrl);
+        this.debug('Creating fresh audio stream with URL:', uniqueStreamUrl);
         
         return new Howl({
             src: [uniqueStreamUrl],
@@ -44,10 +61,10 @@ class AudioService {
             xhrWithCredentials: false, // Disable credentials which can cause caching
             preload: true, // Allow preloading to ensure faster start
             onload: () => {
-                console.log('Stream loaded fresh');
+                this.debug('Stream loaded successfully');
             },
             onplay: () => {
-                console.log('Stream playback started');
+                this.debug('Stream playback started');
                 this.notifyListeners('onPlay');
                 this.startNetworkErrorDetection();
             },
@@ -94,19 +111,19 @@ class AudioService {
             // If we didn't find any, try to find all audio elements since Howler might be using a different URL format
             if (audioElements.length === 0) {
                 audioElements = document.querySelectorAll('audio');
-                console.log(`No specific stream audio elements found, cleaning all ${audioElements.length} audio elements`);
+                this.debug(`No specific stream audio elements found, cleaning all ${audioElements.length} audio elements`);
             } else {
-                console.log(`Found ${audioElements.length} audio elements with our stream URL`);
+                this.debug(`Found ${audioElements.length} audio elements with our stream URL`);
             }
             
             // Process all found audio elements
             audioElements.forEach(audioEl => {
                 try {
-                    console.log('Cleaning up audio element:', audioEl.currentSrc || audioEl.src);
+                    this.debug('Cleaning up audio element:', audioEl.currentSrc || audioEl.src);
                     
                     // First try to reset all potential buffered content
                     if (audioEl.buffered && audioEl.buffered.length > 0) {
-                        console.log(`Element has ${audioEl.buffered.length} buffered ranges`);
+                        this.debug(`Element has ${audioEl.buffered.length} buffered ranges`);
                     }
                     
                     // Stop any active playback
@@ -142,7 +159,7 @@ class AudioService {
                         audioEl.parentNode.removeChild(audioEl);
                     }
                 } catch (e) {
-                    console.warn('Error cleaning up audio element:', e);
+                    console.warn('[AudioService] Error cleaning up audio element:', e);
                 }
             });
             
@@ -153,7 +170,7 @@ class AudioService {
                         const obj = window[key];
                         if (obj && typeof obj === 'object' && obj.constructor && 
                             obj.constructor.name === 'MediaSource') {
-                            console.log('Found a MediaSource object, attempting to clean up');
+                            this.debug('Found a MediaSource object, attempting to clean up');
                             if (typeof obj.endOfStream === 'function') {
                                 obj.endOfStream();
                             }
@@ -164,7 +181,7 @@ class AudioService {
                 });
             }
         } catch (e) {
-            console.warn('Error in cleanupGlobalAudioElements:', e);
+            console.warn('[AudioService] Error in cleanupGlobalAudioElements:', e);
         }
     }
     
@@ -173,16 +190,16 @@ class AudioService {
             return true; // Already playing
         }
         
-        console.log('Preparing to play stream...');
+        this.debug('Preparing to play stream...');
         
         // Clean up any previous audio instance
         if (this.audio) {
-            console.log('Stopping and unloading previous audio instance');
+            this.debug('Stopping and unloading previous audio instance');
             try {
                 this.audio.stop();
                 this.audio.unload();
             } catch(e) {
-                console.warn('Error cleaning up previous audio:', e);
+                console.warn('[AudioService] Error cleaning up previous audio:', e);
             }
             this.audio = null;
         }
@@ -195,20 +212,20 @@ class AudioService {
         
         // Attempt to play the audio
         try {
-            console.log('Starting playback...');
+            this.debug('Starting playback...');
             this.audio.play();
             this.isPlaying = true;
-            console.log('Stream started with new audio object');
+            this.debug('Stream started with new audio object');
             
             // Add a verification check to make sure playback actually started
             setTimeout(() => {
                 if (this.audio && this.isPlaying && !this.audio.playing()) {
-                    console.warn('Playback verification failed, retrying play command');
+                    console.warn('[AudioService] Playback verification failed, retrying play command');
                     this.audio.play();
                 }
             }, 1000);
         } catch (e) {
-            console.error('Error starting audio playback:', e);
+            console.error('[AudioService] Error starting audio playback:', e);
             this.handleError(0, e, 'play');
             return false;
         }
@@ -275,7 +292,7 @@ class AudioService {
             return false; // Already stopped
         }
         
-        console.log('Stopping stream and destroying audio object...');
+        this.debug('Stopping stream and destroying audio object...');
         
         // Stop network error detection
         this.stopNetworkErrorDetection();
@@ -296,11 +313,12 @@ class AudioService {
         this.stuckPlaybackCounter = 0;
         this.playbackStartTime = null;
         
-        console.log('Stream completely stopped');
+        this.debug('Stream completely stopped');
         
         return this.isPlaying;
     }
     
+    // Toggle playback state - convenience method for play/stop
     toggle() {
         return this.isPlaying ? this.stop() : this.play();
     }
@@ -342,7 +360,7 @@ class AudioService {
     }
     
     handleError(id, error, errorType) {
-        console.error(`Audio ${errorType} error:`, error);
+        console.error(`[AudioService] ${errorType} error:`, error);
         this.isPlaying = false;
         this.stopNetworkErrorDetection();
         this.notifyListeners('onError', error, errorType);
@@ -352,7 +370,7 @@ class AudioService {
             try {
                 this.audio.unload();
             } catch (e) {
-                console.error('Error unloading after error:', e);
+                console.error('[AudioService] Error unloading after error:', e);
             }
             this.audio = null;
         }
@@ -390,11 +408,11 @@ class AudioService {
                 // Check if the stream is stuck (not advancing)
                 if (!isInitialBuffering && Math.abs(currentPosition - this.lastPlaybackPosition) < 0.001) {
                     this.stuckPlaybackCounter++;
-                    console.warn(`Stream may be stalled. Counter: ${this.stuckPlaybackCounter}`);
+                    this.debug(`Stream may be stalled. Counter: ${this.stuckPlaybackCounter}`);
                     
                     // If playback has been stuck for 3 check intervals (30 seconds by default), consider it a network error
                     if (this.stuckPlaybackCounter >= 3) {
-                        console.error('Stream appears to be stuck. Treating as network error.');
+                        console.error('[AudioService] Stream appears to be stuck. Treating as network error.');
                         this.handleStreamEnd();
                         return;
                     }
@@ -405,7 +423,7 @@ class AudioService {
                 
                 // Check if the stream has ended naturally - but only after some time has passed
                 if (this.stuckPlaybackCounter > 0 && this.audio && !this.audio.playing()) {
-                    console.warn('Stream not playing according to Howler API');
+                    this.debug('Stream not playing according to Howler API');
                     this.handleStreamEnd();
                     return;
                 }
@@ -440,11 +458,11 @@ class AudioService {
         
         // If we're still within the initial grace period, ignore premature end events
         if (playbackDuration < 5000) { // 5 second grace period
-            console.warn('Ignoring potential false stream end during initialization');
+            this.debug('Ignoring potential false stream end during initialization');
             return;
         }
         
-        console.warn('Stream ended unexpectedly');
+        console.warn('[AudioService] Stream ended unexpectedly');
         if (this.isPlaying) {
             this.isPlaying = false;
             this.stopNetworkErrorDetection();
@@ -454,7 +472,7 @@ class AudioService {
                 try {
                     this.audio.unload();
                 } catch (e) {
-                    console.error('Error unloading after stream end:', e);
+                    console.error('[AudioService] Error unloading after stream end:', e);
                 }
                 this.audio = null;
             }

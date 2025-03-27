@@ -35,10 +35,23 @@ class ShareManager {
         const shareTitle = `${track.title} by ${track.artist}`;
         const shareUrl = this.options.stationUrl;
         
-        // Prepare artwork URL if available
-        const artworkUrl = track.artwork_url && 
-                          !track.artwork_url.includes('/NWR_text_logo_angle.png') ? 
-                          track.artwork_url : null;
+        // Prepare artwork URL, prioritizing hashed artwork URL for persistence
+        let artworkUrl = null;
+        
+        // First, try to use the hash-based artwork if available
+        if (track.artwork_hash) {
+            artworkUrl = `/player/publish/ca/${track.artwork_hash}.jpg`;
+        } 
+        // Next try hashed_artwork_url if available
+        else if (track.hashed_artwork_url && 
+                !track.hashed_artwork_url.includes('/NWR_text_logo_angle.png')) {
+            artworkUrl = track.hashed_artwork_url;
+        }
+        // Finally fall back to regular artwork_url
+        else if (track.artwork_url && 
+                !track.artwork_url.includes('/NWR_text_logo_angle.png')) {
+            artworkUrl = track.artwork_url;
+        }
         
         try {
             switch (method) {
@@ -145,7 +158,10 @@ class ShareManager {
      */
     async fetchImageAsBlob(url) {
         try {
-            const response = await fetch(url, { 
+            // Ensure URL is absolute
+            const absoluteUrl = this.getAbsoluteArtworkUrl(url);
+            
+            const response = await fetch(absoluteUrl, { 
                 mode: 'cors',
                 cache: 'no-cache'
             });
@@ -362,6 +378,31 @@ class ShareManager {
     }
     
     /**
+     * Get absolute URL for artwork
+     * @param {string} artworkUrl - The potentially relative artwork URL
+     * @returns {string} - The absolute URL
+     */
+    getAbsoluteArtworkUrl(artworkUrl) {
+        if (!artworkUrl) return null;
+        
+        // Already absolute
+        if (artworkUrl.startsWith('http')) {
+            return artworkUrl;
+        }
+        
+        // Root-relative URL
+        if (artworkUrl.startsWith('/')) {
+            const baseUrl = this.options.stationUrl;
+            const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+            const cleanArtworkPath = artworkUrl.replace(/^\/+/, '');
+            return `${cleanBaseUrl}/${cleanArtworkPath}`;
+        }
+        
+        // Regular relative URL
+        return `${this.options.stationUrl}/${artworkUrl}`;
+    }
+    
+    /**
      * Open email sharing
      * @param {string} subject - The email subject
      * @param {string} body - The email body
@@ -373,8 +414,11 @@ class ShareManager {
         let emailBody = body;
         
         if (artworkUrl) {
-            // Include a note about the artwork
-            emailBody += `\n\nYou can view the album artwork here: ${artworkUrl}`;
+            // Get absolute URL for artwork
+            const fullArtworkUrl = this.getAbsoluteArtworkUrl(artworkUrl);
+            
+            // Include a note about the artwork with the full URL
+            emailBody += `\n\nYou can view the album artwork here: ${fullArtworkUrl}`;
         }
         
         const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
@@ -474,6 +518,16 @@ class ShareManager {
         if (existingOverlay) {
             document.body.removeChild(existingOverlay);
         }
+        
+        // Log track details for debugging
+        console.log('Sharing track with data:', {
+            id: track.id,
+            title: track.title,
+            artist: track.artist,
+            artwork_url: track.artwork_url,
+            artwork_hash: track.artwork_hash,
+            hashed_artwork_url: track.hashed_artwork_url
+        });
         
         // Create overlay container
         const overlay = document.createElement('div');

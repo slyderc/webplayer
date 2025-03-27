@@ -25,6 +25,9 @@ $audioConfig = [
     'umamiEnabled' => true,
     'umamiWebsiteId' => '', // Your Umami website ID goes here
     'umamiScriptUrl' => '', // Your Umami script URL goes here (e.g., https://analytics.yourdomain.com/umami.js)
+
+    // Debug Configuration
+    'debugMode' => true, // Set to true to enable debug logging across all components
 ];
 
 // Audio libraries

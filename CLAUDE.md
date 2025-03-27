@@ -138,3 +138,36 @@ Edit `src/php/config.php` to configure:
 - **Modifying embed behavior**: Update `src/js/embed.js` and related files
 - **Changing UI elements**: Modify `src/css/player.css` for styling
 - **Adding analytics events**: Update `src/js/services/analytics-service.js`
+
+## Code Cleanup Guidelines
+
+The following areas should be addressed during code cleanup:
+
+1. **Console Logs**:
+   - Remove all debugging console.log statements in production
+   - Replace with a proper logging system with configurable levels
+   - Key files with excessive logging: player.js, audio-service.js, embed.js
+
+2. **Unused Methods**:
+   - AudioService: `toggle()` method is defined but never called
+   - LikeManager: Reference to undefined variable `url` in getArtworkUrl() function
+
+3. **Redundant Logging**:
+   - BackgroundManager: Simplify multiple background update logs
+   - Player.js: Remove excessive object dumps in console.logs
+
+4. **Error Handling**:
+   - Standardize error handling across all components
+   - Add appropriate fallback behavior for all error conditions
+
+5. **Development/Production Modes**:
+   - Add environment detection to automatically disable logging in production
+   - Only show detailed errors in development mode
+
+6. **Code Style Consistency**:
+   - Use consistent error handling patterns across components
+   - Standardize the pattern for event listeners across all components
+
+7. **Bug Fixes**:
+   - LikeManager: Fix incorrect variable `url` in getArtworkUrl method
+   - Ensure all class methods use proper error handling

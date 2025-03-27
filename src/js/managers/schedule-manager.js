@@ -8,6 +8,7 @@ class ScheduleManager {
             pollInterval: 900000, // 15 minutes
             daysToShow: 7, // Number of days to display in the schedule
             defaultArtwork: window.NWR_CONFIG?.defaultArtwork || '/player/NWR_text_logo_angle.png',
+            debugMode: false, // Set to true to enable debug logging
             ...options
         };
         
@@ -22,6 +23,21 @@ class ScheduleManager {
         // Make this instance available for debugging
         window.scheduleManager = this;
     }
+    
+    /**
+     * Debug logging function that only logs when debugMode is enabled
+     * @param {string} message - Message to log
+     * @param {*} data - Optional data to log
+     */
+    debug(message, data) {
+        if (this.options.debugMode) {
+            if (data !== undefined) {
+                console.log(`[ScheduleManager] ${message}`, data);
+            } else {
+                console.log(`[ScheduleManager] ${message}`);
+            }
+        }
+    }
         
     /**
      * Initialize the schedule manager
@@ -33,7 +49,7 @@ class ScheduleManager {
             return this;
         }
         
-        console.log('Initializing schedule manager');
+        this.debug('Initializing schedule manager');
         
         // Add the schedule container to the view
         this.scheduleView.innerHTML = '';
@@ -44,7 +60,7 @@ class ScheduleManager {
         
         // Initial schedule fetch - using try/catch to ensure proper error handling
         this.fetchSchedule()
-            .then(() => console.log('Initial schedule fetch complete'))
+            .then(() => this.debug('Initial schedule fetch complete'))
             .catch(err => console.error('Error during initial schedule fetch:', err));
         
         // Set up polling for schedule updates
@@ -54,7 +70,7 @@ class ScheduleManager {
     }
 
     handleTabActivation() {
-        console.log('Schedule tab activated - handling activation');
+        this.debug('Schedule tab activated - handling activation');
         
         // First ensure we have a valid scheduleView reference
         if (!this.scheduleView) {
@@ -67,7 +83,7 @@ class ScheduleManager {
         
         // Check if the container exists, recreate if needed
         if (!this.scheduleContainer || !this.scheduleView.contains(this.scheduleContainer)) {
-            console.log('Recreating schedule container');
+            this.debug('Recreating schedule container');
             this.scheduleView.innerHTML = '';
             const container = document.createElement('div');
             container.className = 'schedule-container';
@@ -77,13 +93,13 @@ class ScheduleManager {
         
         // If we have cached schedule data, use it
         if (this.generatedSchedule && this.generatedSchedule.length > 0 && !this.fetchError) {
-            console.log('Using cached schedule data with', this.generatedSchedule.length, 'shows');
+            this.debug('Using cached schedule data with', this.generatedSchedule.length, 'shows');
             const now = new Date();
             this.updateScheduleView(this.generatedSchedule, now);
         } 
         // Otherwise fetch fresh data
         else {
-            console.log('No cached data or previous error - fetching fresh schedule');
+            this.debug('No cached data or previous error - fetching fresh schedule');
             this.fetchSchedule().catch(err => {
                 console.error('Error fetching schedule from tab activation:', err);
                 if (this.scheduleContainer) {
@@ -104,7 +120,7 @@ class ScheduleManager {
         const timestamp = new Date().getTime();
         const url = `${this.options.scheduleUrl}?t=${timestamp}`;
         
-        console.log('Fetching schedule from:', url);
+        this.debug('Fetching schedule from:', url);
         
         try {
             const response = await fetch(url);
@@ -114,7 +130,7 @@ class ScheduleManager {
             }
             
             const data = await response.json();
-            console.log('Schedule data parsed successfully');
+            this.debug('Schedule data parsed successfully');
             
             // Validate data structure
             if (!data || !data.weekly || !Array.isArray(data.weekly)) {
@@ -150,7 +166,7 @@ class ScheduleManager {
      * Generate a schedule for the current week based on patterns
      */
     generateSchedule() {
-        console.log('Starting schedule generation');
+        this.debug('Starting schedule generation');
         
         if (!this.scheduleData) {
             console.error('No schedule data available');
@@ -162,11 +178,11 @@ class ScheduleManager {
         
         // Get the current date
         const actualNow = new Date();
-        console.log('Current date/time:', actualNow.toISOString());
+        this.debug('Current date/time:', actualNow.toISOString());
         
         // Start with actual today at midnight
         const today = new Date(actualNow.getFullYear(), actualNow.getMonth(), actualNow.getDate());
-        console.log('Today at midnight:', today.toISOString());
+        this.debug('Today at midnight:', today.toISOString());
         
         // Generate schedule from patterns
         const generatedSchedule = [];
@@ -179,7 +195,7 @@ class ScheduleManager {
                 
                 const dayOfWeek = currentDate.getDay();
                 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                console.log(`Processing ${dayNames[dayOfWeek]} (day ${dayOfWeek})`, currentDate.toISOString().split('T')[0]);
+                this.debug(`Processing ${dayNames[dayOfWeek]} (day ${dayOfWeek})`, currentDate.toISOString().split('T')[0]);
                 
                 // Add all types of shows
                 this.addWeeklyShows(generatedSchedule, currentDate);
@@ -187,7 +203,7 @@ class ScheduleManager {
                 this.addSpecialShows(generatedSchedule, currentDate);
             }
             
-            console.log(`Generated ${generatedSchedule.length} total shows`);
+            this.debug(`Generated ${generatedSchedule.length} total shows`);
             
             if (generatedSchedule.length === 0) {
                 console.warn('No shows were generated');
@@ -202,7 +218,7 @@ class ScheduleManager {
             
             // Debug output for first few generated shows
             const showSample = generatedSchedule.slice(0, 5);
-            console.log('Sample of generated shows:', showSample.map(show => ({
+            this.debug('Sample of generated shows:', showSample.map(show => ({
                 title: show.title,
                 startTime: new Date(show.startTime).toLocaleString(),
                 dayOfWeek: new Date(show.startTime).getDay(),
@@ -230,13 +246,13 @@ class ScheduleManager {
     addWeeklyShows(schedule, date) {
         try {
             if (!this.scheduleData.weekly || !Array.isArray(this.scheduleData.weekly) || this.scheduleData.weekly.length === 0) {
-                console.log('No weekly shows data available');
+                this.debug('No weekly shows data available');
                 return;
             }
             
             const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
             const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            console.log(`Looking for weekly shows on ${dayNames[dayOfWeek]} (day ${dayOfWeek})`);
+            this.debug(`Looking for weekly shows on ${dayNames[dayOfWeek]} (day ${dayOfWeek})`);
             
             let showsAdded = 0;
             
@@ -248,11 +264,11 @@ class ScheduleManager {
                     }
                     
                     // Explicitly log show details for debugging
-                    console.log(`Checking show "${show.title}" (day=${show.day}) against current day ${dayOfWeek}`);
+                    this.debug(`Checking show "${show.title}" (day=${show.day}) against current day ${dayOfWeek}`);
                     
                     // Check if this show runs on this day of week
                     if (Number(show.day) === dayOfWeek) {
-                        console.log(`✓ Show "${show.title}" matches day ${dayOfWeek} (${dayNames[dayOfWeek]})`);
+                        this.debug(`✓ Show "${show.title}" matches day ${dayOfWeek} (${dayNames[dayOfWeek]})`);
                         
                         if (!show.startTime) {
                             console.warn(`Show "${show.title}" is missing startTime property`);
@@ -285,7 +301,7 @@ class ScheduleManager {
                             });
                             
                             showsAdded++;
-                            console.log(`Added weekly show "${show.title}" on ${startTime.toDateString()} at ${startTime.toLocaleTimeString()}`);
+                            this.debug(`Added weekly show "${show.title}" on ${startTime.toDateString()} at ${startTime.toLocaleTimeString()}`);
                         } catch (timeError) {
                             console.error(`Error processing time for "${show.title}":`, timeError);
                         }
@@ -295,7 +311,7 @@ class ScheduleManager {
                 }
             });
             
-            console.log(`Added ${showsAdded} weekly shows for ${dayNames[dayOfWeek]}`);
+            this.debug(`Added ${showsAdded} weekly shows for ${dayNames[dayOfWeek]}`);
         } catch (error) {
             console.error('Error in addWeeklyShows:', error);
         }
@@ -307,7 +323,7 @@ class ScheduleManager {
     addWeekdayShows(schedule, date) {
         try {
             if (!this.scheduleData.weekdays || !Array.isArray(this.scheduleData.weekdays) || this.scheduleData.weekdays.length === 0) {
-                console.log('No weekday shows data available');
+                this.debug('No weekday shows data available');
                 return;
             }
             
@@ -316,7 +332,7 @@ class ScheduleManager {
             
             // Only add weekday shows for Monday through Friday (1-5)
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-                console.log(`Adding weekday shows for ${dayNames[dayOfWeek]} (day ${dayOfWeek})`);
+                this.debug(`Adding weekday shows for ${dayNames[dayOfWeek]} (day ${dayOfWeek})`);
                 
                 let showsAdded = 0;
                 
@@ -347,7 +363,7 @@ class ScheduleManager {
                             });
                             
                             showsAdded++;
-                            console.log(`Added weekday show "${show.title}" on ${startTime.toDateString()} at ${startTime.toLocaleTimeString()}`);
+                            this.debug(`Added weekday show "${show.title}" on ${startTime.toDateString()} at ${startTime.toLocaleTimeString()}`);
                         } catch (timeError) {
                             console.error(`Error processing time for weekday show "${show.title}":`, timeError);
                         }
@@ -356,9 +372,9 @@ class ScheduleManager {
                     }
                 });
                 
-                console.log(`Added ${showsAdded} weekday shows for ${dayNames[dayOfWeek]}`);
+                this.debug(`Added ${showsAdded} weekday shows for ${dayNames[dayOfWeek]}`);
             } else {
-                console.log(`Skipping weekday shows for ${dayNames[dayOfWeek]} (weekend)`);
+                this.debug(`Skipping weekday shows for ${dayNames[dayOfWeek]} (weekend)`);
             }
         } catch (error) {
             console.error('Error in addWeekdayShows:', error);
@@ -371,13 +387,13 @@ class ScheduleManager {
     addSpecialShows(schedule, date) {
         try {
             if (!this.scheduleData.special || !Array.isArray(this.scheduleData.special) || this.scheduleData.special.length === 0) {
-                console.log('No special shows data available');
+                this.debug('No special shows data available');
                 return;
             }
             
             // Normalize date to start of day for comparison (YYYY-MM-DD)
             const dateStr = date.toISOString().split('T')[0];
-            console.log(`Looking for special shows on ${dateStr}`);
+            this.debug(`Looking for special shows on ${dateStr}`);
             
             let specialShowsAdded = 0;
             
@@ -399,7 +415,7 @@ class ScheduleManager {
                     
                     const showDateStr = showDate.toISOString().split('T')[0];
                     
-                    console.log(`Checking special show "${show.title}" date ${showDateStr} against ${dateStr}`);
+                    this.debug(`Checking special show "${show.title}" date ${showDateStr} against ${dateStr}`);
                     
                     // Check if this special show falls on the current date
                     if (showDateStr === dateStr) {
@@ -417,14 +433,14 @@ class ScheduleManager {
                         });
                         
                         specialShowsAdded++;
-                        console.log(`Added special show "${show.title}" on ${showDate.toDateString()} at ${showDate.toLocaleTimeString()}`);
+                        this.debug(`Added special show "${show.title}" on ${showDate.toDateString()} at ${showDate.toLocaleTimeString()}`);
                     }
                 } catch (error) {
                     console.error(`Error processing special show at index ${index}:`, error);
                 }
             });
             
-            console.log(`Added ${specialShowsAdded} special shows for ${dateStr}`);
+            this.debug(`Added ${specialShowsAdded} special shows for ${dateStr}`);
         } catch (error) {
             console.error('Error in addSpecialShows:', error);
         }
@@ -435,7 +451,7 @@ class ScheduleManager {
      * Enhanced to work both for full updates and on-air status updates only
      */
     updateScheduleView(schedule, actualNow) {
-        console.log('⭐⭐⭐ Starting schedule view update ⭐⭐⭐');
+        this.debug('⭐⭐⭐ Starting schedule view update ⭐⭐⭐');
         
         // Fail fast if container not found
         if (!this.scheduleContainer) {
@@ -464,7 +480,7 @@ class ScheduleManager {
             return showDateStr === currentDateStr;
         });
         
-        console.log(`Found ${todaysShows.length} shows for today (${currentDateStr})`);
+        this.debug(`Found ${todaysShows.length} shows for today (${currentDateStr})`);
         
         // Sort today's shows by start time
         todaysShows.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
@@ -494,9 +510,9 @@ class ScheduleManager {
         }
         
         if (currentOnAirShow) {
-            console.log(`Current on-air show: ${currentOnAirShow.title} at ${new Date(currentOnAirShow.startTime).toLocaleTimeString()}`);
+            this.debug(`Current on-air show: ${currentOnAirShow.title} at ${new Date(currentOnAirShow.startTime).toLocaleTimeString()}`);
         } else {
-            console.log('No show currently on air');
+            this.debug('No show currently on air');
         }
         
         // Cache the current on-air show
@@ -532,7 +548,7 @@ class ScheduleManager {
             const dateKeys = Object.keys(groupedShows);
             dateKeys.sort((a, b) => new Date(a) - new Date(b));
             
-            console.log('Processing dates:', dateKeys);
+            this.debug('Processing dates:', dateKeys);
             
             // Process each date group
             dateKeys.forEach(dateKey => {
@@ -540,7 +556,7 @@ class ScheduleManager {
                 const dateObj = dateGroup.date;
                 const shows = dateGroup.shows;
                 
-                console.log(`Adding date header for ${dateKey} with ${shows.length} shows`);
+                this.debug(`Adding date header for ${dateKey} with ${shows.length} shows`);
                 
                 // Create date header
                 const dateHeader = document.createElement('div');
@@ -573,7 +589,7 @@ class ScheduleManager {
         }
         else {
             // REFRESH ONLY - Just update the "on air" status of existing items
-            console.log('Refreshing "On Air" status of existing schedule items');
+            this.debug('Refreshing "On Air" status of existing schedule items');
             
             // First, remove on-air class from all items
             existingItems.forEach(item => {
@@ -593,7 +609,7 @@ class ScheduleManager {
                 
                 if (onAirElement) {
                     onAirElement.classList.add('on-air');
-                    console.log(`Found and highlighted on-air show: ${currentOnAirShow.title}`);
+                    this.debug(`Found and highlighted on-air show: ${currentOnAirShow.title}`);
                     
                     // Scroll to the element with a small offset if we're on the schedule tab
                     if (this.viewManager && this.viewManager.getCurrentTab() === 'schedule') {
@@ -605,30 +621,30 @@ class ScheduleManager {
             }
         }
         
-        console.log('Schedule view update complete');
+        this.debug('Schedule view update complete');
     }
  
     /* Check if a show is currently on air */
     isShowOnAir(show, currentTime, allShows) {
         try {
             // For debugging
-            const debugging = show.title === "Tracks From the Dark Side";
+            const debugging = show.title === "Tracks From the Dark Side" && this.options.debugMode;
             
             if (debugging) {
-                console.log("==== CHECKING ON-AIR STATUS FOR TRACKED SHOW ====");
-                console.log("Current time:", currentTime.toLocaleString());
+                this.debug("==== CHECKING ON-AIR STATUS FOR TRACKED SHOW ====");
+                this.debug("Current time:", currentTime.toLocaleString());
             }
             
             if (!show.startTime) {
-                if (debugging) console.log("No start time, not on air");
+                if (debugging) this.debug("No start time, not on air");
                 return false;
             }
             
             const showStartTime = new Date(show.startTime);
             
             if (debugging) {
-                console.log("Show start time:", showStartTime.toLocaleString());
-                console.log("Has show started?", currentTime >= showStartTime);
+                this.debug("Show start time:", showStartTime.toLocaleString());
+                this.debug("Has show started?", currentTime >= showStartTime);
             }
             
             // If show hasn't started yet, it's not on air
@@ -647,7 +663,7 @@ class ScheduleManager {
             });
             
             if (debugging) {
-                console.log(`Found ${sameDayShows.length} shows on the same day`);
+                this.debug(`Found ${sameDayShows.length} shows on the same day`);
             }
             
             // Sort by start time
@@ -662,11 +678,11 @@ class ScheduleManager {
             );
             
             if (debugging) {
-                console.log(`Show position in day's lineup: ${currentIndex + 1} of ${sortedShows.length}`);
+                this.debug(`Show position in day's lineup: ${currentIndex + 1} of ${sortedShows.length}`);
             }
             
             if (currentIndex === -1) {
-                if (debugging) console.log("Show not found in sorted list");
+                if (debugging) this.debug("Show not found in sorted list");
                 return false;
             }
             
@@ -676,8 +692,8 @@ class ScheduleManager {
                 const nextShowStart = new Date(nextShow.startTime);
                 
                 if (debugging) {
-                    console.log(`Next show: ${nextShow.title} at ${nextShowStart.toLocaleString()}`);
-                    console.log(`Is before next show? ${currentTime < nextShowStart}`);
+                    this.debug(`Next show: ${nextShow.title} at ${nextShowStart.toLocaleString()}`);
+                    this.debug(`Is before next show? ${currentTime < nextShowStart}`);
                 }
                 
                 return currentTime < nextShowStart;
@@ -688,8 +704,8 @@ class ScheduleManager {
             endOfDay.setHours(23, 59, 59, 999);
             
             if (debugging) {
-                console.log(`Last show of the day, on until ${endOfDay.toLocaleString()}`);
-                console.log(`Is before end of day? ${currentTime <= endOfDay}`);
+                this.debug(`Last show of the day, on until ${endOfDay.toLocaleString()}`);
+                this.debug(`Is before end of day? ${currentTime <= endOfDay}`);
             }
             
             return currentTime <= endOfDay;
@@ -796,6 +812,7 @@ class ScheduleManager {
      */
     async mockScheduleData() {
         console.warn('⚠️ Using mock schedule data - this should only happen in development ⚠️');
+        this.debug('Loading mock schedule data');
         return {
             "weekly": [
                 {

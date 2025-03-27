@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize GDPR manager to handle consent
     window.gdprManager = new GDPRManager({
-        storageService: storageService
+        storageService: storageService,
+        debugMode: window.NWR_CONFIG?.debugMode || false
     });
     
     // Initialize the player (GDPR consent will be checked on first metadata request)
@@ -33,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check for GDPR consent
     window.gdprManager.checkConsent();
     
-    console.log('Now Wave Radio player initialized');
+    // Only show initialization message in debug mode
+    if (window.NWR_CONFIG?.debugMode) {
+        console.log('Now Wave Radio player initialized');
+    }
 });
 

@@ -9,6 +9,7 @@ class UIManager {
             defaultProgram: '🛜 NowWave.Radio',
             defaultPresenter: '💌 dj@NowWave.Radio',
             defaultArtwork: '/player/NWR_text_logo_angle.png',
+            debugMode: false, // Set to true to enable debug logging
             ...options
         };
         
@@ -30,7 +31,21 @@ class UIManager {
         }
 
         this.contactFormInitialized = false;
+    }
     
+    /**
+     * Debug logging function that only logs when debugMode is enabled
+     * @param {string} message - Message to log
+     * @param {*} data - Optional data to log
+     */
+    debug(message, data) {
+        if (this.options.debugMode) {
+            if (data !== undefined) {
+                console.log(`[UIManager] ${message}`, data);
+            } else {
+                console.log(`[UIManager] ${message}`);
+            }
+        }
     }
     
     updatePlayButton(isPlaying) {
@@ -59,6 +74,8 @@ class UIManager {
     updateTrackInfo(data) {
         if (!data) return;
         
+        this.debug('Updating track info with data:', data);
+        
         // Update track information
         if (data.title) this.elements.trackTitle.textContent = data.title;
         if (data.artist) this.elements.trackArtist.textContent = data.artist;
@@ -86,16 +103,17 @@ class UIManager {
                     : `https://nowwave.radio/${cleanImagePath}`;
             }
             
-            console.log('Setting album art to:', artworkUrl);
+            this.debug('Using artwork URL:', artworkUrl);
             
-            // Only update if the image URL has changed
-            if (this.elements.albumArt.src !== artworkUrl) {
-                this.elements.albumArt.src = artworkUrl;
-            }
+            // Since player.js now checks if the track has changed before calling this method,
+            // we can simply update the image src
+            this.elements.albumArt.src = artworkUrl;
         }
     }
     
     resetToDefault() {
+        this.debug('Resetting UI to default state');
+        
         // Reset display to default state when stream is stopped
         this.elements.trackTitle.textContent = this.options.defaultTitle;
         this.elements.trackArtist.textContent = this.options.defaultArtist;

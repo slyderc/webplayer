@@ -8,22 +8,23 @@ class LikeManager {
             analyticsService: null,
             defaultArtwork: '/player/NWR_text_logo_angle.png',
             cachedArtworkPath: '/player/publish/ca/',
+            debugMode: false, // Set to true to enable debug logging
             ...options
         };
         
         // Ensure we have valid paths
         if (!this.options.cachedArtworkPath || typeof this.options.cachedArtworkPath !== 'string') {
-            console.warn('Invalid cachedArtworkPath, using default');
+            console.warn('[LikeManager] Invalid cachedArtworkPath, using default');
             this.options.cachedArtworkPath = '/player/publish/ca/';
         }
         
         if (!this.options.defaultArtwork || typeof this.options.defaultArtwork !== 'string') {
-            console.warn('Invalid defaultArtwork, using default');
+            console.warn('[LikeManager] Invalid defaultArtwork, using default');
             this.options.defaultArtwork = '/player/NWR_text_logo_angle.png';
         }
         
-        // Log options for debugging
-        console.log('LikeManager initialized with options:', {
+        // Log options only in debug mode
+        this.debug('LikeManager initialized with options:', {
             cachedArtworkPath: this.options.cachedArtworkPath,
             defaultArtwork: this.options.defaultArtwork
         });
@@ -51,13 +52,28 @@ class LikeManager {
         return this;
     }
     
+    /**
+     * Debug logging function that only logs when debugMode is enabled
+     * @param {string} message - Message to log
+     * @param {*} data - Optional data to log
+     */
+    debug(message, data) {
+        if (this.options.debugMode) {
+            if (data !== undefined) {
+                console.log(`[LikeManager] ${message}`, data);
+            } else {
+                console.log(`[LikeManager] ${message}`);
+            }
+        }
+    }
+    
     // Notify all observers of a change
     notifyObservers(trackId, isLoved) {
         this.observers.forEach(observer => {
             try {
                 observer.onLikeStatusChanged(trackId, isLoved);
             } catch (e) {
-                console.error('Error notifying observer:', e);
+                console.error('[LikeManager] Error notifying observer:', e);
             }
         });
     }
@@ -240,11 +256,11 @@ class LikeManager {
     
     // Get artwork URLs for a track
     getArtworkUrl(track) {
-        // Fixed version with extensive debugging
-        console.log('getArtworkUrl called with track:', track ? {
+        this.debug('getArtworkUrl called with track:', track ? {
             id: track.id,
             artwork_url: track.artwork_url,
-            artwork_hash: track.artwork_hash
+            artwork_hash: track.artwork_hash,
+            hashed_artwork_url: track.hashed_artwork_url
         } : 'null or undefined');
         
         // Fixed absolute paths - NEVER rely on object properties that might be undefined
@@ -253,7 +269,7 @@ class LikeManager {
         
         // Handle null/undefined track gracefully
         if (!track) {
-            console.warn('getArtworkUrl called with null/undefined track');
+            console.warn('[LikeManager] getArtworkUrl called with null/undefined track');
             return {
                 primaryUrl: defaultArtwork,
                 fallbackUrl: defaultArtwork,
@@ -261,42 +277,43 @@ class LikeManager {
             };
         }
         
-        // Determine primary URL, with preferences in order:
-        // 1. hashed_artwork_url (from history.json)
-        // 2. artwork_url (regular URL)
-        // 3. Default artwork
-        let primaryUrl = track.hashed_artwork_url || track.artwork_url || defaultArtwork;
-        
-        // Create fallback URL if there's a hash
+        // For likes, we should prioritize the hashed artwork URLs since they're more permanent
+        // Build a hash-based URL if we have a hash but no hashed_artwork_url
+        let hashedUrl = null;
         if (track.artwork_hash) {
-            // Always use absolute path with direct string concatenation
-            const fallbackUrl = cachedArtworkPath + track.artwork_hash + '.jpg';
-            
-            console.log('Generated artwork URLs:', {
-                primaryUrl: primaryUrl,
-                fallbackUrl: fallbackUrl,
-                defaultUrl: defaultArtwork,
-                trackInfo: {
-                    id: track.id,
-                    hashedArtworkUrl: track.hashed_artwork_url,
-                    artworkUrl: track.artwork_url,
-                    hash: track.artwork_hash
-                }
-            });
-            
-            return {
-                primaryUrl: primaryUrl,
-                fallbackUrl: fallbackUrl,
-                defaultUrl: defaultArtwork
-            };
+            hashedUrl = cachedArtworkPath + track.artwork_hash + '.jpg';
         }
         
-        console.log('No artwork_hash found, using default fallback');
+        // Determine primary URL, with preferences in order:
+        // 1. hashed_artwork_url (from history.json)
+        // 2. Generated hash-based URL 
+        // 3. artwork_url (regular URL - less reliable for likes)
+        // 4. Default artwork
+        let primaryUrl = track.hashed_artwork_url || hashedUrl || track.artwork_url || defaultArtwork;
         
-        // If no hash, just return the url or default
+        // For fallback, if we have a hash, use the hash-based URL as fallback
+        // Otherwise use the default artwork
+        let fallbackUrl = defaultArtwork;
+        if (hashedUrl && primaryUrl !== hashedUrl) {
+            fallbackUrl = hashedUrl;
+        }
+        
+        this.debug('Generated artwork URLs:', {
+            primaryUrl: primaryUrl,
+            fallbackUrl: fallbackUrl,
+            defaultUrl: defaultArtwork,
+            trackInfo: {
+                id: track.id,
+                hashedArtworkUrl: track.hashed_artwork_url,
+                generatedHashedUrl: hashedUrl,
+                artworkUrl: track.artwork_url,
+                hash: track.artwork_hash
+            }
+        });
+        
         return {
-            primaryUrl: url,
-            fallbackUrl: defaultArtwork,
+            primaryUrl: primaryUrl,
+            fallbackUrl: fallbackUrl,
             defaultUrl: defaultArtwork
         };
     }

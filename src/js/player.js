@@ -8,9 +8,27 @@ class NowWavePlayer {
         
         this.isPlaying = false;
         this.mixcloudContentLoaded = false;
+        this.debugMode = this.config.debugMode || false;
         
         // Set GDPR manager if provided
         this.gdprManager = options.gdprManager || null;
+        
+        /**
+         * Debug logging function that only logs when debugMode is enabled
+         * @param {string} message - Message to log
+         * @param {*} data - Optional data to log
+         */
+        this.debug = (message, data) => {
+            if (this.debugMode) {
+                if (data !== undefined) {
+                    console.log(`[Player] ${message}`, data);
+                } else {
+                    console.log(`[Player] ${message}`);
+                }
+            }
+        };
+        
+        this.debug('Initializing player with config:', this.config);
         
         // Initialize services
         this.storageService = new StorageService();
@@ -20,11 +38,13 @@ class NowWavePlayer {
         this.audioService = new AudioService({
             streamUrl: this.config.streamUrl,
             format: [this.config.format],
-            volume: this.config.defaultVolume
+            volume: this.config.defaultVolume,
+            debugMode: this.debugMode
         });
         this.metadataService = new MetadataService({
             metadataUrl: this.config.metadataUrl,
-            pollInterval: this.config.pollInterval
+            pollInterval: this.config.pollInterval,
+            debugMode: this.debugMode
         });
         
         // If GDPR manager is provided, set up the consent callback
@@ -35,21 +55,25 @@ class NowWavePlayer {
         }
         
         // Initialize managers
-        this.scheduleManager = new ScheduleManager();      
+        this.scheduleManager = new ScheduleManager({
+            debugMode: this.debugMode
+        });      
 
         // Track manager now only handles recent tracks history
         this.trackManager = new TrackManager({
             maxRecentTracks: 30,
             storageService: this.storageService,
             cachedArtworkPath: this.config.cachedArtworkPath,
-            defaultArtwork: this.config.defaultArtwork
+            defaultArtwork: this.config.defaultArtwork,
+            debugMode: this.debugMode
         });
         
         // Initialize Mixcloud manager for archived shows
         this.mixcloudManager = new MixcloudManager({
             mixcloudUsername: this.config.mixcloud?.username || 'nowwaveradio',
             apiUrl: this.config.mixcloud?.apiUrl || 'https://api.mixcloud.com',
-            limit: 100
+            limit: 100,
+            debugMode: this.debugMode
         });
         
         // New LikeManager handles all like functionality
@@ -57,7 +81,8 @@ class NowWavePlayer {
             storageService: this.storageService,
             analyticsService: this.analyticsService,
             defaultArtwork: this.config.defaultArtwork,
-            cachedArtworkPath: this.config.cachedArtworkPath
+            cachedArtworkPath: this.config.cachedArtworkPath,
+            debugMode: this.debugMode
         });
         
         // ShareManager for track sharing functionality
@@ -65,24 +90,30 @@ class NowWavePlayer {
             stationUrl: 'https://nowwave.radio',
             stationName: 'Now Wave Radio',
             storageService: this.storageService,
-            defaultArtwork: this.config.defaultArtwork
+            defaultArtwork: this.config.defaultArtwork,
+            debugMode: this.debugMode
         });
         
         // Register player as observer for like changes
         this.likeManager.addObserver(this);
         
         this.backgroundManager = new BackgroundManager({
-            defaultArtwork: this.config.defaultArtwork
+            defaultArtwork: this.config.defaultArtwork,
+            debugMode: this.debugMode
         });
 
-        this.uiManager = new UIManager(this.config);
+        this.uiManager = new UIManager({
+            ...this.config,
+            debugMode: this.debugMode
+        });
 
         this.viewManager = new ViewManager({
             trackManager: this.trackManager,
             likeManager: this.likeManager,
             shareManager: this.shareManager,
             cachedArtworkPath: this.config.cachedArtworkPath,
-            defaultArtwork: this.config.defaultArtwork
+            defaultArtwork: this.config.defaultArtwork,
+            debugMode: this.debugMode
         });
         
         this.setupEventHandlers();
@@ -123,15 +154,15 @@ class NowWavePlayer {
         // Register tab callbacks
         this.viewManager
             .registerTabCallback('recent', () => {
-                console.log('Recent tab activated');
+                this.debug('Recent tab activated');
                 this.updateRecentView();
             })
             .registerTabCallback('live', () => {
-                console.log('Live tab activated');
+                this.debug('Live tab activated');
                 this.updateLiveView();
             })
             .registerTabCallback('schedule', () => {
-                console.log('Schedule tab activated');
+                this.debug('Schedule tab activated');
                 if (this.scheduleManager) {
                     this.scheduleManager.handleTabActivation();
                 } else {
@@ -139,13 +170,13 @@ class NowWavePlayer {
                 }
             })
             .registerTabCallback('favorites', () => {
-                console.log('Favorites tab activated');
+                this.debug('Favorites tab activated');
                 this.updateFavoritesView();
             })
             .registerTabCallback('catchup', () => {
-                console.log('Mixcloud Archive tab activated');
+                this.debug('Mixcloud Archive tab activated');
                 if (this.mixcloudContentLoaded) {
-                    console.log('Using pre-loaded Mixcloud content');
+                    this.debug('Using pre-loaded Mixcloud content');
                 } else {
                     this.updateMixcloudArchiveView();
                 }
@@ -231,7 +262,7 @@ class NowWavePlayer {
         const isLoved = this.likeManager.toggleLove(trackId, trackData);
         
         // Log which tab the like came from (for debugging)
-        console.log('Liked from tab:', this.viewManager.getCurrentTab());
+        // Track tab origin for debugging
         
         // Return the new status (observer will handle UI updates)
         return isLoved;
@@ -261,16 +292,23 @@ class NowWavePlayer {
             }
         }
         
+        // Calculate artwork hash if needed
+        const artworkHash = recentTrack ? recentTrack.artwork_hash : 
+            this.likeManager.generateHash(
+                this.uiManager.elements.trackArtist.textContent,
+                this.uiManager.elements.trackTitle.textContent
+            );
+        
+        // Create a hashed artwork URL for persistence
+        const hashedArtworkUrl = `/player/publish/ca/${artworkHash}.jpg`;
+        
         return {
             id: trackId,
             title: this.uiManager.elements.trackTitle.textContent,
             artist: this.uiManager.elements.trackArtist.textContent,
             artwork_url: artworkUrl,
-            artwork_hash: recentTrack ? recentTrack.artwork_hash : 
-                this.likeManager.generateHash(
-                    this.uiManager.elements.trackArtist.textContent,
-                    this.uiManager.elements.trackTitle.textContent
-                ),
+            artwork_hash: artworkHash,
+            hashed_artwork_url: hashedArtworkUrl,
             played_at: new Date().toISOString()
         };
     }
@@ -308,7 +346,7 @@ class NowWavePlayer {
 
         // Use likeManager for artwork URLs
         const artworkUrls = this.likeManager.getArtworkUrl(track);
-        console.log('Track image URLs:', {
+        this.debug('Track image URLs:', {
             primaryUrl: artworkUrls.primaryUrl,
             fallbackUrl: artworkUrls.fallbackUrl,
             defaultUrl: artworkUrls.defaultUrl,
@@ -473,26 +511,43 @@ class NowWavePlayer {
     }
     
     handleMetadataUpdate(data) {
-        // Add track to history
-        if (data.title && data.artist) {
-            this.trackManager.addTrackToHistory(data);
-        }
+        // Check if the track has actually changed
+        const currentTitle = this.uiManager.elements.trackTitle.textContent;
+        const currentArtist = this.uiManager.elements.trackArtist.textContent;
+        const newTrackId = `${data.artist}-${data.title}`;
+        const currentTrackId = `${currentArtist}-${currentTitle}`;
+        const hasTrackChanged = newTrackId !== currentTrackId;
         
-        // Update UI with new track data
-        this.uiManager.updateTrackInfo(data);
+        this.debug(`Track metadata received: ${data.artist} - ${data.title}`);
+        this.debug(`Current track: ${currentArtist} - ${currentTitle}`);
+        this.debug(`Has track changed: ${hasTrackChanged}`);
         
-        // Update love button state - now using likeManager
-        const trackId = `${data.artist}-${data.title}`;
-        this.uiManager.updateLoveButton(this.likeManager.isLoved(trackId));
-        
-        // Update recent view if active
-        if (this.viewManager.getCurrentTab() === 'recent') {
-            this.updateRecentView();
-        }
-        
-        // Update schedule view if active to refresh "On Air" status
-        if (this.viewManager.getCurrentTab() === 'schedule') {
-            this.updateScheduleOnAirStatus();
+        // Only update UI and process if the track has changed or artwork has changed
+        if (hasTrackChanged) {
+            this.debug('Track has changed, updating UI');
+            
+            // Add track to history
+            if (data.title && data.artist) {
+                this.trackManager.addTrackToHistory(data);
+            }
+            
+            // Update UI with new track data
+            this.uiManager.updateTrackInfo(data);
+            
+            // Update love button state - now using likeManager
+            this.uiManager.updateLoveButton(this.likeManager.isLoved(newTrackId));
+            
+            // Update recent view if active
+            if (this.viewManager.getCurrentTab() === 'recent') {
+                this.updateRecentView();
+            }
+            
+            // Update schedule view if active to refresh "On Air" status
+            if (this.viewManager.getCurrentTab() === 'schedule') {
+                this.updateScheduleOnAirStatus();
+            }
+        } else {
+            this.debug('Track unchanged, skipping UI updates');
         }
     }
     
@@ -502,25 +557,25 @@ class NowWavePlayer {
             const now = new Date();
             // Update the view using the existing schedule data but with current time
             this.scheduleManager.updateScheduleView(this.scheduleManager.generatedSchedule, now);
-            console.log('Schedule "On Air" status updated due to metadata change');
+            this.debug('Schedule "On Air" status updated due to metadata change');
         }
     }
     
     handleArtworkLoad(imageUrl) {
-        console.log('Album artwork loaded:', imageUrl);
+        this.debug('Album artwork loaded:', imageUrl);
         
         // Skip background update if it's the default image or invalid
         if (imageUrl && 
             !imageUrl.includes(this.config.defaultArtwork) && 
             !imageUrl.includes('error')) {
             
-            console.log('Updating background with artwork:', imageUrl);
+            this.debug('Updating background with artwork:', imageUrl);
             this.backgroundManager.updateBackground(
                 imageUrl,
                 this.viewManager.getCurrentTab()
             );
         } else {
-            console.log('Skipping background update for default/invalid image');
+            this.debug('Skipping background update for default/invalid image');
         }
     }
     
@@ -757,7 +812,7 @@ class NowWavePlayer {
                 });
                 
                 this.mixcloudContentLoaded = true;
-                console.log('Mixcloud content preloaded successfully');
+                this.debug('Mixcloud content preloaded successfully');
             }
         } catch (error) {
             console.error('Error preloading Mixcloud content:', error);

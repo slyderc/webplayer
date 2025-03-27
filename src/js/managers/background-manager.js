@@ -5,12 +5,28 @@ class BackgroundManager {
     constructor(options = {}) {
         this.options = {
             defaultArtwork: '/player/NWR_text_logo_angle.png',
+            debugMode: false, // Set to true to enable debug logging
             ...options
         };
         
         this.currentArtworkUrl = '';
         this.activeBackground = 1;
         this.setupBackgroundElements();
+    }
+    
+    /**
+     * Debug logging function that only logs when debugMode is enabled
+     * @param {string} message - Message to log
+     * @param {*} data - Optional data to log
+     */
+    debug(message, data) {
+        if (this.options.debugMode) {
+            if (data !== undefined) {
+                console.log(`[BackgroundManager] ${message}`, data);
+            } else {
+                console.log(`[BackgroundManager] ${message}`);
+            }
+        }
     }
     
     setupBackgroundElements() {
@@ -51,12 +67,12 @@ class BackgroundManager {
     }
     
     updateBackground(imageUrl, currentTab, forceUpdate = false) {
-        console.log('Background update requested:', imageUrl, 'Tab:', currentTab);
+        this.debug('Background update requested:', {imageUrl, tab: currentTab, force: forceUpdate});
         
         // Skip if it's the same URL or a default image, unless force update is requested
         if (!forceUpdate && (imageUrl === this.currentArtworkUrl || 
             (this.options.defaultArtwork && imageUrl.includes(this.options.defaultArtwork)))) {
-            console.log('Skipping background update - same URL or default image');
+            this.debug('Skipping background update - same URL or default image');
             return;
         }
         
@@ -65,17 +81,17 @@ class BackgroundManager {
         
         // Don't update background if it's the default image
         if (this.options.defaultArtwork && imageUrl.includes(this.options.defaultArtwork)) {
-            console.log('Skipping background update - default artwork');
+            this.debug('Skipping background update - default artwork');
             return;
         }
         
         // Only update if we're on the live tab
         if (currentTab !== 'live' && !forceUpdate) {
-            console.log('Skipping background update - not on live tab');
+            this.debug('Skipping background update - not on live tab');
             return;
         }
         
-        console.log('Updating background with image:', imageUrl);
+        this.debug('Updating background with image:', imageUrl);
         
         // Toggle between the two background containers for smooth transitions
         const activeBg = this.activeBackground === 1 ? this.bgImage2 : this.bgImage;
