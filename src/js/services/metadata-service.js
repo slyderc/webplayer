@@ -85,7 +85,6 @@ class MetadataService {
         try {
             // Make a direct request to playlist.json for the current track
             const playlistUrl = '/player/publish/playlist.json';
-            console.log(`Fetching current track from ${playlistUrl}`);
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
