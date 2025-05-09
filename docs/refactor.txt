@@ -1,0 +1,14 @@
+Plan to refactor everything to a new stack:
+
+Flask + Alpine.js + Tailwind
+
+Flask: Much more lightweight than Django, minimal by design
+Alpine.js: Tiny JS framework (~8KB) that gives you reactive components without the React complexity
+Tailwind: Still gives you styling benefits with minimal size when optimized
+
+Published document with an overview of setting up this project:
+https://claude.ai/public/artifacts/813e56cd-40df-4c9e-ab05-0462e4dac58f
+
+Also the local filesystem in thie directory:
+flask-alpine-tailwind-setup.md
+
